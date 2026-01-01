@@ -1,4 +1,4 @@
-# HoshiFade - Interactive Black Hole Landing Page
+# Insomnia - Interactive Black Hole Landing Page
 
 An immersive 3D landing page featuring a realistic black hole simulation with gravitational effects, accretion disk, and interactive particle systems.
 

@@ -8,6 +8,7 @@ import { useStore } from '../../store/useStore'
 // --- SHADERS ---
 const particleVertexShader = `
 uniform float uTime;
+uniform vec3 uMouse; // Mouse in LOCAL (disk) space
 attribute float aRandom;
 attribute float aSize;
 varying float vAlpha;
@@ -24,11 +25,39 @@ void main() {
   float c = cos(angle);
   float s = sin(angle);
   
-  pos = vec3(
+  // Calculate rotated position (current orbital pos)
+  vec3 currentPos = vec3(
     pos.x * c - pos.y * s,
     pos.x * s + pos.y * c,
     pos.z
   );
+
+  // --- MOUSE REPULSION ---
+  // Distance to mouse in local space
+  float dist = distance(currentPos, uMouse);
+  
+  // Add randomness to radius for organic, non-circular shape
+  // Varies between 0.4 and 0.7 based on particle's random seed
+  float repulsionRadius = 0.4 + aRandom * 0.3; 
+
+  if (dist < repulsionRadius) {
+      vec3 repulseDir = normalize(currentPos - uMouse);
+      
+      // Add slight noise to direction for more scatter
+      repulseDir.x += (aRandom - 0.5) * 0.2;
+      repulseDir.y += (aRandom - 0.5) * 0.2;
+      
+      float force = (1.0 - dist / repulsionRadius);
+      force = force * force; // Smooth falloff
+      
+      // Variable strength
+      float strength = 0.8 + aRandom * 0.4;
+      
+      currentPos += repulseDir * force * strength; 
+  }
+  // -----------------------
+
+  pos = currentPos;
 
   vec4 viewPosition = modelViewMatrix * vec4(pos, 1.0);
   gl_Position = projectionMatrix * viewPosition;
@@ -40,12 +69,12 @@ void main() {
 
   
   float brightness = 0.7; 
-  float normDist = 1.0 - smoothstep(2.0, 8.0, length(position.xy));
-  float innerFade = smoothstep(1.0, 1.8, length(position.xy));
+  float normDist = 1.0 - smoothstep(2.0, 8.0, length(pos.xy)); // Use displaced pos or original? Displaced looks cool
+  float innerFade = smoothstep(1.0, 1.8, length(pos.xy));
   
   vAlpha = brightness * normDist * innerFade;
 
-  vDistance = length(position.xy);
+  vDistance = length(pos.xy);
 }
 `
 
@@ -97,7 +126,7 @@ export default function BlackHole() {
     const section = useStore((state) => state.section)
 
 
-    const count = 120000
+    const count = 75000 // Optimized from 120000
 
     // 1. Primary Accretion Disk Data
     const { positions, randoms, sizes } = useMemo(() => {
@@ -119,20 +148,57 @@ export default function BlackHole() {
             positions[i * 3 + 2] = z
 
             randoms[i] = Math.random()
-            sizes[i] = Math.random() * 0.4 + 0.1
+            sizes[i] = Math.random() * 0.5 + 0.15 // Slightly larger to compensate for lower count
         }
         return { positions, randoms, sizes }
     }, [])
 
     const uniforms = useMemo(() => ({
-        uTime: { value: 0 }
+        uTime: { value: 0 },
+        uMouse: { value: new THREE.Vector3(9999, 9999, 9999) }
     }), [])
+
+    // Raycast Math Objects
+    const _inverseMatrix = useMemo(() => new THREE.Matrix4(), [])
+    const _rayOrigin = useMemo(() => new THREE.Vector3(), [])
+    const _rayDir = useMemo(() => new THREE.Vector3(), [])
+    const _planeNormal = useMemo(() => new THREE.Vector3(0, 0, 1), []) // Disk is on XY plane (local)
+    const _planePoint = useMemo(() => new THREE.Vector3(0, 0, 0), [])
+    const _intersectPoint = useMemo(() => new THREE.Vector3(), [])
 
     // ANIMATION LOOP
     useFrame((state) => {
         if (!pointsRef.current) return
 
         pointsRef.current.material.uniforms.uTime.value = state.clock.elapsedTime
+
+        // --- MOUSE INTERACTION ---
+        // Project mouse ray onto the disk's local XY plane
+        if (groupRef.current) {
+            // 1. Convert Ray to Local Space of the Group (which is rotated)
+            _inverseMatrix.copy(groupRef.current.matrixWorld).invert()
+
+            state.raycaster.setFromCamera(state.pointer, state.camera)
+
+            _rayOrigin.copy(state.raycaster.ray.origin).applyMatrix4(_inverseMatrix)
+            _rayDir.copy(state.raycaster.ray.direction).transformDirection(_inverseMatrix).normalize()
+
+            // 2. Intersect with Plane Z=0 (since particles are naturally on XY plane)
+            const denom = _rayDir.dot(_planeNormal)
+
+            if (Math.abs(denom) > 0.0001) {
+                const t = _planePoint.clone().sub(_rayOrigin).dot(_planeNormal) / denom
+
+                if (t >= 0) {
+                    _intersectPoint.copy(_rayDir).multiplyScalar(t).add(_rayOrigin)
+                    uniforms.uMouse.value.copy(_intersectPoint)
+                } else {
+                    uniforms.uMouse.value.set(9999, 9999, 9999)
+                }
+            } else {
+                uniforms.uMouse.value.set(9999, 9999, 9999)
+            }
+        }
     })
 
     return (

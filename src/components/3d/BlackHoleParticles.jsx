@@ -238,7 +238,7 @@ export default function BlackHoleParticles() {
     const ambientRef = useRef()
 
     // 0. INNER DENSE DISK - Very close to event horizon (OPTIMIZED)
-    const innerDiskCount = 8000
+    const innerDiskCount = 5000 // Reduced from 6000
     const innerDiskData = useMemo(() => {
         const positions = new Float32Array(innerDiskCount * 3)
         const randoms = new Float32Array(innerDiskCount)
@@ -257,7 +257,7 @@ export default function BlackHoleParticles() {
             positions[i * 3 + 2] = 0
 
             randoms[i] = Math.random()
-            sizes[i] = Math.random() * 1.5 + 0.8
+            sizes[i] = Math.random() * 1.6 + 0.9 // Compensate size
             orbitRadii[i] = r
 
             // Very fast orbits close to horizon
@@ -273,7 +273,7 @@ export default function BlackHoleParticles() {
     }, [])
 
     // 1. Orbital particles (stable orbits at different radii and inclinations) (OPTIMIZED)
-    const orbitalCount = 10000
+    const orbitalCount = 6000 // Reduced from 8000
     const orbitalData = useMemo(() => {
         const positions = new Float32Array(orbitalCount * 3)
         const randoms = new Float32Array(orbitalCount)
@@ -292,7 +292,7 @@ export default function BlackHoleParticles() {
             positions[i * 3 + 2] = 0
 
             randoms[i] = Math.random()
-            sizes[i] = Math.random() * 0.5 + 0.3
+            sizes[i] = Math.random() * 0.55 + 0.35 // Compensate size
             orbitRadii[i] = r
 
             // Orbital speed decreases with distance (Kepler's law approximation)
@@ -309,7 +309,7 @@ export default function BlackHoleParticles() {
     }, [])
 
     // 2. Spiral-falling particles (gradually approaching event horizon) (OPTIMIZED)
-    const spiralCount = 12000
+    const spiralCount = 7000 // Reduced from 9000
     const spiralData = useMemo(() => {
         const positions = new Float32Array(spiralCount * 3)
         const randoms = new Float32Array(spiralCount)
@@ -327,7 +327,7 @@ export default function BlackHoleParticles() {
             positions[i * 3 + 2] = 0
 
             randoms[i] = Math.random()
-            sizes[i] = Math.random() * 0.4 + 0.2
+            sizes[i] = Math.random() * 0.45 + 0.25 // Compensate size
             startRadii[i] = r
             spiralSpeeds[i] = 0.1 + Math.random() * 0.2
             inclinations[i] = (Math.random() - 0.5) * Math.PI * 0.4
@@ -337,7 +337,7 @@ export default function BlackHoleParticles() {
     }, [])
 
     // 3. Ambient scattered particles (far from black hole, slow motion) (OPTIMIZED)
-    const ambientCount = 4000
+    const ambientCount = 2000 // Reduced from 3000
     const ambientData = useMemo(() => {
         const positions = new Float32Array(ambientCount * 3)
         const randoms = new Float32Array(ambientCount)
@@ -414,7 +414,7 @@ export default function BlackHoleParticles() {
 
     return (
         <group>
-            {/* 0. Inner Dense Disk (12k particles very close to horizon) */}
+            {/* 0. Inner Dense Disk (5k particles very close to horizon) */}
             <points ref={innerDiskRef}>
                 <bufferGeometry>
                     <bufferAttribute attach="attributes-position" count={innerDiskCount} array={innerDiskData.positions} itemSize={3} />

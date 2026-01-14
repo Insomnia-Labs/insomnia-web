@@ -66,8 +66,15 @@ export default function CameraController() {
 
         // Camera follows behind active sphere
         const directionToOthers = new THREE.Vector3().subVectors(centerOfOthers, activeSpherePos).normalize()
-        const cameraPos = activeSpherePos.clone().add(directionToOthers.multiplyScalar(-3.5)) // 3.5 units behind
-        cameraPos.y += 1.6 // Higher viewpoint
+
+        // Calculate right vector for offset
+        const right = new THREE.Vector3().crossVectors(directionToOthers, new THREE.Vector3(0, 1, 0)).normalize()
+
+        const cameraPos = activeSpherePos.clone()
+            .add(directionToOthers.multiplyScalar(-3.5)) // 3.5 units behind
+            .add(right.multiplyScalar(2.2)) // Shift camera even more to the right
+
+        cameraPos.y += 2.0 // Higher viewpoint
 
         // Smooth camera movement (faster)
         camera.position.lerp(cameraPos, step)

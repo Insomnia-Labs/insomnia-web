@@ -57,7 +57,7 @@ const LabPanel = ({ active }) => {
     const sub = useScramble('ANALYZING SYSTEM', 20, active)
 
     return (
-        <div className="w-[480px] p-8 border-l-2 border-white/40 bg-black/60 backdrop-blur-md relative overflow-hidden group">
+        <div className="w-[580px] p-8 border-l-2 border-white/40 bg-black/60 backdrop-blur-md relative overflow-hidden group">
             {/* Scanline effect */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent h-2 animate-scan" style={{ top: '50%' }} />
 
@@ -97,7 +97,7 @@ const InfoPanel = ({ active }) => {
     ]
 
     return (
-        <div className="w-[500px] text-left">
+        <div className="w-[580px] text-left">
             <div className="mb-6 border-b border-white/20 pb-2">
                 <h3 className="text-xs text-white/40 font-mono">{header}</h3>
             </div>
@@ -135,7 +135,7 @@ const ProductsPanel = ({ active }) => {
     const sub = useScramble('SELECT PACKAGE', 20, active)
 
     return (
-        <div className="w-[480px] p-8 border-l-2 border-white/40 bg-black/60 backdrop-blur-md relative overflow-hidden group">
+        <div className="w-[580px] p-8 border-l-2 border-white/40 bg-black/60 backdrop-blur-md relative overflow-hidden group">
             {/* Scanline effect */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent h-2 animate-scan" style={{ top: '50%' }} />
 
@@ -177,23 +177,30 @@ export default function SpatialContent() {
     const section = useStore((state) => state.section)
     const groupRef = useRef()
 
+    // OPTIMIZATION: Cache vectors to avoid Garbage Collection in useFrame
+    const vecCache = useMemo(() => ({
+        targetPos: new THREE.Vector3(),
+        targetQuat: new THREE.Quaternion(),
+        offset: new THREE.Vector3()
+    }), [])
+
     useFrame((state) => {
         if (!groupRef.current) return
 
-        // 1. Get Camera Position & Rotation
+        // 1. Get Camera Position & Rotation (Copy, don't clone)
         const camera = state.camera
-        const targetPos = camera.position.clone()
-        const targetQuat = camera.quaternion.clone()
+        vecCache.targetPos.copy(camera.position)
+        vecCache.targetQuat.copy(camera.quaternion)
 
         // 2. Calculate "Heads-Up" position: Offset to top-right
         // Right (+X), Up (+Y), Forward (-Z)
-        const offset = new THREE.Vector3(2.5, 0.9, -4.5)
-        offset.applyQuaternion(targetQuat)
-        targetPos.add(offset)
+        vecCache.offset.set(2.5, 0.9, -4.5)
+        vecCache.offset.applyQuaternion(vecCache.targetQuat)
+        vecCache.targetPos.add(vecCache.offset)
 
         // 3. Smoothly Lerp the group to this position (Drone-follow effect)
-        groupRef.current.position.lerp(targetPos, 0.1)
-        groupRef.current.quaternion.slerp(targetQuat, 0.1)
+        groupRef.current.position.lerp(vecCache.targetPos, 0.1)
+        groupRef.current.quaternion.slerp(vecCache.targetQuat, 0.1)
     })
 
     return (
@@ -204,6 +211,7 @@ export default function SpatialContent() {
                 sprite
                 isObject={false}
                 distanceFactor={1.5}
+                position={[-0.3, 0.15, 0]}
                 zIndexRange={[100, 0]}
                 style={{
                     opacity: section === 'lab' ? 1 : 0,
@@ -222,7 +230,7 @@ export default function SpatialContent() {
                 isObject={false}
                 distanceFactor={1.5}
                 zIndexRange={[100, 0]}
-                position={[0, 0.2, 0]} // Slight vertical adjustment for text
+                position={[-0.3, 0.15, 0]}
                 style={{
                     opacity: section === 'info' ? 1 : 0,
                     transition: 'opacity 0.5s',
@@ -238,6 +246,7 @@ export default function SpatialContent() {
                 sprite
                 isObject={false}
                 distanceFactor={1.5}
+                position={[-0.3, 0.15, 0]}
                 zIndexRange={[100, 0]}
                 style={{
                     opacity: section === 'products' ? 1 : 0,

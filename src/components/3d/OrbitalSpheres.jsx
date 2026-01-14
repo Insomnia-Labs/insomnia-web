@@ -28,6 +28,15 @@ const createCircleTexture = () => {
 
 const circleTexture = createCircleTexture()
 
+// Reusable objects to prevent GC thrashing
+const _orbitalPos = new THREE.Vector3()
+const _targetPos = new THREE.Vector3()
+const _inverseMatrix = new THREE.Matrix4()
+const _rayOrigin = new THREE.Vector3()
+const _rayDir = new THREE.Vector3()
+const _localRay = new THREE.Ray()
+const _closestPoint = new THREE.Vector3()
+
 const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) => {
     const { raycaster, pointer, camera } = useThree()
     const section = useStore((state) => state.section)
@@ -38,6 +47,10 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
     const explosionRef = useRef(0)
     const [hovered, setHovered] = useState(false)
     const [position, setPosition] = useState([0, 0, 0])
+
+    // Magnetic position state
+    const visualPosRef = useRef(new THREE.Vector3())
+    const initializedRef = useRef(false)
 
     // Create particle positions for sphere
     const { positions, count } = useMemo(() => {
@@ -86,19 +99,77 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
         }
     }
     useFrame((state, delta) => {
+        // Clamp delta to prevent huge jumps/overshoot when returning to tab
+        const dt = Math.min(delta, 0.1)
+
         if (pointsRef.current) {
+            // Calculate ideal orbital position
             const angle = baseAngle + state.clock.elapsedTime * 0.15
 
-            const x = radius * Math.cos(angle)
-            const y = radius * Math.sin(angle)
-            const z = 0
+            _orbitalPos.set(
+                radius * Math.cos(angle),
+                radius * Math.sin(angle),
+                0
+            )
 
-            pointsRef.current.position.set(x, y, z)
-            setPosition([x, y, z]) // Exact center of sphere
+            if (!initializedRef.current) {
+                visualPosRef.current.copy(_orbitalPos)
+                initializedRef.current = true
+            }
+
+            // Magnetic attraction logic (only for non-active spheres)
+            _targetPos.copy(_orbitalPos)
+
+            if (!isActive && pointsRef.current.parent) {
+                const parent = pointsRef.current.parent
+                // Update inverse matrix
+                _inverseMatrix.copy(parent.matrixWorld).invert()
+
+                // Calculate ray in local space
+                state.raycaster.setFromCamera(state.pointer, state.camera)
+
+                // Transform ray origin and direction to local space optimize
+                _rayOrigin.copy(state.raycaster.ray.origin).applyMatrix4(_inverseMatrix)
+                _rayDir.copy(state.raycaster.ray.direction).transformDirection(_inverseMatrix).normalize()
+
+                _localRay.set(_rayOrigin, _rayDir)
+
+                // Find closest point on ray to the orbital position
+                _localRay.closestPointToPoint(_orbitalPos, _closestPoint)
+
+                const dist = _orbitalPos.distanceTo(_closestPoint)
+                const outerThreshold = 2.0
+                const innerThreshold = 1.2
+
+                if (dist < outerThreshold) {
+                    let strength = 0
+                    if (dist < innerThreshold) {
+                        // Perfect lock when close
+                        strength = 1.0
+                    } else {
+                        // Linear fade out at the edges
+                        strength = 1 - (dist - innerThreshold) / (outerThreshold - innerThreshold)
+                    }
+
+                    _targetPos.lerp(_closestPoint, strength)
+                }
+            }
+
+            // Smoothly interpolate visual position - ultra smooth
+            // Use clamped dt to avoid shooting off into space on tab switch
+            visualPosRef.current.lerp(_targetPos, dt * 3.0)
+
+            // Apply position
+            pointsRef.current.position.copy(visualPosRef.current)
+
+            // Only update React state if position changed significantly to avoid re-renders (optimization)
+            // Actually setPosition is only used for HTML overlay, maybe throttle it?
+            // For now, let's just keep it but note it could be optimized further.
+            setPosition([visualPosRef.current.x, visualPosRef.current.y, visualPosRef.current.z])
 
             // Sync hitbox position
             if (hitboxRef.current) {
-                hitboxRef.current.position.set(x, y, z)
+                hitboxRef.current.position.copy(visualPosRef.current)
             }
 
             // Scale: active is larger, hover adds extra size
@@ -114,7 +185,7 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
 
             // Smooth explosion animation with gentle easing
             if (explosionRef.current > 0) {
-                explosionRef.current -= delta * 0.8 // Much faster return (was ~0.003/frame)
+                explosionRef.current -= dt * 0.8 // Much faster return (was ~0.003/frame)
 
                 // Easing function for ultra-smooth start (easeOutQuint)
                 const t = 1 - explosionRef.current
@@ -193,7 +264,7 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
                 }}
                 onPointerMove={(e) => e.stopPropagation()}
             >
-                <sphereGeometry args={[0.25, 16, 16]} />
+                <sphereGeometry args={[0.25, 8, 8]} />
                 <meshBasicMaterial
                     transparent
                     opacity={0}

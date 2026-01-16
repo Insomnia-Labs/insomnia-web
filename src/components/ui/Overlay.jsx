@@ -7,7 +7,7 @@ export default function Overlay() {
     return (
         <div className="absolute inset-0 pointer-events-none z-50 flex flex-col justify-between p-8">
             {/* Header */}
-            <header className="flex justify-between items-start">
+            <header className="flex justify-between items-start pointer-events-none">
                 <div
                     className="pointer-events-auto cursor-pointer transition-transform hover:scale-105"
                     onClick={() => setSection('home')}
@@ -22,11 +22,11 @@ export default function Overlay() {
             </header>
 
             {/* Main Content Area (Dynamic) */}
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1 flex items-center justify-center pointer-events-none">
             </div>
 
             {/* Footer Info */}
-            <footer className="flex justify-between items-end">
+            <footer className="flex justify-between items-end pointer-events-none">
                 <div className="text-white/30 font-mono text-[10px] tracking-widest leading-relaxed opacity-50">
                     <div>COORDS: 12.339.992</div>
                     <div>SECTOR: 7G (ORION)</div>

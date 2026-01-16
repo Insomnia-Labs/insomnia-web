@@ -57,7 +57,7 @@ const LabPanel = ({ active }) => {
     const sub = useScramble('ANALYZING SYSTEM', 20, active)
 
     return (
-        <div className="w-[580px] p-8 border-l-2 border-white/40 bg-black/60 backdrop-blur-md relative overflow-hidden group">
+        <div className={`w-[580px] p-8 border-l-2 border-white/40 bg-black/60 backdrop-blur-md relative overflow-hidden group ${active ? 'pointer-events-auto' : 'pointer-events-none'}`}>
             {/* Scanline effect */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent h-2 animate-scan" style={{ top: '50%' }} />
 
@@ -97,7 +97,7 @@ const InfoPanel = ({ active }) => {
     ]
 
     return (
-        <div className="w-[580px] text-left">
+        <div className={`w-[580px] text-left ${active ? 'pointer-events-auto' : 'pointer-events-none'}`}>
             <div className="mb-6 border-b border-white/20 pb-2">
                 <h3 className="text-xs text-white/40 font-mono">{header}</h3>
             </div>
@@ -135,7 +135,7 @@ const ProductsPanel = ({ active }) => {
     const sub = useScramble('SELECT PACKAGE', 20, active)
 
     return (
-        <div className="w-[580px] p-8 border-l-2 border-white/40 bg-black/60 backdrop-blur-md relative overflow-hidden group">
+        <div className={`w-[580px] p-8 border-l-2 border-white/40 bg-black/60 backdrop-blur-md relative overflow-hidden group ${active ? 'pointer-events-auto' : 'pointer-events-none'}`}>
             {/* Scanline effect */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent h-2 animate-scan" style={{ top: '50%' }} />
 
@@ -205,57 +205,61 @@ export default function SpatialContent() {
 
     return (
         <group ref={groupRef}>
-            {/* LAB CONTENT */}
-            <Html
-                transform
-                sprite
-                isObject={false}
-                distanceFactor={1.5}
-                position={[-0.3, 0.15, 0]}
-                zIndexRange={[100, 0]}
-                style={{
-                    opacity: section === 'lab' ? 1 : 0,
-                    transition: 'opacity 0.5s',
-                    pointerEvents: section === 'lab' ? 'auto' : 'none',
-                    transform: 'scale(1)' // Ensure no accidental scaling
-                }}
-            >
-                <LabPanel active={section === 'lab'} />
-            </Html>
+            {section !== 'home' && (
+                <>
+                    {/* LAB CONTENT */}
+                    <Html
+                        transform
+                        sprite
+                        isObject={false}
+                        distanceFactor={1.5}
+                        position={[-0.3, 0.15, 0]}
+                        zIndexRange={[100, 0]}
+                        style={{
+                            opacity: section === 'lab' ? 1 : 0,
+                            transition: 'opacity 0.5s',
+                            pointerEvents: section === 'lab' ? 'auto' : 'none',
+                            transform: 'scale(1)'
+                        }}
+                    >
+                        <LabPanel active={section === 'lab'} />
+                    </Html>
 
-            {/* INFO CONTENT */}
-            <Html
-                transform
-                sprite
-                isObject={false}
-                distanceFactor={1.5}
-                zIndexRange={[100, 0]}
-                position={[-0.3, 0.15, 0]}
-                style={{
-                    opacity: section === 'info' ? 1 : 0,
-                    transition: 'opacity 0.5s',
-                    pointerEvents: section === 'info' ? 'auto' : 'none',
-                }}
-            >
-                <InfoPanel active={section === 'info'} />
-            </Html>
+                    {/* INFO CONTENT */}
+                    <Html
+                        transform
+                        sprite
+                        isObject={false}
+                        distanceFactor={1.5}
+                        zIndexRange={[100, 0]}
+                        position={[-0.3, 0.15, 0]}
+                        style={{
+                            opacity: section === 'info' ? 1 : 0,
+                            transition: 'opacity 0.5s',
+                            pointerEvents: section === 'info' ? 'auto' : 'none',
+                        }}
+                    >
+                        <InfoPanel active={section === 'info'} />
+                    </Html>
 
-            {/* PRODUCTS CONTENT */}
-            <Html
-                transform
-                sprite
-                isObject={false}
-                distanceFactor={1.5}
-                position={[-0.3, 0.15, 0]}
-                zIndexRange={[100, 0]}
-                style={{
-                    opacity: section === 'products' ? 1 : 0,
-                    transition: 'opacity 0.5s',
-                    pointerEvents: section === 'products' ? 'auto' : 'none'
-                }}
-            >
-                <ProductsPanel active={section === 'products'} />
-            </Html>
+                    {/* PRODUCTS CONTENT */}
+                    <Html
+                        transform
+                        sprite
+                        isObject={false}
+                        distanceFactor={1.5}
+                        position={[-0.3, 0.15, 0]}
+                        zIndexRange={[100, 0]}
+                        style={{
+                            opacity: section === 'products' ? 1 : 0,
+                            transition: 'opacity 0.5s',
+                            pointerEvents: section === 'products' ? 'auto' : 'none'
+                        }}
+                    >
+                        <ProductsPanel active={section === 'products'} />
+                    </Html>
+                </>
+            )}
         </group>
     )
 }

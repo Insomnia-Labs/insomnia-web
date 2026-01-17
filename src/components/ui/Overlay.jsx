@@ -66,9 +66,9 @@ export default function Overlay() {
                         <div className="absolute bottom-0 right-0 w-1 h-1 border-b border-r border-white/50 group-hover:border-black transition-colors duration-500" />
                     </a>
 
-                    {/* GitHub Button */}
+                    {/* Instagram Button */}
                     <a
-                        href="https://github.com/mioruno"
+                        href="https://www.instagram.com/_mark.asm/"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="pointer-events-auto group relative px-6 py-3 bg-black/20 border border-white/10 overflow-hidden hover:border-white/60 transition-colors duration-500"
@@ -85,7 +85,7 @@ export default function Overlay() {
                             </div>
 
                             <div className="text-[10px] font-mono tracking-[0.3em] text-white/80 group-hover:text-black transition-colors duration-500 uppercase">
-                                my github
+                                my instagram
                             </div>
 
                             {/* Arrow Icon */}

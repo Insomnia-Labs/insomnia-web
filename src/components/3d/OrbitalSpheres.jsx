@@ -326,6 +326,8 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
 
 export default function OrbitalSpheres() {
     const section = useStore((state) => state.section)
+    const showGame = useStore((state) => state.showGame)
+    const showMenu = useStore((state) => state.showMenu)
 
     const navItems = [
         {
@@ -350,6 +352,9 @@ export default function OrbitalSpheres() {
             radius: 3.2,
         },
     ]
+
+    // Hide spheres when game or menu is active
+    if (showGame || showMenu) return null
 
     return (
         <group rotation={[-Math.PI / 2 + 0.2, 0, 0]}>

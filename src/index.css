@@ -30,3 +30,13 @@ button,
   font-weight: 500;
   letter-spacing: -0.02em;
 }
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}

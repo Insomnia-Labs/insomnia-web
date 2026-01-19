@@ -41,16 +41,44 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
     const { raycaster, pointer, camera } = useThree()
     const section = useStore((state) => state.section)
     const setSection = useStore((state) => state.setSection)
+
+    // Store states for visibility
+    const isDiving = useStore((state) => state.isDiving)
+    const insideBlackHole = useStore((state) => state.insideBlackHole)
+    const showGame = useStore((state) => state.showGame)
+
+    const isExiting = useStore((state) => state.isExiting)
+
+    const containerRef = useRef() // Main container for movement
     const pointsRef = useRef()
     const hitboxRef = useRef()
     const basePositionsRef = useRef()
     const explosionRef = useRef(0)
     const [hovered, setHovered] = useState(false)
-    const [position, setPosition] = useState([0, 0, 0])
+    // Removed position state to avoid re-renders!
 
-    // Magnetic position state
+    // Determine visibility based on state (must match parent OrbitalSpheres logic)
+    const isVisible = !showGame && (!isDiving && (!insideBlackHole || isExiting))
+
     const visualPosRef = useRef(new THREE.Vector3())
     const initializedRef = useRef(false)
+    const isPageVisibleRef = useRef(true) // Track page visibility
+    const orbitTimeRef = useRef(0) // Custom time counter for orbit (freezes when page hidden)
+    const htmlRef = useRef() // Reference to HTML label element
+    const currentOpacityRef = useRef(1) // Current opacity (synced with particles)
+
+    // Listen to page visibility changes
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            isPageVisibleRef.current = !document.hidden
+        }
+
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
+        }
+    }, [])
 
     // Create particle positions for sphere
     const { positions, count } = useMemo(() => {
@@ -99,12 +127,20 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
         }
     }
     useFrame((state, delta) => {
+        // Skip all calculations when page is hidden (tab is inactive)
+        if (!isPageVisibleRef.current) {
+            return
+        }
+
         // Clamp delta to prevent huge jumps/overshoot when returning to tab
         const dt = Math.min(delta, 0.1)
 
-        if (pointsRef.current) {
-            // Calculate ideal orbital position
-            const angle = baseAngle + state.clock.elapsedTime * 0.15
+        // Update our custom orbit time only when page is visible
+        orbitTimeRef.current += dt
+
+        if (containerRef.current) {
+            // Calculate ideal orbital position using our frozen time counter
+            const angle = baseAngle + orbitTimeRef.current * 0.15
 
             _orbitalPos.set(
                 radius * Math.cos(angle),
@@ -120,8 +156,10 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
             // Magnetic attraction logic (only for non-active spheres)
             _targetPos.copy(_orbitalPos)
 
-            if (!isActive && pointsRef.current.parent) {
-                const parent = pointsRef.current.parent
+            let distanceToCursor = 999 // Track distance for speed calculation
+
+            if (!isActive && containerRef.current.parent) {
+                const parent = containerRef.current.parent
                 // Update inverse matrix
                 _inverseMatrix.copy(parent.matrixWorld).invert()
 
@@ -138,6 +176,7 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
                 _localRay.closestPointToPoint(_orbitalPos, _closestPoint)
 
                 const dist = _orbitalPos.distanceTo(_closestPoint)
+                distanceToCursor = dist // Store for speed calculation
                 const outerThreshold = 2.0
                 const innerThreshold = 1.2
 
@@ -155,22 +194,27 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
                 }
             }
 
-            // Smoothly interpolate visual position - ultra smooth
-            // Use clamped dt to avoid shooting off into space on tab switch
-            visualPosRef.current.lerp(_targetPos, dt * 3.0)
+            // Dynamic interpolation speed: closer = faster, farther = slower
+            let lerpSpeed = 2.0 // Base speed when far away (reduced)
 
-            // Apply position
-            pointsRef.current.position.copy(visualPosRef.current)
+            if (distanceToCursor < 2.0) {
+                // Normalize distance to 0-1 range (0 = close, 1 = far)
+                const normalizedDist = Math.min(distanceToCursor / 2.0, 1.0)
 
-            // Only update React state if position changed significantly to avoid re-renders (optimization)
-            // Actually setPosition is only used for HTML overlay, maybe throttle it?
-            // For now, let's just keep it but note it could be optimized further.
-            setPosition([visualPosRef.current.x, visualPosRef.current.y, visualPosRef.current.z])
+                // Apply ease-out quad for smooth deceleration
+                // This creates a smooth curve instead of linear
+                const eased = 1 - Math.pow(normalizedDist, 2)
 
-            // Sync hitbox position
-            if (hitboxRef.current) {
-                hitboxRef.current.position.copy(visualPosRef.current)
+                // Map eased value to speed range: 0.8 (far) to 6.0 (close)
+                lerpSpeed = 0.8 + eased * 5.2
             }
+
+            // Smoothly interpolate visual position with dynamic speed
+            // Use clamped dt to avoid shooting off into space on tab switch
+            visualPosRef.current.lerp(_targetPos, Math.min(dt * lerpSpeed, 0.5))
+
+            // Apply position DIRECTLY to container - NO STATE UPDATE
+            containerRef.current.position.copy(visualPosRef.current)
 
             // Scale: active is larger, hover adds extra size
             let targetScale = 1.0
@@ -180,42 +224,41 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
                 targetScale = hovered ? 1.3 : 1.0  // Normal: 1.0, hover: 1.3
             }
 
-            targetVec.set(targetScale, targetScale, targetScale)
-            pointsRef.current.scale.lerp(targetVec, 0.1)
+            // Apply scale to points to keep them centered relative to container
+            if (pointsRef.current) {
+                targetVec.set(targetScale, targetScale, targetScale)
+                pointsRef.current.scale.lerp(targetVec, 0.1)
 
-            // Smooth explosion animation with gentle easing
-            if (explosionRef.current > 0) {
-                explosionRef.current -= dt * 0.8 // Much faster return (was ~0.003/frame)
+                // Animation logic stays same
+                if (explosionRef.current > 0) {
+                    explosionRef.current -= dt * 0.8
+                    const t = 1 - explosionRef.current
+                    const eased = 1 - Math.pow(1 - t, 5)
+                    const explosionAmount = (1 - eased) * 0.2
+                    const posAttr = pointsRef.current.geometry.attributes.position
 
-                // Easing function for ultra-smooth start (easeOutQuint)
-                const t = 1 - explosionRef.current
-                const eased = 1 - Math.pow(1 - t, 5) // Very gentle start, smooth throughout
-                const explosionAmount = (1 - eased) * 0.2 // Very gentle distance
+                    for (let i = 0; i < count; i++) {
+                        const baseX = basePositionsRef.current[i * 3]
+                        const baseY = basePositionsRef.current[i * 3 + 1]
+                        const baseZ = basePositionsRef.current[i * 3 + 2]
 
-                const posAttr = pointsRef.current.geometry.attributes.position
+                        const len = Math.sqrt(baseX * baseX + baseY * baseY + baseZ * baseZ)
+                        const dirX = baseX / len
+                        const dirY = baseY / len
+                        const dirZ = baseZ / len
 
-                for (let i = 0; i < count; i++) {
-                    const baseX = basePositionsRef.current[i * 3]
-                    const baseY = basePositionsRef.current[i * 3 + 1]
-                    const baseZ = basePositionsRef.current[i * 3 + 2]
-
-                    const len = Math.sqrt(baseX * baseX + baseY * baseY + baseZ * baseZ)
-                    const dirX = baseX / len
-                    const dirY = baseY / len
-                    const dirZ = baseZ / len
-
-                    posAttr.array[i * 3] = baseX + dirX * explosionAmount
-                    posAttr.array[i * 3 + 1] = baseY + dirY * explosionAmount
-                    posAttr.array[i * 3 + 2] = baseZ + dirZ * explosionAmount
+                        posAttr.array[i * 3] = baseX + dirX * explosionAmount
+                        posAttr.array[i * 3 + 1] = baseY + dirY * explosionAmount
+                        posAttr.array[i * 3 + 2] = baseZ + dirZ * explosionAmount
+                    }
+                    posAttr.needsUpdate = true
                 }
-
-                posAttr.needsUpdate = true
             }
 
             // Manual raycasting check for static cursor (optimized - every 6th frame)
             if (hitboxRef.current && Math.floor(state.clock.elapsedTime * 60) % 6 === 0) {
                 raycaster.setFromCamera(pointer, camera)
-                const intersects = raycaster.intersectObject(hitboxRef.current, false)
+                const intersects = raycaster.intersectObject(hitboxRef.current, true) // Changed to true to hit mesh inside group
 
                 if (intersects.length > 0) {
                     if (!hovered) setHovered(true)
@@ -224,10 +267,20 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
                 }
             }
         }
+
+        // Update HTML label opacity (sync with sphere opacity)
+        const targetOpacity = isVisible ? 1 : 0
+        const lerpSpeed = 0.05
+        currentOpacityRef.current += (targetOpacity - currentOpacityRef.current) * lerpSpeed
+
+        // Apply to HTML DOM element directly
+        if (htmlRef.current) {
+            htmlRef.current.style.opacity = currentOpacityRef.current
+        }
     })
 
     return (
-        <group>
+        <group ref={containerRef}>
             <points ref={pointsRef}>
                 <bufferGeometry>
                     <bufferAttribute
@@ -272,20 +325,21 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
                 />
             </mesh>
 
-            {/* Label - CSS positioned strictly to the left */}
+            {/* Label - HTML for better readability */}
             <Html
-                position={position}
                 center
                 distanceFactor={6}
+                zIndexRange={[50, 0]}
                 style={{
                     pointerEvents: 'none',
-                    transform: 'translate3d(-50%, 0, 0)' // Shift origin left
+                    transform: 'translate3d(-50%, 0, 0)'
                 }}
             >
                 <div
+                    ref={htmlRef}
                     className="flex flex-col items-center gap-1 transition-transform duration-500 ease-out"
                     style={{
-                        marginRight: '80px', // Push content away from center
+                        marginRight: '80px',
                         transform: !isActive ? 'scale(1.3)' : 'scale(0.85)'
                     }}
                 >
@@ -327,7 +381,11 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
 export default function OrbitalSpheres() {
     const section = useStore((state) => state.section)
     const showGame = useStore((state) => state.showGame)
-    const showMenu = useStore((state) => state.showMenu)
+
+    const isDiving = useStore((state) => state.isDiving)
+    const isExiting = useStore((state) => state.isExiting)
+    const insideBlackHole = useStore((state) => state.insideBlackHole)
+    const groupRef = useRef()
 
     const navItems = [
         {
@@ -353,11 +411,43 @@ export default function OrbitalSpheres() {
         },
     ]
 
-    // Hide spheres when game or menu is active
-    if (showGame || showMenu) return null
+    // Smooth fade out during dive, fade in during exit
+    useFrame(() => {
+        if (groupRef.current) {
+            let targetOpacity = 1.0
 
+            // Hidden when game showing (Top priority)
+            if (showGame) {
+                targetOpacity = 0.0
+            }
+            // Fade in when exiting (Override insideBlackHole)
+            else if (isExiting) {
+                targetOpacity = 1.0
+            }
+            // Fade out when diving or inside black hole
+            else if (isDiving || insideBlackHole) {
+                targetOpacity = 0.0
+            }
+
+            // Smooth lerp to target opacity
+            const lerpSpeed = 0.05
+            groupRef.current.traverse((child) => {
+                if (child.material) {
+                    // Handle standard material opacity
+                    if (child.material.opacity !== undefined) {
+                        child.material.opacity += (targetOpacity - child.material.opacity) * lerpSpeed
+                    }
+                    // Handle Troika text custom uniforms if necessary (usually maps to standard transparency)
+                    // But explicitly syncing fillOpacity/strokeOpacity might be safer if the shader ignores .opacity
+                    // However, drei Text usually respects standard material.opacity if transparent=true.
+                }
+            })
+        }
+    })
+
+    // Don't unmount, just fade out
     return (
-        <group rotation={[-Math.PI / 2 + 0.2, 0, 0]}>
+        <group ref={groupRef} rotation={[-Math.PI / 2 + 0.2, 0, 0]}>
             {navItems.map((item) => (
                 <SphereButton
                     key={item.id}

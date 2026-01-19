@@ -176,7 +176,7 @@ const ProductsPanel = ({ active }) => {
 export default function SpatialContent() {
     const section = useStore((state) => state.section)
     const showGame = useStore((state) => state.showGame)
-    const showMenu = useStore((state) => state.showMenu)
+
     const groupRef = useRef()
 
     // OPTIMIZATION: Cache vectors to avoid Garbage Collection in useFrame
@@ -207,7 +207,7 @@ export default function SpatialContent() {
 
     return (
         <group ref={groupRef}>
-            {section !== 'home' && !showGame && !showMenu && (
+            {section !== 'home' && !showGame && (
                 <>
                     {/* LAB CONTENT */}
                     <Html

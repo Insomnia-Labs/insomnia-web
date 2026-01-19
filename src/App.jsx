@@ -11,7 +11,6 @@ import { EffectComposer, Bloom, Noise, Vignette, ChromaticAberration } from '@re
 function App() {
   return (
     <div className="w-full h-screen bg-black relative">
-      <Overlay />
       <Canvas
         dpr={[1, 1.5]} // Limit pixel ratio for huge performance boost on Retina screens
         gl={{
@@ -36,6 +35,7 @@ function App() {
           <Vignette eskil={false} offset={0.1} darkness={1.1} />
         </EffectComposer>
       </Canvas>
+      <Overlay />
     </div>
   )
 }

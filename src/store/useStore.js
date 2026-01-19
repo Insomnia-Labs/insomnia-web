@@ -5,10 +5,12 @@ export const useStore = create((set) => ({
     setSection: (section) => set({ section }),
     showGame: false,
     setShowGame: (showGame) => set({ showGame }),
-    showMenu: false,
-    setShowMenu: (showMenu) => set({ showMenu }),
-    cameraAnimation: null, // 'dive' | null
+    cameraAnimation: null, // 'dive' | 'eject' | null
     setCameraAnimation: (cameraAnimation) => set({ cameraAnimation }),
     isDiving: false,
     setIsDiving: (isDiving) => set({ isDiving }),
+    isExiting: false,
+    setIsExiting: (isExiting) => set({ isExiting }),
+    insideBlackHole: false, // true when camera should stay frozen in black hole
+    setInsideBlackHole: (insideBlackHole) => set({ insideBlackHole }),
 }))

@@ -12,8 +12,14 @@ export default function CameraController() {
     const setShowMenu = useStore((state) => state.setShowMenu)
     const isDiving = useStore((state) => state.isDiving)
     const setIsDiving = useStore((state) => state.setIsDiving)
+    const isExiting = useStore((state) => state.isExiting)
+    const setIsExiting = useStore((state) => state.setIsExiting)
+    const insideBlackHole = useStore((state) => state.insideBlackHole)
+    const setInsideBlackHole = useStore((state) => state.setInsideBlackHole)
 
     const lookAtTarget = useRef(new THREE.Vector3(0, 0, 0))
+    const diveStartPosition = useRef(null)
+    const diveStartLookAt = useRef(null)
 
     // Sphere positions
     const sphereData = {
@@ -38,33 +44,91 @@ export default function CameraController() {
     // Handle dive animation
     useEffect(() => {
         if (cameraAnimation === 'dive' && isDiving) {
-            // Use GSAP to animate camera
-            const targetPos = { x: 0, y: 0, z: 2 }
+            // Save current camera position and look-at target to avoid teleportation
+            diveStartPosition.current = camera.position.clone()
+            diveStartLookAt.current = lookAtTarget.current.clone()
 
-            gsap.to(camera.position, {
-                x: targetPos.x,
-                y: targetPos.y,
-                z: targetPos.z,
-                duration: 3.0,
-                ease: 'power1.inOut',
+            // Create smooth transition from current position to black hole center
+            const timeline = gsap.timeline()
+
+            // Animate camera position
+            timeline.to(camera.position, {
+                x: 0,
+                y: 0,
+                z: 0.1, // Almost at the center
+                duration: 1.2,
+                ease: 'power3.in', // Accelerating into the black hole
+            }, 0)
+
+            // Simultaneously animate look-at target to center
+            timeline.to(lookAtTarget.current, {
+                x: 0,
+                y: 0,
+                z: 0,
+                duration: 1.2,
+                ease: 'power3.in',
                 onUpdate: () => {
-                    camera.lookAt(0, 0, 0)
+                    // Update camera to look at the animated target
+                    camera.lookAt(lookAtTarget.current)
                 },
                 onComplete: () => {
-                    setShowMenu(true)
+                    // Animation complete, camera stays frozen in black hole
                     setCameraAnimation(null)
                     setIsDiving(false)
+                    setInsideBlackHole(true) // LOCK camera inside black hole
                 }
-            })
+            }, 0)
         }
-    }, [cameraAnimation, isDiving, camera, setShowMenu, setCameraAnimation, setIsDiving])
+    }, [cameraAnimation, isDiving, camera, setCameraAnimation, setIsDiving, setInsideBlackHole])
+
+    // Handle eject animation (reverse of dive)
+    useEffect(() => {
+        if (cameraAnimation === 'eject' && isExiting) {
+            // Make sure we have saved positions to return to
+            if (!diveStartPosition.current || !diveStartLookAt.current) {
+                // Fallback to home position
+                diveStartPosition.current = new THREE.Vector3(7, 5, 3)
+                diveStartLookAt.current = new THREE.Vector3(0, -0.6, 0)
+            }
+
+            // Create smooth transition from black hole back to original position
+            const timeline = gsap.timeline()
+
+            // Animate camera position back
+            timeline.to(camera.position, {
+                x: diveStartPosition.current.x,
+                y: diveStartPosition.current.y,
+                z: diveStartPosition.current.z,
+                duration: 1.8,
+                ease: 'power3.out', // Decelerating as ejected from black hole
+            }, 0)
+
+            // Simultaneously animate look-at target back
+            timeline.to(lookAtTarget.current, {
+                x: diveStartLookAt.current.x,
+                y: diveStartLookAt.current.y,
+                z: diveStartLookAt.current.z,
+                duration: 1.8,
+                ease: 'power3.out',
+                onUpdate: () => {
+                    camera.lookAt(lookAtTarget.current)
+                },
+                onComplete: () => {
+                    // Animation complete, return to normal
+                    setCameraAnimation(null)
+                    setIsExiting(false)
+                    setInsideBlackHole(false) // UNLOCK camera
+                }
+            }, 0)
+        }
+    }, [cameraAnimation, isExiting, camera, setCameraAnimation, setIsExiting, setInsideBlackHole])
 
     useFrame((state, delta) => {
         const safeDelta = Math.min(delta, 0.1)
         const step = 2.0 * safeDelta
 
-        // Block all camera updates during dive
-        if (isDiving) {
+        // Block all camera updates during animations or when inside black hole
+        if (isDiving || isExiting || insideBlackHole) {
             return
         }
 

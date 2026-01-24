@@ -157,16 +157,32 @@ export default function CameraController() {
         centerOfOthers.divideScalar(otherSpheres.length)
 
         const directionToOthers = new THREE.Vector3().subVectors(centerOfOthers, activeSpherePos).normalize()
-        const right = new THREE.Vector3().crossVectors(directionToOthers, new THREE.Vector3(0, 1, 0)).normalize()
+        const up = new THREE.Vector3(0, 1, 0)
+        const right = new THREE.Vector3().crossVectors(directionToOthers, up).normalize()
+
+        // 1. Move Camera Back significantly to see the context
+        const dist = 7.0
+        const height = 2.0
+        const sideOffset = 3.0 // Increased to move camera more to the side
 
         const cameraPos = activeSpherePos.clone()
-            .add(directionToOthers.multiplyScalar(-3.5))
-            .add(right.multiplyScalar(2.2))
+            .add(directionToOthers.clone().multiplyScalar(-dist))
+            .add(right.clone().multiplyScalar(sideOffset))
+            .add(new THREE.Vector3(0, height, 0))
 
-        cameraPos.y += 2.0
+        // 2. Look Target
+        // To place the sphere on the Left, we look at a point to the Right of it.
+        // Increasing this offset moves the sphere further Left.
+        const lookRightOffset = 3.5
+
+        const focusPoint = activeSpherePos.clone()
+            .add(right.clone().multiplyScalar(lookRightOffset))
+
+            // Subtle: Look slightly towards the "others" to show connection lines if any
+            .add(directionToOthers.clone().multiplyScalar(1.0))
 
         camera.position.lerp(cameraPos, step)
-        lookAtTarget.current.lerp(centerOfOthers, step)
+        lookAtTarget.current.lerp(focusPoint, step)
         camera.lookAt(lookAtTarget.current)
     })
 

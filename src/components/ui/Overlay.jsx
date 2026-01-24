@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useStore } from '../../store/useStore'
+import TerminalPages from './TerminalPages'
 
 export default function Overlay() {
     const { section, setSection, showGame, setShowGame, setCameraAnimation, setIsDiving, setIsExiting } = useStore()
@@ -8,45 +9,34 @@ export default function Overlay() {
     const [transitionDuration, setTransitionDuration] = useState(2000)
 
     const handleGameClose = () => {
-        // Start exit animation: fade to black, then eject camera
         setIsTransitioning(true)
-        setTransitionDuration(500) // Faster fade on exit
-
-        // Fade to black
-        setFadeOpacity(1)
+        setTransitionDuration(500)
+        // Removed setFadeOpacity(1) for transparent transition
 
         setTimeout(() => {
-            // Hide game/black page
             setShowGame(false)
-
-            // Start camera eject animation
             setCameraAnimation('eject')
             setIsExiting(true)
-
-            // Fade from black to reveal the scene
             setTimeout(() => {
                 setFadeOpacity(0)
                 setIsTransitioning(false)
             }, 50)
-        }, 500) // Earlier switch (0.5s instead of 1s)
+        }, 500)
     }
 
     const handleInitGame = () => {
-        // Start camera dive animation and fade to black
         setIsTransitioning(true)
         setCameraAnimation('dive')
         setIsDiving(true)
-        setTransitionDuration(1000) // Faster smooth fade on enter
+        setTransitionDuration(1000)
 
-        // Start fade to black sooner to match dive speed
+        // Removed setFadeOpacity(1)
         setTimeout(() => {
-            setFadeOpacity(1)
+            // No opacity change
         }, 300)
 
-        // Show "black page" after camera animation completes and screen is fully black
         setTimeout(() => {
             setShowGame(true)
-            // Fade from black to reveal the "empty page"
             setTimeout(() => {
                 setFadeOpacity(0)
                 setIsTransitioning(false)
@@ -56,29 +46,26 @@ export default function Overlay() {
 
     return (
         <>
-            {/* Fade to Black Overlay */}
+            {/* Fade to Black Overlay (Only for extreme transitions if needed, currently kept transparent) */}
             <div
                 className="absolute inset-0 bg-black pointer-events-none z-[100] transition-opacity ease-in-out"
                 style={{ opacity: fadeOpacity, transitionDuration: `${transitionDuration}ms` }}
             />
 
-            {/* Black Empty Page (Placeholder for future content) */}
+            {/* Terminal Pages (Sphere Content) */}
+            <TerminalPages />
+
+            {/* The Void Page (Game Mode) - Transparent now */}
             {showGame && (
-                <div className="absolute inset-0 bg-black z-[80] flex flex-col items-center justify-center gap-16">
-                    {/* Void Title */}
+                <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-[80] flex flex-col items-center justify-center gap-16">
                     <h2 className="text-white/5 font-mono text-5xl md:text-9xl font-bold tracking-[0.2em] select-none pointer-events-none">
                         THE VOID
                     </h2>
-
-                    {/* User can add content here later */}
                     <button
                         onClick={handleGameClose}
                         className="pointer-events-auto relative px-8 py-4 group overflow-hidden transition-all duration-500"
                     >
-                        {/* Border & Background */}
                         <div className="absolute inset-0 border border-white/20 group-hover:border-white/60 group-hover:bg-white/5 transition-all duration-500" />
-
-                        {/* Text */}
                         <span className="relative text-xs font-mono tracking-[0.4em] text-white/60 group-hover:text-white transition-colors duration-500 uppercase">
                             Return to Reality
                         </span>
@@ -102,9 +89,7 @@ export default function Overlay() {
                     </div>
                 </header>
 
-                {/* Main Content Area (Dynamic) */}
-                <div className="flex-1 flex items-center justify-center pointer-events-none">
-                </div>
+                <div className="flex-1"></div>
 
                 {/* Footer Info */}
                 <footer className="flex justify-between items-end pointer-events-none">
@@ -119,17 +104,12 @@ export default function Overlay() {
                             onClick={handleInitGame}
                             className="pointer-events-auto group relative px-8 py-3 bg-transparent border border-white/20 overflow-hidden hover:border-white/80 transition-colors duration-500"
                         >
-                            {/* Hover Fill Effect */}
                             <div className="absolute inset-0 bg-white translate-y-[100%] group-hover:translate-y-0 transition-transform duration-500 cubic-bezier(0.87, 0, 0.13, 1)" />
-
-                            {/* Content */}
                             <div className="relative flex items-center gap-3">
                                 <span className="text-[10px] font-mono tracking-[0.3em] text-white/70 group-hover:text-black transition-colors duration-500 uppercase">
                                     [  ENTER THE VOID  ]
                                 </span>
                             </div>
-
-                            {/* Decorative Corners */}
                             <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-white/50 group-hover:border-black transition-colors duration-500" />
                             <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-white/50 group-hover:border-black transition-colors duration-500" />
                         </button>
@@ -143,30 +123,15 @@ export default function Overlay() {
                             rel="noopener noreferrer"
                             className="pointer-events-auto group relative px-6 py-3 bg-black/20 border border-white/10 overflow-hidden hover:border-white/60 transition-colors duration-500"
                         >
-                            {/* Hover Fill */}
                             <div className="absolute inset-0 bg-white translate-y-[101%] group-hover:translate-y-0 transition-transform duration-500 cubic-bezier(0.19, 1, 0.22, 1)" />
-
                             <div className="relative flex items-center gap-4">
-                                {/* Status Dot */}
-                                <div className="flex flex-col gap-[2px]">
-                                    <div className="w-[2px] h-[2px] bg-white/40 group-hover:bg-black group-hover:opacity-100 opacity-0 transition-all duration-300 delay-100" />
-                                    <div className="w-[2px] h-[2px] bg-white/40 group-hover:bg-black group-hover:opacity-100 opacity-0 transition-all duration-300 delay-75" />
-                                    <div className="w-[2px] h-[2px] bg-white/40 group-hover:bg-black group-hover:opacity-100 opacity-0 transition-all duration-300 delay-0" />
-                                </div>
-
                                 <div className="text-[10px] font-mono tracking-[0.3em] text-white/80 group-hover:text-black transition-colors duration-500 uppercase">
                                     my telegram
                                 </div>
-
-                                {/* Arrow Icon */}
                                 <svg className="w-3 h-3 text-white/50 group-hover:text-black transform -rotate-45 group-hover:rotate-0 transition-all duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                 </svg>
                             </div>
-
-                            {/* Decorative Corners */}
-                            <div className="absolute top-0 left-0 w-1 h-1 border-t border-l border-white/50 group-hover:border-black transition-colors duration-500" />
-                            <div className="absolute bottom-0 right-0 w-1 h-1 border-b border-r border-white/50 group-hover:border-black transition-colors duration-500" />
                         </a>
 
                         {/* Instagram Button */}
@@ -176,30 +141,15 @@ export default function Overlay() {
                             rel="noopener noreferrer"
                             className="pointer-events-auto group relative px-6 py-3 bg-black/20 border border-white/10 overflow-hidden hover:border-white/60 transition-colors duration-500"
                         >
-                            {/* Hover Fill */}
                             <div className="absolute inset-0 bg-white translate-y-[101%] group-hover:translate-y-0 transition-transform duration-500 cubic-bezier(0.19, 1, 0.22, 1)" />
-
                             <div className="relative flex items-center gap-4">
-                                {/* Status Dot */}
-                                <div className="flex flex-col gap-[2px]">
-                                    <div className="w-[2px] h-[2px] bg-white/40 group-hover:bg-black group-hover:opacity-100 opacity-0 transition-all duration-300 delay-100" />
-                                    <div className="w-[2px] h-[2px] bg-white/40 group-hover:bg-black group-hover:opacity-100 opacity-0 transition-all duration-300 delay-75" />
-                                    <div className="w-[2px] h-[2px] bg-white/40 group-hover:bg-black group-hover:opacity-100 opacity-0 transition-all duration-300 delay-0" />
-                                </div>
-
                                 <div className="text-[10px] font-mono tracking-[0.3em] text-white/80 group-hover:text-black transition-colors duration-500 uppercase">
                                     my instagram
                                 </div>
-
-                                {/* Arrow Icon */}
                                 <svg className="w-3 h-3 text-white/50 group-hover:text-black transform -rotate-45 group-hover:rotate-0 transition-all duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                 </svg>
                             </div>
-
-                            {/* Decorative Corners */}
-                            <div className="absolute top-0 left-0 w-1 h-1 border-t border-l border-white/50 group-hover:border-black transition-colors duration-500" />
-                            <div className="absolute bottom-0 right-0 w-1 h-1 border-b border-r border-white/50 group-hover:border-black transition-colors duration-500" />
                         </a>
                     </div>
                 </footer>

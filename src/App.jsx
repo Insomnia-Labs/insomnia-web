@@ -19,7 +19,7 @@ function App() {
           stencil: false,
           depth: true
         }}
-        camera={{ position: [0, 0, 8], fov: 45 }}
+        camera={{ position: [25, 12, 25], fov: 45 }}
       >
         <CameraController />
         <Suspense fallback={null}>

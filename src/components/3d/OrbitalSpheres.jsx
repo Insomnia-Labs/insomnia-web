@@ -400,7 +400,7 @@ export default function OrbitalSpheres() {
             label: 'Info',
             icon: Info,
             angle: (2 * Math.PI) / 3,
-            radius: 3.5,
+            radius: 2.8,
         },
         {
             id: 'products',

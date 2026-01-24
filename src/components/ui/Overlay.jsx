@@ -4,9 +4,18 @@ import TerminalPages from './TerminalPages'
 
 export default function Overlay() {
     const { section, setSection, showGame, setShowGame, setCameraAnimation, setIsDiving, setIsExiting } = useStore()
-    const [isTransitioning, setIsTransitioning] = useState(false)
-    const [fadeOpacity, setFadeOpacity] = useState(0)
-    const [transitionDuration, setTransitionDuration] = useState(2000)
+    const [isTransitioning, setIsTransitioning] = useState(true)
+    const [fadeOpacity, setFadeOpacity] = useState(1)
+    const [transitionDuration, setTransitionDuration] = useState(2500)
+
+    // Intro Fade In
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            setFadeOpacity(0)
+            setIsTransitioning(false)
+        }, 100)
+        return () => clearTimeout(timer)
+    }, [])
 
     const handleGameClose = () => {
         setIsTransitioning(true)

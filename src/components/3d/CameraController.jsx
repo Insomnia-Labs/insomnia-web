@@ -24,11 +24,26 @@ export default function CameraController() {
     // Sphere positions
     const sphereData = {
         lab: { angle: 0, radius: 2.5 },
-        info: { angle: (2 * Math.PI) / 3, radius: 3.5 },
+        info: { angle: (2 * Math.PI) / 3, radius: 2.8 },
         products: { angle: (4 * Math.PI) / 3, radius: 3.2 },
     }
 
     const groupRotation = -Math.PI / 2 + 0.2
+
+    const isPageVisibleRef = useRef(true) // Track page visibility
+    const orbitTimeRef = useRef(0) // Custom time counter for orbit
+
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            isPageVisibleRef.current = !document.hidden
+        }
+
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
+        }
+    }, [])
 
     const getSpherePosition = (sphere, timeOffset = 0) => {
         const angle = sphere.angle + timeOffset * 0.15
@@ -124,8 +139,16 @@ export default function CameraController() {
     }, [cameraAnimation, isExiting, camera, setCameraAnimation, setIsExiting, setInsideBlackHole])
 
     useFrame((state, delta) => {
+        // Skip all calculations when page is hidden (tab is inactive)
+        if (!isPageVisibleRef.current) {
+            return
+        }
+
         const safeDelta = Math.min(delta, 0.1)
         const step = 2.0 * safeDelta
+
+        // Update custom time
+        orbitTimeRef.current += safeDelta
 
         // Block all camera updates during animations or when inside black hole
         if (isDiving || isExiting || insideBlackHole) {
@@ -145,7 +168,8 @@ export default function CameraController() {
 
         // Section views
         const activeSphere = sphereData[section] || sphereData.lab
-        const time = state.clock.elapsedTime
+        // Use custom orbit time instead of global time
+        const time = orbitTimeRef.current
 
         const activeSpherePos = getSpherePosition(activeSphere, time)
         const otherSpheres = Object.keys(sphereData)

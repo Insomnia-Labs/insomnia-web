@@ -28,7 +28,7 @@ const SectionHeader = ({ index, title, subtitle }) => (
         <div className="text-[10px] font-mono text-blue-400 mb-2 tracking-[0.2em] opacity-80">
             {index} // SYSTEM_DIRECTORY
         </div>
-        <h2 className="text-6xl md:text-7xl font-light text-white mb-4 tracking-tighter uppercase relative z-10">
+        <h2 className="text-4xl md:text-6xl lg:text-7xl font-light text-white mb-4 tracking-tighter uppercase relative z-10">
             {title}
         </h2>
         <div className="flex items-center gap-4">
@@ -250,19 +250,19 @@ export default function TerminalPages() {
                 {/* Sidebar Container */}
                 <div
                     className="
-                        relative w-[60%] min-w-[600px] h-full 
+                        relative w-full md:w-[60%] md:min-w-[600px] h-full 
                         pointer-events-none
                         flex flex-col isolation-isolate
                     "
                 >
-                    {/* Separate Gradient Background Layer */}
-                    <div className="absolute inset-0 bg-gradient-to-l from-[#050505] via-[#050505] via-60% to-transparent -z-10" />
+                    {/* Separate Gradient Background Layer - Mobile: Solid Black, Desktop: Smooth Leftward Fade */}
+                    <div className="absolute inset-0 bg-black/90 md:bg-transparent md:bg-gradient-to-l md:from-black/80 md:to-transparent -z-10 transition-all duration-500" />
 
                     {/* Noise Overlay */}
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] -z-10" />
 
                     {/* Content Container */}
-                    <div className="relative flex-1 pl-32 pr-24 py-20 overflow-y-auto flex flex-col justify-center pointer-events-none">
+                    <div className="relative flex-1 px-6 pt-24 pb-32 md:pl-32 md:pr-24 md:py-20 overflow-y-auto flex flex-col justify-center pointer-events-none">
                         <div className="grid w-full h-full items-center pointer-events-none relative transform-gpu">
                             <PanelWrapper active={section === 'lab'}>
                                 <LabPanel active={section === 'lab'} />
@@ -277,6 +277,6 @@ export default function TerminalPages() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     )
 }

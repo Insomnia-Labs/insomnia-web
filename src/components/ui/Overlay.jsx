@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { useStore } from '../../store/useStore'
 import TerminalPages from './TerminalPages'
+import StaggeredMenu from './StaggeredMenu'
 
 export default function Overlay() {
-    const { section, setSection, showGame, setShowGame, setCameraAnimation, setIsDiving, setIsExiting } = useStore()
+    const { section, setSection, showGame, setShowGame, setCameraAnimation, setIsDiving, setIsExiting, isMenuOpen } = useStore()
     const [isTransitioning, setIsTransitioning] = useState(true)
     const [fadeOpacity, setFadeOpacity] = useState(1)
     const [transitionDuration, setTransitionDuration] = useState(2500)
@@ -39,9 +40,9 @@ export default function Overlay() {
         setIsDiving(true)
         setTransitionDuration(1000)
 
-        // Removed setFadeOpacity(1)
+        // Initializing game transition
         setTimeout(() => {
-            // No opacity change
+            // Animation timing
         }, 300)
 
         setTimeout(() => {
@@ -52,6 +53,15 @@ export default function Overlay() {
             }, 800)
         }, 1400)
     }
+
+    const [isMobile, setIsMobile] = useState(false)
+
+    React.useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768)
+        checkMobile() // Init
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
 
     return (
         <>
@@ -67,7 +77,7 @@ export default function Overlay() {
             {/* The Void Page (Game Mode) - Transparent now */}
             {showGame && (
                 <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-[80] flex flex-col items-center justify-center gap-16">
-                    <h2 className="text-white/5 font-mono text-5xl md:text-9xl font-bold tracking-[0.2em] select-none pointer-events-none">
+                    <h2 className="text-white/5 font-mono text-5xl md:text-9xl font-bold tracking-[0.2em] select-none pointer-events-none text-center">
                         THE VOID
                     </h2>
                     <button
@@ -82,30 +92,42 @@ export default function Overlay() {
                 </div>
             )}
 
-            <div className={`absolute inset-0 pointer-events-none z-50 flex flex-col justify-between p-8 transition-opacity duration-500 ${showGame || isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+            <div className={`absolute inset-0 pointer-events-none z-50 flex flex-col justify-between p-6 md:p-8 transition-opacity duration-500 ${showGame || isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
                 {/* Header */}
                 <header className="flex justify-between items-start pointer-events-none">
                     <div
                         className="pointer-events-auto cursor-pointer transition-transform hover:scale-105"
                         onClick={() => setSection('home')}
                     >
-                        <h1 className="text-5xl font-bold tracking-widest bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 font-heading drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
+                        <h1 className="text-3xl md:text-5xl font-black tracking-tighter leading-[0.9] text-white font-sans transform origin-left scale-y-90">
                             INSOMNIA
                         </h1>
-                        <p className="text-sm text-blue-200/60 tracking-[0.3em] uppercase mt-2 font-mono">
-                            Infinite Cloud Storage
-                        </p>
+                        <div>
+                            <p className={`text-xs md:text-sm text-blue-200/60 tracking-[0.5em] uppercase mt-2 font-mono transition-opacity duration-300 ${isMobile && isMenuOpen ? 'opacity-0' : 'opacity-100'}`}>
+                                Infinite Cloud Storage
+                            </p>
+                        </div>
                     </div>
                 </header>
 
                 <div className="flex-1"></div>
 
-                {/* Footer Info */}
-                <footer className="flex justify-between items-end pointer-events-none">
+                {/* Footer Info - Hidden on Mobile */}
+                <footer className="hidden md:flex justify-between items-end pointer-events-none">
                     <div className="flex flex-col gap-4">
                         <div className="text-white/30 font-mono text-[10px] tracking-widest leading-relaxed opacity-50">
                             <div>COORDS: 12.339.992</div>
                             <div>SECTOR: 7G (ORION)</div>
+                        </div>
+
+                        {/* Social Buttons */}
+                        <div className="flex gap-4 pointer-events-auto">
+                            <a href="http://t.me/mark_asm" target="_blank" rel="noopener noreferrer" className="text-[10px] font-mono tracking-widest text-white/70 hover:text-blue-400 transition-colors uppercase">
+                                [ MY TELEGRAM ]
+                            </a>
+                            <a href="https://www.instagram.com/_mark.asm/" target="_blank" rel="noopener noreferrer" className="text-[10px] font-mono tracking-widest text-white/70 hover:text-blue-400 transition-colors uppercase">
+                                [ INSTAGRAM ]
+                            </a>
                         </div>
 
                         {/* Game Launch Button */}
@@ -123,46 +145,30 @@ export default function Overlay() {
                             <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-white/50 group-hover:border-black transition-colors duration-500" />
                         </button>
                     </div>
-
-                    <div className="flex gap-4">
-                        {/* Telegram Button */}
-                        <a
-                            href="http://t.me/mark_asm"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="pointer-events-auto group relative px-6 py-3 bg-black/20 border border-white/10 overflow-hidden hover:border-white/60 transition-colors duration-500"
-                        >
-                            <div className="absolute inset-0 bg-white translate-y-[101%] group-hover:translate-y-0 transition-transform duration-500 cubic-bezier(0.19, 1, 0.22, 1)" />
-                            <div className="relative flex items-center gap-4">
-                                <div className="text-[10px] font-mono tracking-[0.3em] text-white/80 group-hover:text-black transition-colors duration-500 uppercase">
-                                    my telegram
-                                </div>
-                                <svg className="w-3 h-3 text-white/50 group-hover:text-black transform -rotate-45 group-hover:rotate-0 transition-all duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                </svg>
-                            </div>
-                        </a>
-
-                        {/* Instagram Button */}
-                        <a
-                            href="https://www.instagram.com/_mark.asm/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="pointer-events-auto group relative px-6 py-3 bg-black/20 border border-white/10 overflow-hidden hover:border-white/60 transition-colors duration-500"
-                        >
-                            <div className="absolute inset-0 bg-white translate-y-[101%] group-hover:translate-y-0 transition-transform duration-500 cubic-bezier(0.19, 1, 0.22, 1)" />
-                            <div className="relative flex items-center gap-4">
-                                <div className="text-[10px] font-mono tracking-[0.3em] text-white/80 group-hover:text-black transition-colors duration-500 uppercase">
-                                    my instagram
-                                </div>
-                                <svg className="w-3 h-3 text-white/50 group-hover:text-black transform -rotate-45 group-hover:rotate-0 transition-all duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                </svg>
-                            </div>
-                        </a>
-                    </div>
                 </footer>
             </div>
+            {/* Staggered Menu Navigation - ONLY Render on Mobile */}
+            {isMobile && (
+                <StaggeredMenu
+                    isFixed={true}
+                    items={[
+                        { label: 'BASE', ariaLabel: 'Go to home', link: '#home', id: 'home' },
+                        { label: 'R&D', ariaLabel: 'Research and Development', link: '#lab', id: 'lab' },
+                        { label: 'SYSTEM', ariaLabel: 'System Information', link: '#info', id: 'info' },
+                        { label: 'ARMORY', ariaLabel: 'Product Catalogue', link: '#products', id: 'products' }
+                    ]}
+                    socialItems={[
+                        { label: 'Telegram', link: 'http://t.me/mark_asm' },
+                        { label: 'Instagram', link: 'https://www.instagram.com/_mark.asm/' }
+                    ]}
+                    displaySocials={true}
+                    displayItemNumbering={true}
+                    menuButtonColor="#ffffff"
+                    openMenuButtonColor="#ffffff"
+                    accentColor="#5227FF"
+                    colors={['#050505', '#16161e', '#2d1b4e', '#102a43']}
+                />
+            )}
         </>
     )
 }

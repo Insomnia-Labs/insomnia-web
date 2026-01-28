@@ -230,7 +230,7 @@ void main() {
 }
 `
 
-export default function BlackHoleParticles() {
+export default function BlackHoleParticles({ isMobile = false }) {
     const innerDiskRef = useRef()
     const orbitalRef = useRef()
     const orbitalGroupRef = useRef() // Group for camera-facing orbital "wings"
@@ -238,7 +238,7 @@ export default function BlackHoleParticles() {
     const ambientRef = useRef()
 
     // 0. INNER DENSE DISK - Very close to event horizon (OPTIMIZED)
-    const innerDiskCount = 5000 // Reduced from 6000
+    const innerDiskCount = isMobile ? 1200 : 5000 // Mobile optimization
     const innerDiskData = useMemo(() => {
         const positions = new Float32Array(innerDiskCount * 3)
         const randoms = new Float32Array(innerDiskCount)
@@ -270,10 +270,10 @@ export default function BlackHoleParticles() {
         }
 
         return { positions, randoms, sizes, orbitRadii, orbitSpeeds, inclinations, phaseOffsets }
-    }, [])
+    }, [innerDiskCount])
 
     // 1. Orbital particles (stable orbits at different radii and inclinations) (OPTIMIZED)
-    const orbitalCount = 6000 // Reduced from 8000
+    const orbitalCount = isMobile ? 1500 : 6000 // Mobile optimization
     const orbitalData = useMemo(() => {
         const positions = new Float32Array(orbitalCount * 3)
         const randoms = new Float32Array(orbitalCount)
@@ -306,10 +306,10 @@ export default function BlackHoleParticles() {
         }
 
         return { positions, randoms, sizes, orbitRadii, orbitSpeeds, inclinations, phaseOffsets }
-    }, [])
+    }, [orbitalCount])
 
     // 2. Spiral-falling particles (gradually approaching event horizon) (OPTIMIZED)
-    const spiralCount = 7000 // Reduced from 9000
+    const spiralCount = isMobile ? 1800 : 7000 // Mobile optimization
     const spiralData = useMemo(() => {
         const positions = new Float32Array(spiralCount * 3)
         const randoms = new Float32Array(spiralCount)
@@ -334,10 +334,10 @@ export default function BlackHoleParticles() {
         }
 
         return { positions, randoms, sizes, startRadii, spiralSpeeds, inclinations }
-    }, [])
+    }, [spiralCount])
 
     // 3. Ambient scattered particles (far from black hole, slow motion) (OPTIMIZED)
-    const ambientCount = 2000 // Reduced from 3000
+    const ambientCount = isMobile ? 500 : 2000 // Mobile optimization
     const ambientData = useMemo(() => {
         const positions = new Float32Array(ambientCount * 3)
         const randoms = new Float32Array(ambientCount)
@@ -367,7 +367,7 @@ export default function BlackHoleParticles() {
         }
 
         return { positions, randoms, sizes, velocities, wanderSpeeds }
-    }, [])
+    }, [ambientCount])
 
     const innerDiskUniforms = useMemo(() => ({ uTime: { value: 0 } }), [])
     const orbitalUniforms = useMemo(() => ({ uTime: { value: 0 } }), [])

@@ -1,5 +1,5 @@
 import { useFrame, useThree } from '@react-three/fiber'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useStore } from '../../store/useStore'
 import gsap from 'gsap'
@@ -20,6 +20,16 @@ export default function CameraController() {
     const lookAtTarget = useRef(new THREE.Vector3(0, 0, 0))
     const diveStartPosition = useRef(null)
     const diveStartLookAt = useRef(null)
+
+    // Mobile detection
+    const [isMobile, setIsMobile] = useState(false)
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768)
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
 
     // Sphere positions
     const sphereData = {
@@ -157,7 +167,10 @@ export default function CameraController() {
 
         // Home view
         if (section === 'home') {
-            const homePos = new THREE.Vector3(7, 5, 3)
+            // Mobile: pull back and up to frame centered
+            const homePos = isMobile
+                ? new THREE.Vector3(12, 12, 12)
+                : new THREE.Vector3(7, 5, 3)
             const homeTarget = new THREE.Vector3(0, -0.6, 0)
 
             camera.position.lerp(homePos, step)
@@ -185,9 +198,9 @@ export default function CameraController() {
         const right = new THREE.Vector3().crossVectors(directionToOthers, up).normalize()
 
         // 1. Move Camera Back significantly to see the context
-        const dist = 7.0
-        const height = 2.0
-        const sideOffset = 3.0 // Increased to move camera more to the side
+        const dist = isMobile ? 9.0 : 7.0
+        const height = isMobile ? 2.5 : 2.0
+        const sideOffset = isMobile ? 0 : 3.0 // Center on mobile, offset on desktop
 
         const cameraPos = activeSpherePos.clone()
             .add(directionToOthers.clone().multiplyScalar(-dist))
@@ -197,7 +210,7 @@ export default function CameraController() {
         // 2. Look Target
         // To place the sphere on the Left, we look at a point to the Right of it.
         // Increasing this offset moves the sphere further Left.
-        const lookRightOffset = 3.5
+        const lookRightOffset = isMobile ? 0 : 3.5
 
         const focusPoint = activeSpherePos.clone()
             .add(right.clone().multiplyScalar(lookRightOffset))

@@ -125,8 +125,19 @@ export default function BlackHole() {
     const pointsRef = useRef()
     const section = useStore((state) => state.section)
 
+    // INITIALIZE VISUAL SETTINGS (Mobile check first)
+    const [isMobile, setIsMobile] = React.useState(() =>
+        typeof window !== 'undefined' ? window.innerWidth < 768 : false
+    )
 
-    const count = 75000 // Optimized from 120000
+    React.useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768)
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
+
+
+    const count = isMobile ? 12000 : 65000 // Optimized count (Moved definition below isMobile check)
 
     // 1. Primary Accretion Disk Data
     const { positions, randoms, sizes } = useMemo(() => {
@@ -151,7 +162,7 @@ export default function BlackHole() {
             sizes[i] = Math.random() * 0.5 + 0.15 // Slightly larger to compensate for lower count
         }
         return { positions, randoms, sizes }
-    }, [])
+    }, [count])
 
     const uniforms = useMemo(() => ({
         uTime: { value: 0 },
@@ -167,12 +178,22 @@ export default function BlackHole() {
     const _intersectPoint = useMemo(() => new THREE.Vector3(), [])
 
     // ANIMATION LOOP
+
+
+
     useFrame((state) => {
         if (!pointsRef.current) return
 
         pointsRef.current.material.uniforms.uTime.value = state.clock.elapsedTime
 
         // --- MOUSE INTERACTION ---
+
+        // Skip on Mobile to prevent "scared" particles (Performance & UX)
+        if (isMobile) {
+            uniforms.uMouse.value.set(9999, 9999, 9999)
+            return
+        }
+
         // Project mouse ray onto the disk's local XY plane
         if (groupRef.current) {
             // 1. Convert Ray to Local Space of the Group (which is rotated)
@@ -239,7 +260,7 @@ export default function BlackHole() {
                 />
             </points>
 
-            <BlackHoleParticles />
+            <BlackHoleParticles isMobile={isMobile} />
         </group>
     )
 }

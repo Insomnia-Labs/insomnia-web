@@ -55,10 +55,30 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
     const basePositionsRef = useRef()
     const explosionRef = useRef(0)
     const [hovered, setHovered] = useState(false)
+    const [isMobile, setIsMobile] = useState(() =>
+        typeof window !== 'undefined' ? window.innerWidth < 768 : false
+    )
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768)
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
     // Removed position state to avoid re-renders!
 
-    // Determine visibility based on state (must match parent OrbitalSpheres logic)
-    const isVisible = !showGame && (!isDiving && (!insideBlackHole || isExiting))
+    // Determine visibility based on state
+    // Visible ONLY when:
+    // 1. Game is NOT showing
+    // 2. Not diving/inside black hole (unless exiting)
+    // 3. Section is 'home' (Hide labels when reading content)
+    // 4. Menu is NOT open (MOBILE ONLY condition)
+
+    const isMenuOpen = useStore((state) => state.isMenuOpen)
+
+    // Logic split for robustness:
+    // DESKTOP: Show always (unless Game/Diving). Ignore section navigation (Split Screen).
+    // MOBILE: strict visibility (Home only, Menu closed).
+    const isVisible = !showGame && (!isDiving && (!insideBlackHole || isExiting)) && (isMobile ? (section === 'home' && !isMenuOpen) : true)
 
     const visualPosRef = useRef(new THREE.Vector3())
     const initializedRef = useRef(false)
@@ -82,7 +102,7 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
 
     // Create particle positions for sphere
     const { positions, count } = useMemo(() => {
-        const particleCount = 80 // Reduced from 120 for better performance
+        const particleCount = isMobile ? 35 : 80 // Reduced from 120/80 for better performance
         const positions = new Float32Array(particleCount * 3)
         const sphereRadius = 0.15
 
@@ -101,7 +121,7 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
         }
 
         return { positions, count: particleCount }
-    }, [])
+    }, [isMobile])
 
     // Store base positions
     if (!basePositionsRef.current) {
@@ -112,7 +132,8 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
     const targetVec = useMemo(() => new THREE.Vector3(), [])
 
     const handleClick = () => {
-        // Don't trigger if already active
+        // Allow clicking on mobile, but keep magnetic attraction disabled elsewhere
+
         if (!isActive) {
             setSection(id)
             // Kill any existing explosion animation first
@@ -158,7 +179,7 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
 
             let distanceToCursor = 999 // Track distance for speed calculation
 
-            if (!isActive && containerRef.current.parent) {
+            if (!isActive && containerRef.current.parent && !isMobile) {
                 const parent = containerRef.current.parent
                 // Update inverse matrix
                 _inverseMatrix.copy(parent.matrixWorld).invert()
@@ -257,13 +278,16 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
 
             // Manual raycasting check for static cursor (optimized - every 6th frame)
             if (hitboxRef.current && Math.floor(state.clock.elapsedTime * 60) % 6 === 0) {
-                raycaster.setFromCamera(pointer, camera)
-                const intersects = raycaster.intersectObject(hitboxRef.current, true) // Changed to true to hit mesh inside group
+                // Skip raycasting on mobile
+                if (!isMobile) {
+                    raycaster.setFromCamera(pointer, camera)
+                    const intersects = raycaster.intersectObject(hitboxRef.current, true)
 
-                if (intersects.length > 0) {
-                    if (!hovered) setHovered(true)
-                } else {
-                    if (hovered) setHovered(false)
+                    if (intersects.length > 0) {
+                        if (!hovered) setHovered(true)
+                    } else {
+                        if (hovered) setHovered(false)
+                    }
                 }
             }
         }

@@ -13,4 +13,6 @@ export const useStore = create((set) => ({
     setIsExiting: (isExiting) => set({ isExiting }),
     insideBlackHole: false, // true when camera should stay frozen in black hole
     setInsideBlackHole: (insideBlackHole) => set({ insideBlackHole }),
+    isMenuOpen: false,
+    setIsMenuOpen: (isMenuOpen) => set({ isMenuOpen }),
 }))

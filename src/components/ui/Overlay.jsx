@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useStore } from '../../store/useStore'
 import TerminalPages from './TerminalPages'
 import StaggeredMenu from './StaggeredMenu'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 export default function Overlay() {
     const { section, setSection, showGame, setShowGame, setCameraAnimation, setIsDiving, setIsExiting, isMenuOpen } = useStore()
@@ -54,14 +55,7 @@ export default function Overlay() {
         }, 1400)
     }
 
-    const [isMobile, setIsMobile] = useState(false)
-
-    React.useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 768)
-        checkMobile() // Init
-        window.addEventListener('resize', checkMobile)
-        return () => window.removeEventListener('resize', checkMobile)
-    }, [])
+    const isMobile = useIsMobile()
 
     return (
         <>
@@ -152,10 +146,10 @@ export default function Overlay() {
                 <StaggeredMenu
                     isFixed={true}
                     items={[
-                        { label: 'BASE', ariaLabel: 'Go to home', link: '#home', id: 'home' },
-                        { label: 'R&D', ariaLabel: 'Research and Development', link: '#lab', id: 'lab' },
-                        { label: 'SYSTEM', ariaLabel: 'System Information', link: '#info', id: 'info' },
-                        { label: 'ARMORY', ariaLabel: 'Product Catalogue', link: '#products', id: 'products' }
+                        { label: 'HOME', ariaLabel: 'Go to home', link: '#home', id: 'home' },
+                        { label: 'LAB', ariaLabel: 'Research and Development', link: '#lab', id: 'lab' },
+                        { label: 'ABOUT', ariaLabel: 'System Information', link: '#info', id: 'info' },
+                        { label: 'PRODUCTS', ariaLabel: 'Product Catalogue', link: '#products', id: 'products' }
                     ]}
                     socialItems={[
                         { label: 'Telegram', link: 'http://t.me/mark_asm' },

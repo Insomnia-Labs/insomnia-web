@@ -2,6 +2,7 @@ import React, { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Billboard } from '@react-three/drei'
 import * as THREE from 'three'
+import { PERFORMANCE_CONFIG } from '../../constants/performance'
 
 // Shader for Inner Dense Disk (smaller size)
 const innerDiskVertexShader = `
@@ -237,8 +238,10 @@ export default function BlackHoleParticles({ isMobile = false }) {
     const spiralRef = useRef()
     const ambientRef = useRef()
 
+    const config = isMobile ? PERFORMANCE_CONFIG.mobile : PERFORMANCE_CONFIG.desktop
+
     // 0. INNER DENSE DISK - Very close to event horizon (OPTIMIZED)
-    const innerDiskCount = isMobile ? 1200 : 5000 // Mobile optimization
+    const innerDiskCount = config.innerDiskCount
     const innerDiskData = useMemo(() => {
         const positions = new Float32Array(innerDiskCount * 3)
         const randoms = new Float32Array(innerDiskCount)
@@ -273,7 +276,7 @@ export default function BlackHoleParticles({ isMobile = false }) {
     }, [innerDiskCount])
 
     // 1. Orbital particles (stable orbits at different radii and inclinations) (OPTIMIZED)
-    const orbitalCount = isMobile ? 1500 : 6000 // Mobile optimization
+    const orbitalCount = config.orbitalCount
     const orbitalData = useMemo(() => {
         const positions = new Float32Array(orbitalCount * 3)
         const randoms = new Float32Array(orbitalCount)
@@ -309,7 +312,7 @@ export default function BlackHoleParticles({ isMobile = false }) {
     }, [orbitalCount])
 
     // 2. Spiral-falling particles (gradually approaching event horizon) (OPTIMIZED)
-    const spiralCount = isMobile ? 1800 : 7000 // Mobile optimization
+    const spiralCount = config.spiralCount
     const spiralData = useMemo(() => {
         const positions = new Float32Array(spiralCount * 3)
         const randoms = new Float32Array(spiralCount)
@@ -337,7 +340,7 @@ export default function BlackHoleParticles({ isMobile = false }) {
     }, [spiralCount])
 
     // 3. Ambient scattered particles (far from black hole, slow motion) (OPTIMIZED)
-    const ambientCount = isMobile ? 500 : 2000 // Mobile optimization
+    const ambientCount = config.ambientCount
     const ambientData = useMemo(() => {
         const positions = new Float32Array(ambientCount * 3)
         const randoms = new Float32Array(ambientCount)

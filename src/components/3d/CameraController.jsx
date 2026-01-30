@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useStore } from '../../store/useStore'
 import gsap from 'gsap'
+import { useIsMobile } from '../../hooks/useIsMobile'
+import { CAMERA_SETTINGS } from '../../constants/layout'
 
 export default function CameraController() {
     const { camera } = useThree()
@@ -22,14 +24,7 @@ export default function CameraController() {
     const diveStartLookAt = useRef(null)
 
     // Mobile detection
-    const [isMobile, setIsMobile] = useState(false)
-
-    useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 768)
-        checkMobile()
-        window.addEventListener('resize', checkMobile)
-        return () => window.removeEventListener('resize', checkMobile)
-    }, [])
+    const isMobile = useIsMobile()
 
     // Sphere positions
     const sphereData = {
@@ -198,9 +193,10 @@ export default function CameraController() {
         const right = new THREE.Vector3().crossVectors(directionToOthers, up).normalize()
 
         // 1. Move Camera Back significantly to see the context
-        const dist = isMobile ? 9.0 : 7.0
-        const height = isMobile ? 2.5 : 2.0
-        const sideOffset = isMobile ? 0 : 3.0 // Center on mobile, offset on desktop
+        const config = isMobile ? CAMERA_SETTINGS.mobile : CAMERA_SETTINGS.desktop
+        const dist = config.dist
+        const height = config.height
+        const sideOffset = config.sideOffset
 
         const cameraPos = activeSpherePos.clone()
             .add(directionToOthers.clone().multiplyScalar(-dist))
@@ -210,7 +206,7 @@ export default function CameraController() {
         // 2. Look Target
         // To place the sphere on the Left, we look at a point to the Right of it.
         // Increasing this offset moves the sphere further Left.
-        const lookRightOffset = isMobile ? 0 : 3.5
+        const lookRightOffset = config.lookRightOffset
 
         const focusPoint = activeSpherePos.clone()
             .add(right.clone().multiplyScalar(lookRightOffset))

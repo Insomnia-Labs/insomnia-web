@@ -7,12 +7,17 @@ import OrbitalSpheres from './components/3d/OrbitalSpheres'
 import SpatialContent from './components/3d/SpatialContent'
 import Overlay from './components/ui/Overlay'
 import { EffectComposer, Bloom, Noise, Vignette, ChromaticAberration } from '@react-three/postprocessing'
+import { useIsMobile } from './hooks/useIsMobile'
+import { PERFORMANCE_CONFIG } from './constants/performance'
 
 function App() {
+  const isMobile = useIsMobile()
+  const config = isMobile ? PERFORMANCE_CONFIG.mobile : PERFORMANCE_CONFIG.desktop
+
   return (
     <div className="w-full h-screen bg-black relative">
       <Canvas
-        dpr={[1, 1.5]} // Limit pixel ratio for huge performance boost on Retina screens
+        dpr={config.dpr} // Limit pixel ratio for huge performance boost on Retina screens
         gl={{
           powerPreference: "high-performance",
           antialias: false, // Disable MSAA (Bloom+Noise masks aliasing)
@@ -28,15 +33,17 @@ function App() {
           <BlackHole />
           <OrbitalSpheres />
           <SpatialContent />
-          <Stars radius={100} depth={50} count={2000} factor={4} saturation={0} fade speed={1} />
+          <Stars radius={100} depth={50} count={config.starsCount} factor={4} saturation={0} fade speed={1} />
         </Suspense>
-        <EffectComposer disableNormalPass multisampling={0}>
-          <Bloom luminanceThreshold={0.2} luminanceSmoothing={0.9} height={300} intensity={0.8} />
-          <Vignette eskil={false} offset={0.1} darkness={0.6} />
-        </EffectComposer>
+        {config.enableBloom && (
+          <EffectComposer disableNormalPass multisampling={0}>
+            <Bloom luminanceThreshold={0.2} luminanceSmoothing={config.bloomSmoothing} height={config.bloomHeight} intensity={0.8} />
+            <Vignette eskil={false} offset={0.1} darkness={0.6} />
+          </EffectComposer>
+        )}
       </Canvas>
       <Overlay />
-    </div>
+    </div >
   )
 }
 

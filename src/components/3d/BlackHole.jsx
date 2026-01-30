@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { Billboard } from '@react-three/drei'
 import BlackHoleParticles from './BlackHoleParticles'
 import { useStore } from '../../store/useStore'
+import { PERFORMANCE_CONFIG } from '../../constants/performance'
 
 // --- SHADERS ---
 const particleVertexShader = `
@@ -126,6 +127,16 @@ export default function BlackHole() {
     const section = useStore((state) => state.section)
 
     // INITIALIZE VISUAL SETTINGS (Mobile check first)
+    // We already have useIsMobile in App, but here we can reuse the logic or prop drill
+    // For consistency with current file structure, we'll keep local state but initialize better if possible
+    // Actually, let's use the centralized hook if we want, but since we are inside a component that might not re-render often
+    // Let's stick to the prop passed from parent or duplicate check for safety. 
+    // Wait, let's use the constant config based on screen width.
+
+    // Better: use the prop passed down or check window. 
+    // Since we are refactoring, let's just grab the config based on simple check to avoid hook overhead if we want 
+    // OR just use the hook. Hook is cleaner.
+
     const [isMobile, setIsMobile] = React.useState(() =>
         typeof window !== 'undefined' ? window.innerWidth < 768 : false
     )
@@ -136,8 +147,8 @@ export default function BlackHole() {
         return () => window.removeEventListener('resize', checkMobile)
     }, [])
 
-
-    const count = isMobile ? 12000 : 65000 // Optimized count (Moved definition below isMobile check)
+    const config = isMobile ? PERFORMANCE_CONFIG.mobile : PERFORMANCE_CONFIG.desktop
+    const count = config.blackHoleCount
 
     // 1. Primary Accretion Disk Data
     const { positions, randoms, sizes } = useMemo(() => {

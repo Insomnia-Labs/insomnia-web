@@ -256,7 +256,8 @@ export default function TerminalPages() {
                     "
                 >
                     {/* Separate Gradient Background Layer - Mobile: Solid Black, Desktop: Smooth Leftward Fade */}
-                    <div className="absolute inset-0 bg-black/90 md:bg-transparent md:bg-gradient-to-l md:from-black/80 md:to-transparent -z-10 transition-all duration-500" />
+                    {/* Separate Gradient Background Layer - Mobile: Transparent Black, Desktop: Smooth Leftward Fade */}
+                    <div className="absolute inset-0 bg-black/30 md:bg-transparent md:bg-gradient-to-l md:from-black/80 md:to-transparent -z-10 transition-all duration-500" />
 
                     {/* Noise Overlay */}
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] -z-10" />

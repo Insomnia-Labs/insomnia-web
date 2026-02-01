@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useStore } from '../../store/useStore'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 // --- REUSABLE UI COMPONENTS ---
 
@@ -66,7 +67,9 @@ const StatusFooter = ({ status = "STANDING BY", memory = "OPTIMAL" }) => (
 
 const PanelWrapper = ({ children, active }) => (
     <div
-        className={`w-full h-full absolute inset-0 pointer-events-none ${active ? 'z-10' : 'z-0'}`}
+        className={`w-full h-full md:absolute md:inset-0 pointer-events-none 
+            ${active ? 'md:z-10 md:opacity-100' : 'md:z-0 md:opacity-0'} 
+            ${active ? 'block' : 'hidden md:block'}`}
         style={{ gridArea: '1 / 1' }}
     >
         {children}
@@ -240,31 +243,55 @@ const ProductsPanel = ({ active }) => {
 
 export default function TerminalPages() {
     const section = useStore((state) => state.section)
-    const showGame = useStore((state) => state.showGame)
+    const showVoid = useStore((state) => state.showVoid)
+    const isMobile = useIsMobile()
 
-    const isVisible = section !== 'home' && !showGame
+    const isVisible = section !== 'home' && !showVoid
+
+    // Mobile: Ultra-simple structure for maximum performance
+    if (isMobile) {
+        if (!isVisible) return null
+
+        return (
+            <div
+                className="fixed inset-0 bg-black z-40 overflow-y-auto"
+                style={{
+                    WebkitOverflowScrolling: 'touch',
+                    overscrollBehavior: 'contain'
+                }}
+            >
+                <div className="min-h-screen px-6 pt-28 pb-40">
+                    {section === 'lab' && <LabPanel active={true} />}
+                    {section === 'info' && <InfoPanel active={true} />}
+                    {section === 'products' && <ProductsPanel active={true} />}
+                </div>
+            </div>
+        )
+    }
+
+    // Desktop: Original complex overlay structure
 
     return (
-        <div className={`fixed inset-0 pointer-events-none z-40 overflow-hidden transition-opacity duration-700 ${isVisible ? 'opacity-100' : 'opacity-0 delay-300'}`}>
+        <div className={`fixed inset-0 pointer-events-none z-40 transition-opacity duration-700 ${isVisible ? 'opacity-100' : 'opacity-0 delay-300'}`}>
             <div className={`w-full h-full flex justify-end pointer-events-none`}>
                 {/* Sidebar Container */}
                 <div
                     className="
-                        relative w-full md:w-[60%] md:min-w-[600px] h-full 
+                        relative w-[60%] min-w-[600px] h-full 
                         pointer-events-none
                         flex flex-col isolation-isolate
                     "
                 >
-                    {/* Separate Gradient Background Layer - Mobile: Solid Black, Desktop: Smooth Leftward Fade */}
-                    {/* Separate Gradient Background Layer - Mobile: Transparent Black, Desktop: Smooth Leftward Fade */}
-                    <div className="absolute inset-0 bg-black/30 md:bg-transparent md:bg-gradient-to-l md:from-black/80 md:to-transparent -z-10 transition-all duration-500" />
+                    {/* Separate Gradient Background Layer */}
+                    <div className="absolute inset-0 bg-transparent bg-gradient-to-l from-black/80 to-transparent -z-10 transition-all duration-500" />
 
                     {/* Noise Overlay */}
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] -z-10" />
 
                     {/* Content Container */}
-                    <div className="relative flex-1 px-6 pt-24 pb-32 md:pl-32 md:pr-24 md:py-20 overflow-y-auto flex flex-col justify-center pointer-events-none">
-                        <div className="grid w-full h-full items-center pointer-events-none relative transform-gpu">
+                    <div className="relative flex-1 pl-32 pr-24 py-20 overflow-y-auto flex flex-col justify-center pointer-events-auto">
+                        {/* Desktop: Use grid overlay */}
+                        <div className="grid w-full h-full items-center pointer-events-none relative">
                             <PanelWrapper active={section === 'lab'}>
                                 <LabPanel active={section === 'lab'} />
                             </PanelWrapper>

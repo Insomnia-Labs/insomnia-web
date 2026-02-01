@@ -5,7 +5,7 @@ import StaggeredMenu from './StaggeredMenu'
 import { useIsMobile } from '../../hooks/useIsMobile'
 
 export default function Overlay() {
-    const { section, setSection, showGame, setShowGame, setCameraAnimation, setIsDiving, setIsExiting, isMenuOpen } = useStore()
+    const { section, setSection, showVoid, setShowVoid, setCameraAnimation, setIsDiving, setIsExiting, isMenuOpen } = useStore()
     const [isTransitioning, setIsTransitioning] = useState(true)
     const [fadeOpacity, setFadeOpacity] = useState(1)
     const [transitionDuration, setTransitionDuration] = useState(2500)
@@ -19,13 +19,12 @@ export default function Overlay() {
         return () => clearTimeout(timer)
     }, [])
 
-    const handleGameClose = () => {
+    const handleExitVoid = () => {
         setIsTransitioning(true)
         setTransitionDuration(500)
-        // Removed setFadeOpacity(1) for transparent transition
 
         setTimeout(() => {
-            setShowGame(false)
+            setShowVoid(false)
             setCameraAnimation('eject')
             setIsExiting(true)
             setTimeout(() => {
@@ -35,19 +34,19 @@ export default function Overlay() {
         }, 500)
     }
 
-    const handleInitGame = () => {
+    const handleEnterVoid = () => {
         setIsTransitioning(true)
         setCameraAnimation('dive')
         setIsDiving(true)
         setTransitionDuration(1000)
 
-        // Initializing game transition
+        // Initializing VOID transition
         setTimeout(() => {
             // Animation timing
         }, 300)
 
         setTimeout(() => {
-            setShowGame(true)
+            setShowVoid(true)
             setTimeout(() => {
                 setFadeOpacity(0)
                 setIsTransitioning(false)
@@ -68,14 +67,14 @@ export default function Overlay() {
             {/* Terminal Pages (Sphere Content) */}
             <TerminalPages />
 
-            {/* The Void Page (Game Mode) - Transparent now */}
-            {showGame && (
+            {/* The Void Experience - Visual Feature */}
+            {showVoid && (
                 <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-[80] flex flex-col items-center justify-center gap-16">
                     <h2 className="text-white/5 font-mono text-5xl md:text-9xl font-bold tracking-[0.2em] select-none pointer-events-none text-center">
                         THE VOID
                     </h2>
                     <button
-                        onClick={handleGameClose}
+                        onClick={handleExitVoid}
                         className="pointer-events-auto relative px-8 py-4 group overflow-hidden transition-all duration-500"
                     >
                         <div className="absolute inset-0 border border-white/20 group-hover:border-white/60 group-hover:bg-white/5 transition-all duration-500" />
@@ -86,20 +85,22 @@ export default function Overlay() {
                 </div>
             )}
 
-            <div className={`absolute inset-0 pointer-events-none z-50 flex flex-col justify-between p-6 md:p-8 transition-opacity duration-500 ${showGame || isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-                {/* Header */}
-                <header className="flex justify-between items-start pointer-events-none">
+            <div className={`absolute inset-0 pointer-events-none z-50 flex flex-col justify-between p-6 md:p-8 transition-opacity duration-500 ${showVoid || isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+                {/* Header - Visible on desktop, and on mobile when NOT on home section */}
+                <header className={`justify-between items-start pointer-events-none transition-opacity duration-500 ${isMobile && section === 'home' ? 'hidden' : 'flex'} ${isMobile ? 'absolute top-6 left-6 z-50' : 'relative'}`}>
                     <div
                         className="pointer-events-auto cursor-pointer transition-transform hover:scale-105"
                         onClick={() => setSection('home')}
                     >
-                        <h1 className="text-3xl md:text-5xl font-black tracking-tighter leading-[0.9] text-white font-sans transform origin-left scale-y-90">
-                            INSOMNIA
-                        </h1>
-                        <div>
-                            <p className={`text-xs md:text-sm text-blue-200/60 tracking-[0.5em] uppercase mt-2 font-mono transition-opacity duration-300 ${isMobile && isMenuOpen ? 'opacity-0' : 'opacity-100'}`}>
-                                Infinite Cloud Storage
-                            </p>
+                        <div className="relative group">
+                            <h1 className="text-2xl md:text-6xl font-extralight tracking-[0.15em] text-white uppercase relative leading-tight">
+                                INSOMNIA
+                            </h1>
+                            <div className="mt-4 text-center">
+                                <p className={`text-[9px] md:text-xs text-blue-200/40 tracking-[0.3em] md:tracking-[0.5em] uppercase font-light italic transition-opacity duration-300 ${isMobile && isMenuOpen ? 'opacity-0' : 'opacity-100'}`}>
+                                    Cloud Architecture
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </header>
@@ -124,9 +125,9 @@ export default function Overlay() {
                             </a>
                         </div>
 
-                        {/* Game Launch Button */}
+                        {/* VOID Experience Button */}
                         <button
-                            onClick={handleInitGame}
+                            onClick={handleEnterVoid}
                             className="pointer-events-auto group relative px-8 py-3 bg-transparent border border-white/20 overflow-hidden hover:border-white/80 transition-colors duration-500"
                         >
                             <div className="absolute inset-0 bg-white translate-y-[100%] group-hover:translate-y-0 transition-transform duration-500 cubic-bezier(0.87, 0, 0.13, 1)" />

@@ -45,7 +45,7 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
     // Store states for visibility
     const isDiving = useStore((state) => state.isDiving)
     const insideBlackHole = useStore((state) => state.insideBlackHole)
-    const showGame = useStore((state) => state.showGame)
+    const showVoid = useStore((state) => state.showVoid)
 
     const isExiting = useStore((state) => state.isExiting)
 
@@ -78,7 +78,7 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
     // Logic split for robustness:
     // DESKTOP: Show always (unless Game/Diving). Ignore section navigation (Split Screen).
     // MOBILE: strict visibility (Home only, Menu closed).
-    const isVisible = !showGame && (!isDiving && (!insideBlackHole || isExiting)) && (isMobile ? (section === 'home' && !isMenuOpen) : true)
+    const isVisible = !showVoid && (!isDiving && (!insideBlackHole || isExiting)) && (isMobile ? (section === 'home' && !isMenuOpen) : true)
 
     const visualPosRef = useRef(new THREE.Vector3())
     const initializedRef = useRef(false)
@@ -404,7 +404,7 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
 
 export default function OrbitalSpheres() {
     const section = useStore((state) => state.section)
-    const showGame = useStore((state) => state.showGame)
+    const showVoid = useStore((state) => state.showVoid)
 
     const isDiving = useStore((state) => state.isDiving)
     const isExiting = useStore((state) => state.isExiting)
@@ -441,7 +441,7 @@ export default function OrbitalSpheres() {
             let targetOpacity = 1.0
 
             // Hidden when game showing (Top priority)
-            if (showGame) {
+            if (showVoid) {
                 targetOpacity = 0.0
             }
             // Fade in when exiting (Override insideBlackHole)

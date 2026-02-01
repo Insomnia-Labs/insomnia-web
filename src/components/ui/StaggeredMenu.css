@@ -368,8 +368,11 @@
     }
 
     .staggered-menu-header {
-        padding: 1.5em;
-        /* Match Overlay padding */
+        padding-top: 1.8rem;
+        padding-right: 2rem;
+        padding-left: 1.5rem;
+        padding-bottom: 1.5rem;
+        /* Match Overlay padding but align with text */
     }
 
     /* Ensure toggle button is visible */

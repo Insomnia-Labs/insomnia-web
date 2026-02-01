@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Stars } from '@react-three/drei'
 import BlackHole from './components/3d/BlackHole'
@@ -8,40 +8,70 @@ import SpatialContent from './components/3d/SpatialContent'
 import Overlay from './components/ui/Overlay'
 import { EffectComposer, Bloom, Noise, Vignette, ChromaticAberration } from '@react-three/postprocessing'
 import { useIsMobile } from './hooks/useIsMobile'
+import MobileBackground from './components/ui/MobileBackground'
 import { PERFORMANCE_CONFIG } from './constants/performance'
+import { useStore } from './store/useStore'
 
 function App() {
   const isMobile = useIsMobile()
+  const section = useStore((state) => state.section)
   const config = isMobile ? PERFORMANCE_CONFIG.mobile : PERFORMANCE_CONFIG.desktop
+  const containerRef = useRef(null)
+
+  // Block body scroll on mobile when viewing sections (not home)
+  useEffect(() => {
+    if (isMobile && section !== 'home') {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isMobile, section])
 
   return (
-    <div className="w-full h-screen bg-black relative">
-      <Canvas
-        dpr={config.dpr} // Limit pixel ratio for huge performance boost on Retina screens
-        gl={{
-          powerPreference: "high-performance",
-          antialias: false, // Disable MSAA (Bloom+Noise masks aliasing)
-          stencil: false,
-          depth: true
-        }}
-        camera={{ position: [25, 12, 25], fov: 45 }}
-      >
-        <CameraController />
-        <Suspense fallback={null}>
-          <color attach="background" args={['#050505']} />
-          <ambientLight intensity={0.5} />
-          <BlackHole />
-          <OrbitalSpheres />
-          <SpatialContent />
-          <Stars radius={100} depth={50} count={config.starsCount} factor={4} saturation={0} fade speed={1} />
-        </Suspense>
-        {config.enableBloom && (
-          <EffectComposer disableNormalPass multisampling={0}>
-            <Bloom luminanceThreshold={0.2} luminanceSmoothing={config.bloomSmoothing} height={config.bloomHeight} intensity={0.8} />
-            <Vignette eskil={false} offset={0.1} darkness={0.6} />
-          </EffectComposer>
-        )}
-      </Canvas>
+    <div ref={containerRef} className="w-full h-screen relative">
+      {!isMobile ? (
+        <Canvas
+          dpr={config.dpr} // Limit pixel ratio for huge performance boost on Retina screens
+          gl={{
+            powerPreference: "high-performance",
+            antialias: false, // Disable MSAA (Bloom+Noise masks aliasing)
+            stencil: false,
+            depth: true
+          }}
+          camera={{ position: [25, 12, 25], fov: 45 }}
+          eventSource={containerRef}
+          eventPrefix="client"
+        >
+          <CameraController />
+          <Suspense fallback={null}>
+            <color attach="background" args={['#050505']} />
+            <ambientLight intensity={0.5} />
+            <BlackHole />
+            <OrbitalSpheres />
+            <SpatialContent />
+            <Stars radius={100} depth={50} count={config.starsCount} factor={4} saturation={0} fade speed={1} />
+          </Suspense>
+          {config.enableBloom && (
+            <EffectComposer disableNormalPass multisampling={0}>
+              <Bloom luminanceThreshold={0.2} luminanceSmoothing={config.bloomSmoothing} height={config.bloomHeight} intensity={0.8} />
+              <Vignette eskil={false} offset={0.1} darkness={0.6} />
+            </EffectComposer>
+          )}
+        </Canvas>
+      ) : (
+        <>
+          {/* Only show MobileBackground on home section */}
+          {section === 'home' ? (
+            <MobileBackground />
+          ) : (
+            // Simple dark background for other sections
+            <div className="fixed inset-0 bg-black" />
+          )}
+        </>
+      )}
       <Overlay />
     </div >
   )

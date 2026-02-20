@@ -5,6 +5,8 @@ export const useStore = create((set) => ({
     setSection: (section) => set({ section }),
     showVoid: false,
     setShowVoid: (showVoid) => set({ showVoid }),
+    showVoidLogin: false,
+    setShowVoidLogin: (showVoidLogin) => set({ showVoidLogin }),
     cameraAnimation: null, // 'dive' | 'eject' | null - for VOID experience
     setCameraAnimation: (cameraAnimation) => set({ cameraAnimation }),
     isDiving: false,

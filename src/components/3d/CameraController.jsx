@@ -9,6 +9,7 @@ import { CAMERA_SETTINGS } from '../../constants/layout'
 export default function CameraController() {
     const { camera } = useThree()
     const section = useStore((state) => state.section)
+    const setSection = useStore((state) => state.setSection)
     const cameraAnimation = useStore((state) => state.cameraAnimation)
     const setCameraAnimation = useStore((state) => state.setCameraAnimation)
     const setShowMenu = useStore((state) => state.setShowMenu)
@@ -101,47 +102,44 @@ export default function CameraController() {
         }
     }, [cameraAnimation, isDiving, camera, setCameraAnimation, setIsDiving, setInsideBlackHole])
 
-    // Handle eject animation (reverse of dive)
+    // Handle eject animation (always returns to canonical home position)
     useEffect(() => {
         if (cameraAnimation === 'eject' && isExiting) {
-            // Make sure we have saved positions to return to
-            if (!diveStartPosition.current || !diveStartLookAt.current) {
-                // Fallback to home position
-                diveStartPosition.current = new THREE.Vector3(7, 5, 3)
-                diveStartLookAt.current = new THREE.Vector3(0, -0.6, 0)
-            }
+            // ALWAYS eject back to the fixed home position — never to diveStartPosition.
+            // This prevents the camera from flying toward a sphere or a random point.
+            const HOME_POS = isMobile
+                ? new THREE.Vector3(12, 12, 12)
+                : new THREE.Vector3(7, 5, 3)
+            const HOME_LOOKAT = new THREE.Vector3(0, -0.6, 0)
 
-            // Create smooth transition from black hole back to original position
             const timeline = gsap.timeline()
 
-            // Animate camera position back
             timeline.to(camera.position, {
-                x: diveStartPosition.current.x,
-                y: diveStartPosition.current.y,
-                z: diveStartPosition.current.z,
+                x: HOME_POS.x,
+                y: HOME_POS.y,
+                z: HOME_POS.z,
                 duration: 1.8,
-                ease: 'power3.out', // Decelerating as ejected from black hole
+                ease: 'power3.out',
             }, 0)
 
-            // Simultaneously animate look-at target back
             timeline.to(lookAtTarget.current, {
-                x: diveStartLookAt.current.x,
-                y: diveStartLookAt.current.y,
-                z: diveStartLookAt.current.z,
+                x: HOME_LOOKAT.x,
+                y: HOME_LOOKAT.y,
+                z: HOME_LOOKAT.z,
                 duration: 1.8,
                 ease: 'power3.out',
                 onUpdate: () => {
                     camera.lookAt(lookAtTarget.current)
                 },
                 onComplete: () => {
-                    // Animation complete, return to normal
                     setCameraAnimation(null)
                     setIsExiting(false)
                     setInsideBlackHole(false) // UNLOCK camera
+                    setSection('home')        // Ensure we are on home — prevents snapping to sphere
                 }
             }, 0)
         }
-    }, [cameraAnimation, isExiting, camera, setCameraAnimation, setIsExiting, setInsideBlackHole])
+    }, [cameraAnimation, isExiting, camera, setCameraAnimation, setIsExiting, setInsideBlackHole, setSection, isMobile])
 
     useFrame((state, delta) => {
         // Skip all calculations when page is hidden (tab is inactive)

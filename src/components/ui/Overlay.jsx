@@ -2,10 +2,11 @@ import React, { useState } from 'react'
 import { useStore } from '../../store/useStore'
 import TerminalPages from './TerminalPages'
 import StaggeredMenu from './StaggeredMenu'
+import VoidLogin from './VoidLogin'
 import { useIsMobile } from '../../hooks/useIsMobile'
 
 export default function Overlay() {
-    const { section, setSection, showVoid, setShowVoid, setCameraAnimation, setIsDiving, setIsExiting, isMenuOpen } = useStore()
+    const { section, setSection, showVoid, setShowVoid, showVoidLogin, setShowVoidLogin, setCameraAnimation, setIsDiving, setIsExiting, isMenuOpen } = useStore()
     const [isTransitioning, setIsTransitioning] = useState(true)
     const [fadeOpacity, setFadeOpacity] = useState(1)
     const [transitionDuration, setTransitionDuration] = useState(2500)
@@ -35,29 +36,16 @@ export default function Overlay() {
     }
 
     const handleEnterVoid = () => {
-        setIsTransitioning(true)
-        setCameraAnimation('dive')
-        setIsDiving(true)
-        setTransitionDuration(1000)
-
-        // Initializing VOID transition
-        setTimeout(() => {
-            // Animation timing
-        }, 300)
-
-        setTimeout(() => {
-            setShowVoid(true)
-            setTimeout(() => {
-                setFadeOpacity(0)
-                setIsTransitioning(false)
-            }, 800)
-        }, 1400)
+        // Show login gate first; actual dive fires after authentication inside VoidLogin
+        setShowVoidLogin(true)
     }
 
     const isMobile = useIsMobile()
 
     return (
         <>
+            {/* THE VOID Login Gate */}
+            <VoidLogin />
             {/* Fade to Black Overlay (Only for extreme transitions if needed, currently kept transparent) */}
             <div
                 className="absolute inset-0 bg-black pointer-events-none z-[100] transition-opacity ease-in-out"
@@ -120,8 +108,8 @@ export default function Overlay() {
                             <a href="http://t.me/mark_asm" target="_blank" rel="noopener noreferrer" className="text-[10px] font-mono tracking-widest text-white/70 hover:text-blue-400 transition-colors uppercase">
                                 [ MY TELEGRAM ]
                             </a>
-                            <a href="https://www.instagram.com/_mark.asm/" target="_blank" rel="noopener noreferrer" className="text-[10px] font-mono tracking-widest text-white/70 hover:text-blue-400 transition-colors uppercase">
-                                [ INSTAGRAM ]
+                            <a href="https://github.com/mioruno" target="_blank" rel="noopener noreferrer" className="text-[10px] font-mono tracking-widest text-white/70 hover:text-blue-400 transition-colors uppercase">
+                                [ GITHUB ]
                             </a>
                         </div>
 
@@ -154,7 +142,7 @@ export default function Overlay() {
                     ]}
                     socialItems={[
                         { label: 'Telegram', link: 'http://t.me/mark_asm' },
-                        { label: 'Instagram', link: 'https://www.instagram.com/_mark.asm/' }
+                        { label: 'GitHub', link: 'https://github.com/mioruno' }
                     ]}
                     displaySocials={true}
                     displayItemNumbering={true}

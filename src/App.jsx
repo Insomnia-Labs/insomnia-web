@@ -15,8 +15,13 @@ import { useStore } from './store/useStore'
 function App() {
   const isMobile = useIsMobile()
   const section = useStore((state) => state.section)
+  const showVoidLogin = useStore((state) => state.showVoidLogin)
+  const showVoid = useStore((state) => state.showVoid)
   const config = isMobile ? PERFORMANCE_CONFIG.mobile : PERFORMANCE_CONFIG.desktop
   const containerRef = useRef(null)
+
+  // Block 3D canvas interaction whenever a full-screen modal is open
+  const blockCanvas = showVoidLogin || showVoid
 
   // Block body scroll on mobile when viewing sections (not home)
   useEffect(() => {
@@ -34,16 +39,17 @@ function App() {
     <div ref={containerRef} className="w-full h-screen relative">
       {!isMobile ? (
         <Canvas
-          dpr={config.dpr} // Limit pixel ratio for huge performance boost on Retina screens
+          dpr={config.dpr}
           gl={{
             powerPreference: "high-performance",
-            antialias: false, // Disable MSAA (Bloom+Noise masks aliasing)
+            antialias: false,
             stencil: false,
             depth: true
           }}
           camera={{ position: [25, 12, 25], fov: 45 }}
           eventSource={containerRef}
           eventPrefix="client"
+          style={{ pointerEvents: blockCanvas ? 'none' : 'auto' }}
         >
           <CameraController />
           <Suspense fallback={null}>

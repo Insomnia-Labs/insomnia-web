@@ -152,7 +152,8 @@
     z-index: 10;
     pointer-events: auto;
     border-left: 1px solid rgba(255, 255, 255, 0.1);
-    /* Subtle border */
+    will-change: transform;
+    /* Pre-promote to GPU layer */
 }
 
 [data-position='left'] .staggered-menu-panel {
@@ -184,6 +185,8 @@
     height: 100%;
     width: 100%;
     transform: translateX(0);
+    will-change: transform;
+    /* Pre-promote to GPU layer before animation */
 }
 
 .sm-panel-inner {
@@ -355,30 +358,104 @@
 }
 
 @media (max-width: 640px) {
+
+    /* Wrapper: svh = small viewport height = safe when browser chrome is visible */
+    .staggered-menu-wrapper.fixed-wrapper {
+        height: 100vh;
+        /* fallback for older browsers */
+        height: 100svh;
+        /* modern: safe viewport, accounts for browser address bar */
+    }
+
+    /* Full-screen panel */
     .staggered-menu-panel {
         width: 100%;
         max-width: none;
+        height: 100vh;
+        /* fallback */
+        height: 100svh;
+        /* match wrapper */
         left: 0;
         right: 0;
-        padding-top: 5em;
-        /* Ensure content clears header */
+        padding: 5.5em 1.75rem 0 1.75rem;
         backdrop-filter: none;
-        /* Optimized */
-        background: rgba(5, 5, 5, 0.95);
+        background: #050505;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        /* safety fallback on very small phones */
+        overflow-x: hidden;
+    }
+
+    /* Inner: flex column, socials pushed to bottom */
+    .sm-panel-inner {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        gap: 0;
+        min-height: 0;
+    }
+
+    /* Nav list: tightly grouped, slightly above center */
+    .sm-panel-list {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0;
+        padding: 0;
+        margin-top: -15vh;
+        /* shift group noticeably above center */
+    }
+
+    /* Items: no gap, slightly smaller font to fit all screens */
+    .sm-panel-item {
+        display: block;
+        font-size: clamp(2.2rem, 10.5vw, 4rem);
+        padding-right: 0;
+        line-height: 1.1;
+    }
+
+    /* Numbers: restored at far right, no overlap with text */
+    .sm-panel-list[data-numbering] .sm-panel-item::after {
+        display: block;
+        right: 0.5rem;
+        /* fixed distance from panel right edge, never near text */
+        top: 0.25em;
+        font-size: 0.5em;
+        /* slightly smaller on mobile */
+    }
+
+    /* Socials: flush to bottom, safe area aware */
+    .sm-socials {
+        margin-top: 0;
+        flex-shrink: 0;
+        padding-top: 1rem;
+        padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .sm-socials-title {
+        font-size: 0.7rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.4);
+        margin-bottom: 0.5rem;
+    }
+
+    .sm-socials-link {
+        font-size: 1rem;
     }
 
     .staggered-menu-header {
         padding-top: 1.8rem;
-        padding-right: 2rem;
+        padding-right: 1.75rem;
         padding-left: 1.5rem;
-        padding-bottom: 1.5rem;
-        /* Match Overlay padding but align with text */
+        padding-bottom: 1rem;
     }
 
-    /* Ensure toggle button is visible */
     .sm-toggle {
         z-index: 50;
-        /* Above panel content if needed */
     }
 
     .staggered-menu-wrapper[data-open] .sm-logo-img {

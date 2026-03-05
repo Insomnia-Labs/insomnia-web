@@ -17,4 +17,8 @@ export const useStore = create((set) => ({
     setInsideBlackHole: (insideBlackHole) => set({ insideBlackHole }),
     isMenuOpen: false,
     setIsMenuOpen: (isMenuOpen) => set({ isMenuOpen }),
+    postLoginView: null, // null | 'chats' | 'dashboard'
+    setPostLoginView: (postLoginView) => set({ postLoginView }),
+    selectedChatId: null,
+    setSelectedChatId: (selectedChatId) => set({ selectedChatId }),
 }))

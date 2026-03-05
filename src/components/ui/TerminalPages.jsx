@@ -282,12 +282,6 @@ export default function TerminalPages() {
                         flex flex-col isolation-isolate
                     "
                 >
-                    {/* Separate Gradient Background Layer */}
-                    <div className="absolute inset-0 bg-transparent bg-gradient-to-l from-black/80 to-transparent -z-10 transition-all duration-500" />
-
-                    {/* Noise Overlay */}
-                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] -z-10" />
-
                     {/* Content Container */}
                     <div className="relative flex-1 pl-32 pr-24 py-20 overflow-y-auto flex flex-col justify-center pointer-events-auto">
                         {/* Desktop: Use grid overlay */}

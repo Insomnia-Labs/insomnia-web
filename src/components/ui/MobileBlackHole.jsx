@@ -1,221 +1,244 @@
 import { useRef, useMemo } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { Billboard } from '@react-three/drei'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
-// ── Vertex shader: accretion disk particles ──────────────────────
-const diskVert = `
-uniform float uTime;
-attribute float aRandom;
-attribute float aSize;
-varying float vAlpha;
+/* ── Counts ────────────────────────────────────────────────── */
+const DISK_COUNT = 4000
+const ORB_COUNT = 1200
 
-void main() {
-  vec3 pos = position;
-  float r = length(pos.xy);
-  float speed = 2.5 / (r * r * r + 0.08);
-  float angle = uTime * speed * 0.7 + aRandom * 6.2832;
-  float c = cos(angle); float s = sin(angle);
-  vec3 cur = vec3(pos.x*c - pos.y*s, pos.x*s + pos.y*c, pos.z);
-  pos = cur;
-  vec4 vp = modelViewMatrix * vec4(pos, 1.0);
-  gl_Position = projectionMatrix * vp;
-  gl_PointSize = aSize * (28.0 / -vp.z);
-  float normD = 1.0 - smoothstep(2.0, 8.0, r);
-  float inner = smoothstep(1.0, 1.8, r);
-  vAlpha = 0.7 * normD * inner;
-}
-`
-const diskFrag = `
-varying float vAlpha;
-void main() {
-  vec2 uv = gl_PointCoord - 0.5;
-  if (length(uv) > 0.5) discard;
-  gl_FragColor = vec4(1.0, 1.0, 1.0, vAlpha * 0.6);
-}
-`
-
-// ── Vertex shader: orbital ring particles ────────────────────────
-const orbVert = `
-uniform float uTime;
-attribute float aRandom;
-attribute float aSize;
-attribute float aRadius;
-attribute float aSpeed;
-attribute float aInc;
-attribute float aPhase;
-varying float vAlpha;
-
-void main() {
-  float angle = uTime * aSpeed + aPhase;
-  float r = aRadius;
-  vec3 pos;
-  pos.x = r * cos(angle);
-  pos.y = r * sin(angle);
-  float z = pos.y * sin(aInc);
-  pos.y = pos.y * cos(aInc);
-  pos.z = z;
-  vAlpha = smoothstep(10.0, 2.0, r) * 0.7;
-  vec4 vp = modelViewMatrix * vec4(pos, 1.0);
-  gl_Position = projectionMatrix * vp;
-  gl_PointSize = aSize * (25.0 / -vp.z);
-}
-`
-const orbFrag = `
-varying float vAlpha;
-void main() {
-  vec2 uv = gl_PointCoord - 0.5;
-  float d = length(uv);
-  if (d > 0.5) discard;
-  float i = 1.0 - smoothstep(0.0, 0.5, d);
-  gl_FragColor = vec4(1.0, 1.0, 1.0, vAlpha * i * 0.35);
-}
-`
-
-// ── Photo-ring shader ────────────────────────────────────────────
-const ringVert = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`
-const ringFrag = `
-varying vec2 vUv;
-void main(){
-  vec2 c = vUv - 0.5;
-  float dist = length(c) * 2.0;
-  if(dist < 0.735) discard;
-  float d = abs(dist - 0.74);
-  float ring = smoothstep(0.005, 0.0, d);
-  gl_FragColor = vec4(1.0,1.0,1.0, ring * 0.3);
-}
-`
-
-// Desktop home camera: position(7, 5, 3), lookAt(0, -0.6, 0)
-// We replicate that exact angle and orbit around Y-axis on scroll.
+/* ── Desktop camera position (matches CameraController home) ── */
 const BASE_CAM = new THREE.Vector3(7, 5, 3)
 const LOOK_AT = new THREE.Vector3(0, -0.6, 0)
 
-function BlackHoleScene({ scrollProgress }) {
+/* ═══════════════════════════════════════════════════════════════
+   Accretion Disk shader
+═══════════════════════════════════════════════════════════════ */
+const diskVert = /* glsl */`
+    attribute float aAngle;
+    attribute float aRadius;
+    attribute float aSpeed;
+    attribute float aSize;
+    attribute vec3  aColor;
+    uniform   float uTime;
+    varying   vec3  vColor;
+    varying   float vAlpha;
+
+    void main() {
+        float angle = aAngle + uTime * aSpeed;
+        float x = cos(angle) * aRadius;
+        float z = sin(angle) * aRadius * 0.28;
+        float y = sin(angle * 3.0) * 0.04 * aRadius;
+        vColor = aColor;
+        float dist = aRadius;
+        vAlpha = smoothstep(3.8, 0.4, dist) * 0.85;
+        vec4 mv = modelViewMatrix * vec4(x, y, z, 1.0);
+        gl_PointSize = aSize * (280.0 / -mv.z);
+        gl_Position  = projectionMatrix * mv;
+    }
+`
+const diskFrag = /* glsl */`
+    varying vec3  vColor;
+    varying float vAlpha;
+    void main() {
+        vec2  uv   = gl_PointCoord - 0.5;
+        float d    = length(uv);
+        float fade = 1.0 - smoothstep(0.3, 0.5, d);
+        if (fade < 0.01) discard;
+        gl_FragColor = vec4(vColor, vAlpha * fade);
+    }
+`
+
+/* ═══════════════════════════════════════════════════════════════
+   Orbital ring shader
+═══════════════════════════════════════════════════════════════ */
+const orbVert = /* glsl */`
+    attribute float aAngle;
+    attribute float aRadius;
+    attribute float aSpeed;
+    attribute float aSize;
+    attribute float aTilt;
+    attribute vec3  aColor;
+    uniform   float uTime;
+    varying   vec3  vColor;
+    varying   float vAlpha;
+
+    void main() {
+        float angle = aAngle + uTime * aSpeed;
+        float cx = cos(angle) * aRadius;
+        float cz = sin(angle) * aRadius;
+        float tx = cx;
+        float ty = cz * sin(aTilt);
+        float tz = cz * cos(aTilt);
+        vColor = aColor;
+        vAlpha = 0.55;
+        vec4 mv = modelViewMatrix * vec4(tx, ty, tz, 1.0);
+        gl_PointSize = aSize * (220.0 / -mv.z);
+        gl_Position  = projectionMatrix * mv;
+    }
+`
+const orbFrag = /* glsl */`
+    varying vec3  vColor;
+    varying float vAlpha;
+    void main() {
+        vec2  uv   = gl_PointCoord - 0.5;
+        float d    = length(uv);
+        float fade = 1.0 - smoothstep(0.25, 0.5, d);
+        if (fade < 0.01) discard;
+        gl_FragColor = vec4(vColor, vAlpha * fade);
+    }
+`
+
+/* ═══════════════════════════════════════════════════════════════
+   Helpers
+═══════════════════════════════════════════════════════════════ */
+function makeDiskGeometry() {
+    const pos = new Float32Array(DISK_COUNT * 3)
+    const angles = new Float32Array(DISK_COUNT)
+    const radii = new Float32Array(DISK_COUNT)
+    const speeds = new Float32Array(DISK_COUNT)
+    const sizes = new Float32Array(DISK_COUNT)
+    const colors = new Float32Array(DISK_COUNT * 3)
+
+    const palette = [
+        new THREE.Color('#ff6a00'),
+        new THREE.Color('#ff9d00'),
+        new THREE.Color('#ffcc44'),
+        new THREE.Color('#fff0b0'),
+        new THREE.Color('#ff4400'),
+    ]
+
+    for (let i = 0; i < DISK_COUNT; i++) {
+        const r = 0.35 + Math.pow(Math.random(), 0.6) * 3.4
+        angles[i] = Math.random() * Math.PI * 2
+        radii[i] = r
+        speeds[i] = (0.08 + Math.random() * 0.18) * (Math.random() < 0.5 ? 1 : -1) / r
+        sizes[i] = 1.5 + Math.random() * 2.5
+        const c = palette[Math.floor(Math.random() * palette.length)]
+        const t = Math.random()
+        colors[i * 3] = c.r * (0.7 + t * 0.3)
+        colors[i * 3 + 1] = c.g * (0.5 + t * 0.5)
+        colors[i * 3 + 2] = c.b * (0.3 + t * 0.7)
+    }
+
+    const geo = new THREE.BufferGeometry()
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+    geo.setAttribute('aAngle', new THREE.BufferAttribute(angles, 1))
+    geo.setAttribute('aRadius', new THREE.BufferAttribute(radii, 1))
+    geo.setAttribute('aSpeed', new THREE.BufferAttribute(speeds, 1))
+    geo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1))
+    geo.setAttribute('aColor', new THREE.BufferAttribute(colors, 3))
+    return geo
+}
+
+function makeOrbGeometry() {
+    const pos = new Float32Array(ORB_COUNT * 3)
+    const angles = new Float32Array(ORB_COUNT)
+    const radii = new Float32Array(ORB_COUNT)
+    const speeds = new Float32Array(ORB_COUNT)
+    const sizes = new Float32Array(ORB_COUNT)
+    const tilts = new Float32Array(ORB_COUNT)
+    const colors = new Float32Array(ORB_COUNT * 3)
+
+    const palette = [
+        new THREE.Color('#7040ff'),
+        new THREE.Color('#4488ff'),
+        new THREE.Color('#a0c8ff'),
+        new THREE.Color('#ffffff'),
+    ]
+
+    for (let i = 0; i < ORB_COUNT; i++) {
+        const r = 1.2 + Math.random() * 2.2
+        angles[i] = Math.random() * Math.PI * 2
+        radii[i] = r
+        speeds[i] = (0.04 + Math.random() * 0.1) * (Math.random() < 0.5 ? 1 : -1)
+        sizes[i] = 1.0 + Math.random() * 1.8
+        tilts[i] = (Math.random() - 0.5) * Math.PI * 0.6
+        const c = palette[Math.floor(Math.random() * palette.length)]
+        colors[i * 3] = c.r
+        colors[i * 3 + 1] = c.g
+        colors[i * 3 + 2] = c.b
+    }
+
+    const geo = new THREE.BufferGeometry()
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+    geo.setAttribute('aAngle', new THREE.BufferAttribute(angles, 1))
+    geo.setAttribute('aRadius', new THREE.BufferAttribute(radii, 1))
+    geo.setAttribute('aSpeed', new THREE.BufferAttribute(speeds, 1))
+    geo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1))
+    geo.setAttribute('aTilt', new THREE.BufferAttribute(tilts, 1))
+    geo.setAttribute('aColor', new THREE.BufferAttribute(colors, 3))
+    return geo
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Scene
+═══════════════════════════════════════════════════════════════ */
+function BlackHoleScene({ scrollProgress, isMenuOpen }) {
     const diskRef = useRef()
     const orbRef = useRef()
     const camRef = useRef()
 
-    // Accretion disk — 4000 particles (matching mobile PERFORMANCE_CONFIG)
-    const diskData = useMemo(() => {
-        const n = 4000
-        const pos = new Float32Array(n * 3)
-        const rnd = new Float32Array(n)
-        const sz = new Float32Array(n)
-        for (let i = 0; i < n; i++) {
-            const r = 0.76 + Math.pow(Math.random(), 3.5) * 6.0
-            const t = Math.random() * Math.PI * 2
-            pos[i * 3] = r * Math.cos(t)
-            pos[i * 3 + 1] = r * Math.sin(t)
-            pos[i * 3 + 2] = (Math.random() - 0.5) * 0.15
-            rnd[i] = Math.random()
-            sz[i] = Math.random() * 0.5 + 0.15
-        }
-        return { pos, rnd, sz, n }
-    }, [])
+    const diskGeo = useMemo(() => makeDiskGeometry(), [])
+    const orbGeo = useMemo(() => makeOrbGeometry(), [])
 
-    // Orbital particles — 1200
-    const orbData = useMemo(() => {
-        const n = 1200
-        const pos = new Float32Array(n * 3)
-        const rnd = new Float32Array(n)
-        const sz = new Float32Array(n)
-        const radii = new Float32Array(n)
-        const spds = new Float32Array(n)
-        const incs = new Float32Array(n)
-        const phs = new Float32Array(n)
-        for (let i = 0; i < n; i++) {
-            const r = 1.5 + Math.pow(Math.random(), 5) * 5.0
-            pos[i * 3] = r; pos[i * 3 + 1] = 0; pos[i * 3 + 2] = 0
-            rnd[i] = Math.random()
-            sz[i] = Math.random() * 0.55 + 0.35
-            radii[i] = r
-            spds[i] = 0.8 / Math.sqrt(r)
-            incs[i] = (Math.random() - 0.5) * Math.PI * 0.6
-            phs[i] = Math.random() * Math.PI * 2
-        }
-        return { pos, rnd, sz, radii, spds, incs, phs, n }
-    }, [])
+    const diskUniforms = useMemo(() => ({ uTime: { value: 0 } }), [])
+    const orbUniforms = useMemo(() => ({ uTime: { value: 0 } }), [])
 
-    const diskUni = useMemo(() => ({ uTime: { value: 0 } }), [])
-    const orbUni = useMemo(() => ({ uTime: { value: 0 } }), [])
-
-    // Pre-compute base camera spherical coords for orbit
+    /* Camera azimuth orbit based on scroll ─────────────────── */
     const baseRadius = BASE_CAM.length()
-    const baseTheta = Math.atan2(BASE_CAM.z, BASE_CAM.x)   // horizontal angle
-    const basePhi = Math.asin(BASE_CAM.y / baseRadius)    // vertical angle (elevation)
+    const basePhi = Math.asin(BASE_CAM.y / baseRadius)   // elevation angle
 
     useFrame((state) => {
+        // Pause all GPU work while menu is animating — frees mobile GPU for GSAP
+        if (isMenuOpen) return
+
         const t = state.clock.elapsedTime
         if (diskRef.current) diskRef.current.material.uniforms.uTime.value = t
         if (orbRef.current) orbRef.current.material.uniforms.uTime.value = t
 
-        // Camera orbits horizontally around the black hole on scroll.
-        // Base position matches desktop: (7,5,3) → same elevation, just rotates azimuth.
-        const p = scrollProgress.current          // 0..1
-        const azimuth = baseTheta + p * Math.PI * 2  // full 360° rotation on full scroll
+        // Scroll-based full 360° camera orbit (same elevation as desktop)
+        const progress = scrollProgress.current ?? 0
+        const theta = progress * Math.PI * 2  // full orbit
 
-        state.camera.position.set(
-            baseRadius * Math.cos(basePhi) * Math.cos(azimuth),
-            baseRadius * Math.sin(basePhi),
-            baseRadius * Math.cos(basePhi) * Math.sin(azimuth),
+        const cam = state.camera
+        cam.position.set(
+            Math.cos(theta) * Math.cos(basePhi) * baseRadius,
+            Math.sin(basePhi) * baseRadius,
+            Math.sin(theta) * Math.cos(basePhi) * baseRadius,
         )
-        state.camera.lookAt(LOOK_AT)
+        cam.lookAt(LOOK_AT)
     })
 
     return (
         <>
-            {/* Event horizon */}
-            <Billboard>
-                <mesh renderOrder={100}>
-                    <circleGeometry args={[0.82, 64]} />
-                    <meshBasicMaterial color="black" />
-                </mesh>
-            </Billboard>
+            {/* Black hole core */}
+            <mesh>
+                <circleGeometry args={[0.32, 64]} />
+                <meshBasicMaterial color="#000000" side={THREE.DoubleSide} />
+            </mesh>
 
-            {/* Photo ring */}
-            <Billboard>
-                <mesh renderOrder={50}>
-                    <planeGeometry args={[1.9, 1.9]} />
-                    <shaderMaterial
-                        vertexShader={ringVert}
-                        fragmentShader={ringFrag}
-                        transparent depthTest={true}
-                        blending={THREE.AdditiveBlending}
-                    />
-                </mesh>
-            </Billboard>
-
-            {/* Accretion disk — tilted like the desktop */}
-            <group rotation={[-Math.PI / 2 + 0.2, 0, 0]}>
-                <points ref={diskRef} frustumCulled={false}>
-                    <bufferGeometry>
-                        <bufferAttribute attach="attributes-position" count={diskData.n} array={diskData.pos} itemSize={3} />
-                        <bufferAttribute attach="attributes-aRandom" count={diskData.n} array={diskData.rnd} itemSize={1} />
-                        <bufferAttribute attach="attributes-aSize" count={diskData.n} array={diskData.sz} itemSize={1} />
-                    </bufferGeometry>
-                    <shaderMaterial
-                        vertexShader={diskVert} fragmentShader={diskFrag}
-                        uniforms={diskUni} transparent depthWrite={false}
-                        blending={THREE.AdditiveBlending}
-                    />
-                </points>
-            </group>
-
-            {/* Orbital halo */}
-            <points ref={orbRef} frustumCulled={false}>
-                <bufferGeometry>
-                    <bufferAttribute attach="attributes-position" count={orbData.n} array={orbData.pos} itemSize={3} />
-                    <bufferAttribute attach="attributes-aRandom" count={orbData.n} array={orbData.rnd} itemSize={1} />
-                    <bufferAttribute attach="attributes-aSize" count={orbData.n} array={orbData.sz} itemSize={1} />
-                    <bufferAttribute attach="attributes-aRadius" count={orbData.n} array={orbData.radii} itemSize={1} />
-                    <bufferAttribute attach="attributes-aSpeed" count={orbData.n} array={orbData.spds} itemSize={1} />
-                    <bufferAttribute attach="attributes-aInc" count={orbData.n} array={orbData.incs} itemSize={1} />
-                    <bufferAttribute attach="attributes-aPhase" count={orbData.n} array={orbData.phs} itemSize={1} />
-                </bufferGeometry>
+            {/* Accretion disk particles */}
+            <points ref={diskRef}>
+                <primitive object={diskGeo} attach="geometry" />
                 <shaderMaterial
-                    vertexShader={orbVert} fragmentShader={orbFrag}
-                    uniforms={orbUni} transparent depthWrite={false}
+                    vertexShader={diskVert}
+                    fragmentShader={diskFrag}
+                    uniforms={diskUniforms}
+                    transparent
+                    depthWrite={false}
+                    blending={THREE.AdditiveBlending}
+                />
+            </points>
+
+            {/* Orbital ring particles */}
+            <points ref={orbRef}>
+                <primitive object={orbGeo} attach="geometry" />
+                <shaderMaterial
+                    vertexShader={orbVert}
+                    fragmentShader={orbFrag}
+                    uniforms={orbUniforms}
+                    transparent
+                    depthWrite={false}
                     blending={THREE.AdditiveBlending}
                 />
             </points>
@@ -223,7 +246,10 @@ function BlackHoleScene({ scrollProgress }) {
     )
 }
 
-export default function MobileBlackHole({ scrollProgress }) {
+/* ═══════════════════════════════════════════════════════════════
+   Export
+═══════════════════════════════════════════════════════════════ */
+export default function MobileBlackHole({ scrollProgress, isMenuOpen }) {
     return (
         <Canvas
             camera={{
@@ -239,9 +265,15 @@ export default function MobileBlackHole({ scrollProgress }) {
                 powerPreference: 'high-performance',
                 alpha: true,
             }}
-            style={{ width: '100%', height: '100%', background: 'transparent' }}
+            style={{
+                width: '100%', height: '100%', background: 'transparent',
+                // Hide canvas when menu open — avoids context loss from dynamic frameloop
+                // GPU still renders to invisible canvas (safer than context loss)
+                opacity: isMenuOpen ? 0 : 1,
+                transition: 'opacity 0.15s',
+            }}
         >
-            <BlackHoleScene scrollProgress={scrollProgress} />
+            <BlackHoleScene scrollProgress={scrollProgress} isMenuOpen={isMenuOpen} />
         </Canvas>
     )
 }

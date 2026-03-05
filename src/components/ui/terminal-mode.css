@@ -1,0 +1,208 @@
+/* Terminal TUI Mode — makes the dashboard look like a real terminal app */
+.terminal-mode,
+.terminal-mode * {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', 'Courier New', monospace !important;
+    letter-spacing: 0 !important;
+}
+
+/* Kill ALL rounded corners, shadows, gradients — flat TUI */
+.terminal-mode *,
+.terminal-mode *::before,
+.terminal-mode *::after {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background-image: none !important;
+    text-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+/* Base */
+.terminal-mode {
+    background: #000 !important;
+    color: #b0b0b0 !important;
+}
+
+.terminal-mode .flex.h-full.w-full {
+    background: #000 !important;
+}
+
+/* All panels → pure black */
+.terminal-mode aside,
+.terminal-mode main,
+.terminal-mode header {
+    background: #000 !important;
+}
+
+.terminal-mode [class*="bg-[#16161e]"],
+.terminal-mode [class*="bg-[#1a1b26]"],
+.terminal-mode [class*="bg-[#1e1e2e]"],
+.terminal-mode [class*="bg-[#212129]"] {
+    background: #000 !important;
+}
+
+/* Borders → thin dim grey */
+.terminal-mode [class*="border-[#5e5e75]"],
+.terminal-mode [class*="border-[#2a2a35]"] {
+    border-color: #333 !important;
+}
+
+.terminal-mode aside {
+    border-color: #333 !important;
+}
+
+/* Text colors */
+.terminal-mode .text-white,
+.terminal-mode h2 {
+    color: #e0e0e0 !important;
+}
+
+.terminal-mode [class*="text-[#e4e4e7]"] {
+    color: #e0e0e0 !important;
+}
+
+.terminal-mode [class*="text-[#787c99]"],
+.terminal-mode [class*="text-[#a0a4b8]"],
+.terminal-mode [class*="text-[#a1a1aa]"] {
+    color: #666 !important;
+}
+
+/* Accent → terminal blue */
+.terminal-mode [class*="text-[#7aa2f7]"] {
+    color: #5fafff !important;
+}
+
+.terminal-mode [class*="bg-[#7aa2f7]/10"],
+.terminal-mode [class*="bg-[#7aa2f7]/15"] {
+    background: #111 !important;
+}
+
+.terminal-mode [class*="ring-"] {
+    --tw-ring-color: transparent !important;
+}
+
+/* Hover → subtle */
+.terminal-mode .menu-item:hover {
+    background: #111 !important;
+}
+
+/* ========== MESSAGE BUBBLES → FLAT IRC-STYLE ========== */
+.terminal-mode [class*="bg-[#7aa2f7]"]:not(button):not(.menu-item) {
+    background: transparent !important;
+    color: #e0e0e0 !important;
+    border: none !important;
+    padding: 2px 0 !important;
+}
+
+.terminal-mode [class*="bg-[#2a2a35]"]:not(button):not(.menu-item):not(header) {
+    background: transparent !important;
+    color: #b0b0b0 !important;
+    border: none !important;
+    padding: 2px 0 !important;
+}
+
+.terminal-mode [class*="text-[#0f0f14]"] {
+    color: #e0e0e0 !important;
+}
+
+/* Sender colors */
+.terminal-mode [class*="text-[#9ece6a]"] {
+    color: #5faf5f !important;
+}
+
+/* Input */
+.terminal-mode input {
+    background: #000 !important;
+    border: 1px solid #333 !important;
+    color: #e0e0e0 !important;
+}
+
+.terminal-mode input::placeholder {
+    color: #444 !important;
+}
+
+.terminal-mode input:focus {
+    border-color: #5fafff !important;
+}
+
+/* Scrollbar */
+.terminal-mode ::-webkit-scrollbar {
+    width: 6px;
+}
+
+.terminal-mode ::-webkit-scrollbar-thumb {
+    background: #333 !important;
+}
+
+.terminal-mode ::-webkit-scrollbar-track {
+    background: #000 !important;
+}
+
+/* Hide avatar images, show text only */
+.terminal-mode img.rounded-full {
+    display: none !important;
+}
+
+.terminal-mode [class*="bg-gradient-to-br"],
+.terminal-mode [class*="bg-gradient-to-r"] {
+    background: transparent !important;
+    border: 1px solid #444 !important;
+    color: #5fafff !important;
+}
+
+/* Dropdown */
+.terminal-mode .absolute.right-0.top-full {
+    border: 1px solid #333 !important;
+    background: #0a0a0a !important;
+}
+
+/* Date badge → plain text */
+.terminal-mode [class*="rounded-full"][class*="bg-[#2a2a35]"] {
+    background: transparent !important;
+    color: #555 !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* Tabs/buttons */
+.terminal-mode .tab-pill,
+.terminal-mode .view-btn {
+    background: #000 !important;
+    border: 1px solid #333 !important;
+    color: #e0e0e0 !important;
+}
+
+/* Spinner */
+.terminal-mode .animate-spin {
+    border-color: #333 !important;
+    border-top-color: #5fafff !important;
+}
+
+/* Logo */
+.terminal-mode .logo-btn svg {
+    stroke: #666 !important;
+}
+
+.terminal-mode .logo-btn svg circle {
+    fill: #666 !important;
+}
+
+/* Remove fancy filters */
+.terminal-mode [class*="drop-shadow-"] {
+    filter: none !important;
+}
+
+/* ========== TERMINAL LIST ITEMS — protect from override ========== */
+.terminal-mode .terminal-list,
+.terminal-mode .terminal-list * {
+    color: inherit !important;
+    background: inherit !important;
+}
+
+.terminal-mode .terminal-list>div {
+    color: #d0d0d0 !important;
+    background: transparent !important;
+}
+
+.terminal-mode .terminal-list>div:hover {
+    background: #111 !important;
+}

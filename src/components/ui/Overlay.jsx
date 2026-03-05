@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { useStore } from '../../store/useStore'
 import TerminalPages from './TerminalPages'
 import StaggeredMenu from './StaggeredMenu'
-import VoidLogin from './VoidLogin'
 import { useIsMobile } from '../../hooks/useIsMobile'
 
 export default function Overlay() {
@@ -44,8 +43,6 @@ export default function Overlay() {
 
     return (
         <>
-            {/* THE VOID Login Gate */}
-            <VoidLogin />
             {/* Fade to Black Overlay (Only for extreme transitions if needed, currently kept transparent) */}
             <div
                 className="absolute inset-0 bg-black pointer-events-none z-[100] transition-opacity ease-in-out"

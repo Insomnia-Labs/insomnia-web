@@ -83,13 +83,27 @@ export default function VoidLogin() {
             .then(ok => {
                 if (ok) {
                     setStage('success')
-                    // scheduleSuccess will be called after render via the stage effect below
                 } else {
                     setStage('boot')
                 }
             })
             .catch(() => setStage('boot'))
     }, [stage])
+
+    /* Handle transition to chats upon success */
+    useEffect(() => {
+        if (stage === 'success') {
+            const timer = setTimeout(() => {
+                // Instantly unmount the simulation and mount ChatList behind the login screen
+                useStore.getState().setPostLoginView('chats')
+                setClosing(true)
+                setTimeout(() => {
+                    setShowVoidLogin(false)
+                }, 600)
+            }, 1000) // 1 second showing the success badge, then close and show chats
+            return () => clearTimeout(timer)
+        }
+    }, [stage, setShowVoidLogin])
 
     if (!showVoidLogin) return null
 
@@ -552,7 +566,6 @@ export default function VoidLogin() {
                             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24,
                             width: '100%',
                         }}>
-                            {/* Status badge */}
                             <div style={{
                                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
                             }}>
@@ -570,30 +583,12 @@ export default function VoidLogin() {
                                     color: 'rgba(167,139,250,.85)', letterSpacing: '.38em',
                                     textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.9,
                                 }}>
-                                    SESSION ACTIVE
+                                    CONNECTION ESTABLISHED
                                     <br />
                                     <span style={{ color: 'rgba(139,92,246,.4)', fontSize: '.55rem', letterSpacing: '.2em' }}>
-                                        TELEGRAM AUTHENTICATED
+                                        WARPING INTO THE VOID...
                                     </span>
                                 </div>
-                            </div>
-
-                            {/* Logout button */}
-                            <button
-                                className="vl-btn"
-                                id="void-logout-btn"
-                                onClick={handleLogout}
-                                style={{ marginTop: 8 }}
-                            >
-                                LOGOUT
-                            </button>
-
-                            <div style={{
-                                fontFamily: 'Courier New, monospace', fontSize: '.52rem',
-                                color: 'rgba(139,92,246,.2)', letterSpacing: '.18em',
-                                textTransform: 'uppercase', textAlign: 'center',
-                            }}>
-                                PRESS [ ESC ] TO CLOSE
                             </div>
                         </div>
                     )}

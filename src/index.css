@@ -1,8 +1,5 @@
 @import "@fontsource/space-grotesk/400.css";
 @import "@fontsource/space-grotesk/700.css";
-@import "@fontsource/inter/300.css";
-@import "@fontsource/inter/400.css";
-@import "@fontsource/inter/600.css";
 @import "@fontsource/jetbrains-mono/400.css";
 
 @tailwind base;
@@ -15,7 +12,7 @@ body {
   color: white;
   overflow-x: hidden;
   overflow-y: auto;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Manrope', sans-serif;
 }
 
 @media (min-width: 768px) {
@@ -171,10 +168,76 @@ button,
     transform: translateX(100%);
   }
 }
+
 /* Mobile scroll performance optimization */
 @media (max-width: 767px) {
   .overflow-y-auto {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
   }
+}
+
+/* Desktop-Rust UI Post-Login */
+.gradient-1 {
+  background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%);
+  color: #555;
+}
+
+.gradient-2 {
+  background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+  color: white;
+}
+
+.gradient-3 {
+  background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+  color: #444;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+.scrollbar-thin:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+#dashboard-view button,
+#dashboard-view .rail-item,
+#dashboard-view .menu-item,
+#dashboard-view .tree-item,
+.btn-premium {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: 1px solid transparent;
+}
+
+#dashboard-view button:hover:not(.logo-btn),
+#dashboard-view .rail-item:hover,
+#dashboard-view .menu-item:hover,
+#dashboard-view .tree-item:hover,
+.btn-premium:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+}
+
+.scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollable::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
 }

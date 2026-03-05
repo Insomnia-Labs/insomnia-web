@@ -119,6 +119,115 @@ export async function isAuthorized() {
     }
 }
 
+export async function getMe() {
+    const client = await getClient()
+    const me = await client.getMe()
+    return me
+}
+
+export async function getDialogs(limit = 20, folder = undefined) {
+    const client = await getClient()
+    const opts = { limit }
+    if (folder !== undefined) opts.folder = folder
+    const dialogs = await client.getDialogs(opts)
+    return dialogs
+}
+
+export async function getChatHistory(chatId, options = {}) {
+    const client = await getClient()
+    const limit = options.limit || 50
+    const offsetId = options.offsetId || 0
+    // getMessages expects a string/number id or an entity.
+    const messages = await client.getMessages(chatId, {
+        limit: limit,
+        offsetId: offsetId
+    })
+    return messages
+}
+
+export async function sendMessage(chatId, message) {
+    const client = await getClient()
+    return await client.sendMessage(chatId, { message })
+}
+
+const _avatarCache = new Map()
+
+export async function getProfilePhoto(entity) {
+    if (!entity) return null
+    const key = entity.id?.toString() || entity.toString()
+    if (_avatarCache.has(key)) return _avatarCache.get(key)
+
+    try {
+        const client = await getClient()
+        const buffer = await client.downloadProfilePhoto(entity, { isBig: false })
+        if (!buffer || buffer.length === 0) {
+            _avatarCache.set(key, null)
+            return null
+        }
+        const blob = new Blob([buffer], { type: 'image/jpeg' })
+        const url = URL.createObjectURL(blob)
+        _avatarCache.set(key, url)
+        return url
+    } catch {
+        _avatarCache.set(key, null)
+        return null
+    }
+}
+
+export async function getChatFolders() {
+    try {
+        const client = await getClient()
+        const result = await client.invoke(new Api.messages.GetDialogFilters())
+        // result can be DialogFilters (with .filters array) or an array directly
+        let filters = []
+        if (Array.isArray(result)) {
+            filters = result
+        } else if (result && Array.isArray(result.filters)) {
+            filters = result.filters
+        } else {
+            console.warn('[TG] getChatFolders: unexpected result shape', result?.className)
+            return []
+        }
+
+        // helper: extract numeric peer ID from InputPeer objects
+        const getPeerId = (peer) => {
+            if (!peer) return null
+            return (peer.userId || peer.chatId || peer.channelId)?.toString() || null
+        }
+
+        return filters
+            .filter(f => f.className === 'DialogFilter' || f.className === 'DialogFilterChatlist')
+            .map(f => {
+                // title can be a string or a TextWithEntities object
+                let title = f.title
+                if (title && typeof title === 'object') {
+                    title = title.text || title.toString()
+                }
+                return {
+                    id: f.id,
+                    title: title || 'Folder',
+                    emoji: f.emoticon || null,
+                    // peer lists for client-side filtering
+                    includePeers: (f.includePeers || []).map(getPeerId).filter(Boolean),
+                    excludePeers: (f.excludePeers || []).map(getPeerId).filter(Boolean),
+                    pinnedPeers: (f.pinnedPeers || []).map(getPeerId).filter(Boolean),
+                    // type flags
+                    contacts: !!f.contacts,
+                    nonContacts: !!f.nonContacts,
+                    groups: !!f.groups,
+                    broadcasts: !!f.broadcasts,
+                    bots: !!f.bots,
+                    excludeMuted: !!f.excludeMuted,
+                    excludeRead: !!f.excludeRead,
+                    excludeArchived: !!f.excludeArchived,
+                }
+            })
+    } catch (err) {
+        console.error('[TG] getChatFolders error:', err)
+        return []
+    }
+}
+
 export function clearSession() {
     localStorage.removeItem(SESSION_KEY)
     _client = null

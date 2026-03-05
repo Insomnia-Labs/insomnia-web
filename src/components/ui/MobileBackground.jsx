@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import MobileBlackHole from './MobileBlackHole'
+import { useStore } from '../../store/useStore'
 
 /* ── Typewriter hook ── */
 function useTypewriter(text, speed = 50) {
@@ -124,6 +125,7 @@ export default function MobileBackground() {
     const headline = useTypewriter('Cloud infrastructure,\nwithout limits.', 48)
     const scrollProgress = useRef(0)
     const containerRef = useRef()
+    const isMenuOpen = useStore((s) => s.isMenuOpen)
 
     const handleScroll = useCallback(() => {
         const el = containerRef.current
@@ -150,7 +152,7 @@ export default function MobileBackground() {
                 background: '#0a0a0f',
                 pointerEvents: 'none',
             }}>
-                <MobileBlackHole scrollProgress={scrollProgress} />
+                <MobileBlackHole scrollProgress={scrollProgress} isMenuOpen={isMenuOpen} />
             </div>
 
             <style>{`

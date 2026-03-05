@@ -53,7 +53,23 @@ export default function Dashboard() {
 
                     if (!allDialogsCache.current) {
                         try {
-                            allDialogsCache.current = await getDialogs(100, 0)
+                            const [mainChats, archiveChats] = await Promise.all([
+                                getDialogs(800, 0),
+                                getDialogs(400, 1)
+                            ])
+                            const combined = [...(Array.isArray(mainChats) ? mainChats : []), ...(Array.isArray(archiveChats) ? archiveChats : [])]
+
+                            // Deduplicate
+                            const seen = new Set()
+                            const unique = []
+                            for (const d of combined) {
+                                const eid = d.entity?.id?.toString()
+                                if (eid && !seen.has(eid)) {
+                                    seen.add(eid)
+                                    unique.push(d)
+                                }
+                            }
+                            allDialogsCache.current = unique
                         } catch (e) {
                             console.warn('Failed to fetch dialogs for filtering:', e)
                             allDialogsCache.current = []
@@ -69,8 +85,20 @@ export default function Dashboard() {
                         fetchedDialogs = fetchedDialogs.filter(chat => {
                             const entityId = chat.entity?.id?.toString()
                             if (!entityId) return false
-                            if (allIncluded.has(entityId)) return true
+
+                            // Exclude explicit peers
                             if (folder.excludePeers.includes(entityId)) return false
+
+                            // Always include explicit peers, bypassing type flags
+                            if (allIncluded.has(entityId)) return true
+
+                            // Exclude flags
+                            const isArchived = chat.folderId === 1 || chat.dialog?.folderId === 1
+                            if (folder.excludeArchived && isArchived) return false
+                            if (folder.excludeMuted && chat.dialog?.notifySettings?.muteUntil > (Date.now() / 1000)) return false
+                            if (folder.excludeRead && chat.unreadCount === 0) return false
+
+                            // Match type flags
                             const entity = chat.entity
                             const className = entity?.className || ''
                             if (folder.groups && (className === 'Chat' || className === 'ChatForbidden' || (className === 'Channel' && entity.megagroup))) return true
@@ -78,6 +106,7 @@ export default function Dashboard() {
                             if (folder.bots && entity?.bot) return true
                             if (folder.contacts && className === 'User' && !entity.bot && entity.contact) return true
                             if (folder.nonContacts && className === 'User' && !entity.bot && !entity.contact) return true
+
                             return false
                         })
                         // Pin pinned peers to top

@@ -37,6 +37,8 @@ export async function getClient() {
         useWSS: true, // Browser MUST use WebSocket transport
     })
 
+    _client.setLogLevel('error')
+
     await _client.connect()
     return _client
 }
@@ -152,26 +154,50 @@ export async function sendMessage(chatId, message) {
 
 const _avatarCache = new Map()
 
-export async function getProfilePhoto(entity) {
-    if (!entity) return null
-    const key = entity.id?.toString() || entity.toString()
-    if (_avatarCache.has(key)) return _avatarCache.get(key)
+// Concurrency queue for profile photos to prevent crashing connection
+let _activeAvatarFetches = 0
+const _avatarQueue = []
+
+async function processAvatarQueue() {
+    if (_activeAvatarFetches >= 3 || _avatarQueue.length === 0) return
+    _activeAvatarFetches++
+    const { entity, resolve } = _avatarQueue.shift()
 
     try {
         const client = await getClient()
         const buffer = await client.downloadProfilePhoto(entity, { isBig: false })
         if (!buffer || buffer.length === 0) {
-            _avatarCache.set(key, null)
-            return null
+            resolve(null)
+        } else {
+            const blob = new Blob([buffer], { type: 'image/jpeg' })
+            resolve(URL.createObjectURL(blob))
         }
-        const blob = new Blob([buffer], { type: 'image/jpeg' })
-        const url = URL.createObjectURL(blob)
-        _avatarCache.set(key, url)
-        return url
     } catch {
-        _avatarCache.set(key, null)
-        return null
+        resolve(null)
+    } finally {
+        _activeAvatarFetches--
+        processAvatarQueue()
     }
+}
+
+export async function getProfilePhoto(entity) {
+    if (!entity) return null
+    const key = entity.id?.toString() || entity.toString()
+    if (_avatarCache.has(key)) return _avatarCache.get(key)
+
+    // Set a temporary promise so multiple identical requests wait for same promise
+    if (!_avatarCache.has(key)) {
+        const promise = new Promise(resolve => {
+            _avatarQueue.push({ entity, resolve })
+            processAvatarQueue()
+        }).then(url => {
+            _avatarCache.set(key, url)
+            return url
+        })
+        _avatarCache.set(key, promise)
+    }
+
+    return await _avatarCache.get(key)
 }
 
 export async function getChatFolders() {
@@ -189,10 +215,12 @@ export async function getChatFolders() {
             return []
         }
 
+        console.log('[TG] Raw chat folders from Telegram:', filters)
+
         // helper: extract numeric peer ID from InputPeer objects
         const getPeerId = (peer) => {
             if (!peer) return null
-            return (peer.userId || peer.chatId || peer.channelId)?.toString() || null
+            return (peer.userId || peer.chatId || peer.channelId || peer.id || peer.peerId)?.toString() || null
         }
 
         return filters
@@ -201,12 +229,19 @@ export async function getChatFolders() {
                 // title can be a string or a TextWithEntities object
                 let title = f.title
                 if (title && typeof title === 'object') {
-                    title = title.text || title.toString()
+                    // fallback safely for TextWithEntities or other objects
+                    title = title.text || title.className || 'Folder'
                 }
+
+                let emoji = f.emoticon
+                if (emoji && typeof emoji !== 'string') {
+                    emoji = null // prevent React crash on complex animated emoji objects
+                }
+
                 return {
                     id: f.id,
-                    title: title || 'Folder',
-                    emoji: f.emoticon || null,
+                    title: typeof title === 'string' ? title : 'Folder',
+                    emoji: emoji || null,
                     // peer lists for client-side filtering
                     includePeers: (f.includePeers || []).map(getPeerId).filter(Boolean),
                     excludePeers: (f.excludePeers || []).map(getPeerId).filter(Boolean),

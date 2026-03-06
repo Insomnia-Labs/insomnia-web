@@ -148,12 +148,34 @@ export async function getChatHistory(chatId, options = {}) {
     const client = await getClient()
     const limit = options.limit || 50
     const offsetId = options.offsetId || 0
-    // getMessages expects a string/number id or an entity.
-    const messages = await client.getMessages(chatId, {
-        limit: limit,
-        offsetId: offsetId
-    })
-    return messages
+
+    let peerId = chatId;
+    if (typeof chatId === 'string' && /^-?\d+$/.test(chatId)) {
+        try {
+            const me = await client.getMe();
+            if (me && me.id && me.id.toString() === chatId) {
+                peerId = "me";
+            }
+        } catch (e) { }
+    }
+
+    try {
+        const messages = await client.getMessages(peerId, {
+            limit: limit,
+            offsetId: offsetId
+        })
+        return messages
+    } catch (err) {
+        if (err.message && err.message.includes("Could not find the input entity")) {
+            console.warn("[TG] Entity not found. Fetching dialogs to warm up cache...");
+            await client.getDialogs({ limit: 200 });
+            return await client.getMessages(peerId, {
+                limit: limit,
+                offsetId: offsetId
+            })
+        }
+        throw err;
+    }
 }
 
 export async function subscribeToMessages(chatId, callback) {
@@ -191,15 +213,107 @@ export async function subscribeToMessages(chatId, callback) {
     }
 }
 
+export async function subscribeToPresence(callback) {
+    const client = await getClient()
+
+    const handler = (event) => {
+        // GramJS raw events
+        let update = event
+        if (event && event.update) update = event.update // Sometimes wrapped in an event object
+
+        if (update && update.className === 'UpdateUserStatus') {
+            callback({
+                userId: update.userId?.toString(),
+                status: update.status
+            })
+        } else if (update && update.className === 'UpdateShort' && update.update?.className === 'UpdateUserStatus') {
+            callback({
+                userId: update.update.userId?.toString(),
+                status: update.update.status
+            })
+        }
+    }
+
+    client.addEventHandler(handler)
+
+    return () => {
+        client.removeEventHandler(handler)
+    }
+}
+
+export async function subscribeToTyping(callback) {
+    const client = await getClient()
+
+    const handler = (event) => {
+        let update = event
+        if (event && event.update) update = event.update
+
+        if (update?.className === 'UpdateUserTyping') {
+            callback({
+                chatId: update.userId?.toString(),
+                userId: update.userId?.toString(),
+                action: update.action?.className
+            })
+        } else if (update?.className === 'UpdateChatUserTyping') {
+            // Provide neg (-) format if it's a group to match ChatId convention in GramJS dialogs but GramJS sometimes uses raw id
+            callback({
+                chatId: update.chatId?.toString(),
+                userId: update.userId?.toString(),
+                action: update.action?.className
+            })
+        } else if (update?.className === 'UpdateChannelUserTyping') {
+            // Same logic for channel
+            callback({
+                chatId: '-100' + update.channelId?.toString(),
+                userId: update.userId?.toString(),
+                action: update.action?.className
+            })
+        } else if (update?.className === 'UpdateShort' && update.update?.className === 'UpdateUserTyping') {
+            callback({
+                chatId: update.update.userId?.toString(),
+                userId: update.update.userId?.toString(),
+                action: update.update.action?.className
+            })
+        }
+    }
+
+    client.addEventHandler(handler)
+
+    return () => {
+        client.removeEventHandler(handler)
+    }
+}
+
 export async function sendMessage(chatId, message) {
     const client = await getClient()
 
-    // 1. Resolve peer to proper InputPeer
-    const peer = await client.getInputEntity(chatId)
+    let peerId = chatId;
+    if (typeof chatId === 'string' && /^-?\d+$/.test(chatId)) {
+        try {
+            const me = await client.getMe();
+            if (me && me.id && me.id.toString() === chatId) {
+                peerId = "me";
+            }
+        } catch (e) { }
+    }
 
-    // 2. Ghost Mode Delay: Minimum 15 seconds into the future
+    // 1. Resolve peer to proper InputPeer
+    let peer;
+    try {
+        peer = await client.getInputEntity(peerId)
+    } catch (err) {
+        if (err.message && err.message.includes("Could not find the input entity")) {
+            console.warn("[TG] Entity not found for sendMessage. Warming up cache...");
+            await client.getDialogs({ limit: 200 });
+            peer = await client.getInputEntity(peerId)
+        } else {
+            throw err;
+        }
+    }
+
+    // 2. Ghost Mode Delay: Minimum 10-12 seconds into the future (Telegram API limit)
     // Injects the message into the datacenter's internal cron-worker queue
-    const stealthScheduleTime = Math.floor(Date.now() / 1000) + 15
+    const stealthScheduleTime = Math.floor(Date.now() / 1000) + 12
 
     // 3. Raw Request with Obfuscation flags (silent, background, no_webpage)
     const sendRequest = new Api.messages.SendMessage({

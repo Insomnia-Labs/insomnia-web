@@ -95,7 +95,12 @@ export default function VoidLogin() {
         if (stage === 'success') {
             const timer = setTimeout(() => {
                 // Instantly unmount the simulation and mount ChatList behind the login screen
-                useStore.getState().setPostLoginView('chats')
+                const state = useStore.getState()
+                if (state.selectedChatId) {
+                    state.setPostLoginView('dashboard')
+                } else {
+                    state.setPostLoginView('chats')
+                }
                 setClosing(true)
                 setTimeout(() => {
                     setShowVoidLogin(false)

@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useState, useRef } from 'react'
 import { useStore } from '../../store/useStore'
-import { getChatHistory, getDialogs, getMe, getProfilePhoto, getChatFolders, sendMessage, subscribeToMessages } from '../../services/telegramClient'
+import { getChatHistory, getDialogs, getMe, getProfilePhoto, getChatFolders, sendMessage, subscribeToMessages, subscribeToPresence, subscribeToTyping } from '../../services/telegramClient'
 import { motion, AnimatePresence } from 'framer-motion'
 import './terminal-mode.css'
 
@@ -18,6 +18,7 @@ export default function Dashboard() {
     const [showChatMenu, setShowChatMenu] = useState(false)
     const [chatFolders, setChatFolders] = useState([])
     const [terminalMode, setTerminalMode] = useState(true)
+    const [typingUsers, setTypingUsers] = useState({})
     const [draftMessage, setDraftMessage] = useState('')
     const chatMenuRef = useRef(null)
     const allDialogsCache = useRef(null) // cache all dialogs for custom folder filtering
@@ -176,6 +177,107 @@ export default function Dashboard() {
         fetchChats()
         return () => { mounted = false }
     }, [chatFolder])
+
+    // Subscribe to realtime presence updates
+    useEffect(() => {
+        if (activeSection !== 'chats') return
+
+        let mounted = true
+        let unsubscribe = null
+
+        subscribeToPresence((update) => {
+            if (!mounted || !update.userId || !update.status) return
+
+            setDialogs(prevDialogs => {
+                const newDialogs = [...prevDialogs]
+                const chatIndex = newDialogs.findIndex(d => d.entity?.id?.toString() === update.userId)
+                if (chatIndex !== -1) {
+                    newDialogs[chatIndex] = {
+                        ...newDialogs[chatIndex],
+                        entity: {
+                            ...newDialogs[chatIndex].entity,
+                            status: update.status
+                        }
+                    }
+                }
+                return newDialogs
+            })
+        }).then(unsub => {
+            unsubscribe = unsub
+        })
+
+        return () => {
+            mounted = false
+            if (unsubscribe) unsubscribe()
+        }
+    }, [activeSection])
+
+    // Subscribe to realtime typing updates
+    useEffect(() => {
+        if (activeSection !== 'chats') return
+
+        let mounted = true
+        let unsubscribe = null
+
+        subscribeToTyping((update) => {
+            if (!mounted) return
+
+            // Generate all possible variations of the chatId to guarantee a match
+            // with how it's stored in the dialogs array, specifically for supergroups (-100).
+            const rawChatId = update.chatId?.replace('-100', '')?.replace('-', '')
+
+            const possibleIds = [
+                update.chatId,
+                rawChatId,
+                `-${rawChatId}`,
+                `-100${rawChatId}`
+            ].filter(Boolean)
+
+            let actionText = 'typing...'
+            if (update.action) {
+                if (update.action.includes('RecordAudio') || update.action.includes('RecordVoice')) actionText = 'recording voice...'
+                else if (update.action.includes('RecordVideo')) actionText = 'recording video...'
+                else if (update.action.includes('UploadPhoto')) actionText = 'sending photo...'
+                else if (update.action.includes('UploadVideo')) actionText = 'sending video...'
+                else if (update.action.includes('UploadDocument')) actionText = 'sending file...'
+                else if (update.action.includes('ChooseSticker')) actionText = 'choosing sticker...'
+            }
+
+            setTypingUsers(prev => {
+                const next = { ...prev }
+                possibleIds.forEach(id => {
+                    next[id] = { time: Date.now(), text: actionText }
+                })
+                return next
+            })
+        }).then(unsub => {
+            unsubscribe = unsub
+        })
+
+        // Auto-clear typing status after 4 seconds
+        const interval = setInterval(() => {
+            setTypingUsers(prev => {
+                const now = Date.now()
+                const next = { ...prev }
+                let changed = false
+                Object.keys(next).forEach(key => {
+                    const status = next[key]
+                    const statusTime = typeof status === 'object' ? status.time : status
+                    if (now - statusTime > 4000) {
+                        delete next[key]
+                        changed = true
+                    }
+                })
+                return changed ? next : prev
+            })
+        }, 1000)
+
+        return () => {
+            mounted = false
+            clearInterval(interval)
+            if (unsubscribe) unsubscribe()
+        }
+    }, [activeSection])
 
     // Refresh folders & clear cache when entering chats section
     useEffect(() => {
@@ -686,36 +788,42 @@ export default function Dashboard() {
                                             style={{ padding: '3px 12px', cursor: 'pointer', color: activeTab === item.id ? '#5fafff' : '#b0b0b0', background: activeTab === item.id ? '#111' : 'transparent', flexShrink: 0 }}
                                         >{activeTab === item.id ? '>' : ' '} {item.label.toLowerCase()}/</div>
                                     ))}
-                                    {activeSection === 'chats' && dialogs.map((chat) => {
+                                    {activeSection === 'chats' && dialogs.map((chat, index) => {
                                         const idStr = chat.entity?.id?.toString() || Math.random().toString()
                                         const isMe = idStr === myId?.toString()
-                                        const title = isMe ? 'saved_messages' : (chat.title || 'deleted').toLowerCase().replace(/\s+/g, '_')
+
+                                        const emojiRegex = /[\u{1f300}-\u{1f5ff}\u{1f900}-\u{1f9ff}\u{1f600}-\u{1f64f}\u{1f680}-\u{1f6ff}\u{2600}-\u{26ff}\u{2700}-\u{27bf}\u{1f1e6}-\u{1f1ff}\u{1f191}-\u{1f251}\u{1f004}\u{1f0cf}\u{1f170}-\u{1f171}\u{1f17e}-\u{1f17f}\u{1f18e}\u{3030}\u{2b50}\u{2b55}\u{2934}-\u{2935}\u{2b05}-\u{2b07}\u{2b1b}-\u{2b1c}\u{3297}\u{3299}\u{303d}\u{00a9}\u{00ae}\u{2122}\u{23f3}\u{24c2}\u{23e9}-\u{23ef}\u{25b6}\u{23f8}-\u{23fa}]/gu
+                                        const cleanStr = (chat.title || 'deleted').replace(emojiRegex, '').trim()
+                                        const title = isMe ? 'saved_messages' : cleanStr.toLowerCase().replace(/\s+/g, '_').replace(/_+/g, '_').replace(/_$/, '')
+
                                         const isSelected = selectedChatId === idStr
                                         const unreadCount = chat.unreadCount || 0
                                         const msgTime = chat.message?.date ? new Date(chat.message.date * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+
+                                        const isOnline = chat.entity?.status?.className === 'UserStatusOnline';
 
                                         return (
                                             <div
                                                 key={idStr}
                                                 onClick={() => setSelectedChatId(idStr)}
-                                                style={{
-                                                    padding: '7px 12px',
-                                                    cursor: 'pointer',
-                                                    color: isSelected ? '#5fafff' : '#b0b0b0',
-                                                    background: isSelected ? '#111' : 'transparent',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    display: 'flex',
-                                                    flexShrink: 0,
-                                                    gap: '0',
-                                                    borderBottom: '1px solid #1a1a1a',
-                                                }}
+                                                className={`flex items-center gap-1.5 px-3 py-1.5 cursor-pointer shrink-0 transition-colors border-b border-[#1a1a1a] ${isSelected ? 'bg-[#111] text-[#5fafff]' : 'bg-transparent text-[#b0b0b0] hover:bg-[#0a0a0a] hover:text-[#ccc]'}`}
                                             >
-                                                <span style={{ color: isSelected ? '#5fafff' : '#555', flexShrink: 0 }}>{isSelected ? '> ' : '  '}</span>
-                                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</span>
-                                                {unreadCount > 0 && <span style={{ color: '#d75f5f', marginLeft: '4px', flexShrink: 0 }}>({unreadCount})</span>}
-                                                {msgTime && <span style={{ color: '#444', marginLeft: 'auto', paddingLeft: '8px', flexShrink: 0 }}>{msgTime}</span>}
+                                                <span className="shrink-0 flex items-center justify-center w-2 mr-0.5" style={{ color: isSelected ? '#5fafff' : '#555' }}>
+                                                    {isSelected ? '>' : ''}
+                                                </span>
+                                                <span className="shrink-0 flex items-center justify-center w-2" style={{ color: '#00ff41', fontSize: '10px' }}>
+                                                    {isOnline ? '●' : ' '}
+                                                </span>
+                                                <span className="shrink-0 w-6 text-right mr-1.5" style={{ color: isSelected ? '#5fafff' : '#555' }}>
+                                                    {index + 1}
+                                                </span>
+                                                <span className="truncate" style={{ color: typingUsers[idStr] ? '#5fafff' : 'inherit' }}>{title || 'unknown'}</span>
+                                                {unreadCount > 0 && !typingUsers[idStr] && (
+                                                    <span className="shrink-0" style={{ color: '#d75f5f' }}>({unreadCount})</span>
+                                                )}
+                                                <span className="shrink-0 ml-auto pl-2" style={{ color: typingUsers[idStr] ? '#5fafff' : '#444', fontStyle: typingUsers[idStr] ? 'italic' : 'normal' }}>
+                                                    {typingUsers[idStr] ? (typeof typingUsers[idStr] === 'object' ? typingUsers[idStr].text : 'typing...') : msgTime}
+                                                </span>
                                             </div>
                                         )
                                     })}
@@ -912,7 +1020,10 @@ export default function Dashboard() {
                                             <h2 className="text-2xl font-manrope font-medium text-white flex items-center gap-3">
                                                 {navItems.find(i => i.id === activeTab)?.label}
                                             </h2>
-                                            <span className="text-sm text-[#787c99] mt-1 font-mono tracking-wide">ID: {selectedChatId || 'Облако'}</span>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className="text-sm text-[#787c99] font-mono tracking-wide">ID: {selectedChatId || 'Облако'}</span>
+                                                <button onClick={() => setPostLoginView('chats')} className="text-[11px] px-2 py-0.5 rounded bg-white/5 text-[#7aa2f7]/80 hover:bg-[#7aa2f7]/10 hover:text-[#7aa2f7] transition-colors shadow-sm">Изменить</button>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -934,7 +1045,10 @@ export default function Dashboard() {
                                             <h2 className="text-2xl font-manrope font-medium text-white flex items-center gap-3">
                                                 {dialogs.find(d => d.entity?.id?.toString() === selectedChatId)?.title || (selectedChatId === myId?.toString() ? "Saved Messages" : "Чат")}
                                             </h2>
-                                            <span className="text-sm text-[#787c99] mt-1 font-mono tracking-wide">ID: {selectedChatId || 'Облако'}</span>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className="text-sm text-[#787c99] font-mono tracking-wide">ID: {selectedChatId || 'Облако'}</span>
+                                                <button onClick={() => setPostLoginView('chats')} className="text-[11px] px-2 py-0.5 rounded bg-white/5 text-[#7aa2f7]/80 hover:bg-[#7aa2f7]/10 hover:text-[#7aa2f7] transition-colors shadow-sm">Изменить</button>
+                                            </div>
                                         </div>
                                     </div>
                                     {renderChatMessages()}

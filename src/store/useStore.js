@@ -19,6 +19,13 @@ export const useStore = create((set) => ({
     setIsMenuOpen: (isMenuOpen) => set({ isMenuOpen }),
     postLoginView: null, // null | 'chats' | 'dashboard'
     setPostLoginView: (postLoginView) => set({ postLoginView }),
-    selectedChatId: null,
-    setSelectedChatId: (selectedChatId) => set({ selectedChatId }),
+    selectedChatId: localStorage.getItem('insomnia_selectedChatId') || null,
+    setSelectedChatId: (selectedChatId) => {
+        if (selectedChatId) {
+            localStorage.setItem('insomnia_selectedChatId', selectedChatId)
+        } else {
+            localStorage.removeItem('insomnia_selectedChatId')
+        }
+        set({ selectedChatId })
+    },
 }))

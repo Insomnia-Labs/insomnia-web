@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useState, useRef } from 'react'
 import { useStore } from '../../store/useStore'
-import { getChatHistory, getDialogs, getMe, getProfilePhoto, getChatFolders, sendMessage } from '../../services/telegramClient'
+import { getChatHistory, getDialogs, getMe, getProfilePhoto, getChatFolders, sendMessage, subscribeToMessages } from '../../services/telegramClient'
 import { motion, AnimatePresence } from 'framer-motion'
 import './terminal-mode.css'
 
@@ -17,7 +17,7 @@ export default function Dashboard() {
     const [chatFolder, setChatFolder] = useState(0) // 0 = regular, 1 = archive, 2+ = custom folders
     const [showChatMenu, setShowChatMenu] = useState(false)
     const [chatFolders, setChatFolders] = useState([])
-    const [terminalMode, setTerminalMode] = useState(false)
+    const [terminalMode, setTerminalMode] = useState(true)
     const [draftMessage, setDraftMessage] = useState('')
     const chatMenuRef = useRef(null)
     const allDialogsCache = useRef(null) // cache all dialogs for custom folder filtering
@@ -42,9 +42,26 @@ export default function Dashboard() {
                         console.warn('Failed to fetch folder', chatFolder, ':', e)
                         fetchedDialogs = await getDialogs(50, 0)
                     }
-                    // Cache all dialogs when viewing folder 0
-                    if (chatFolder === 0 && Array.isArray(fetchedDialogs)) {
-                        allDialogsCache.current = fetchedDialogs
+
+                    if (Array.isArray(fetchedDialogs)) {
+                        const seen = new Set()
+                        const unique = []
+                        for (const d of fetchedDialogs) {
+                            const eid = d.entity?.id?.toString()
+                            // Skip deactivated or migrated legacy groups (avoids duplicates when a group was upgraded to a supergroup)
+                            if (d.entity?.migratedTo || d.entity?.deactivated) continue
+
+                            if (eid && !seen.has(eid)) {
+                                seen.add(eid)
+                                unique.push(d)
+                            }
+                        }
+                        fetchedDialogs = unique
+
+                        // Cache all dialogs when viewing folder 0
+                        if (chatFolder === 0) {
+                            allDialogsCache.current = fetchedDialogs
+                        }
                     }
                 } else {
                     // Custom folder — use cached dialogs or fetch once
@@ -64,6 +81,8 @@ export default function Dashboard() {
                             const unique = []
                             for (const d of combined) {
                                 const eid = d.entity?.id?.toString()
+                                if (d.entity?.migratedTo || d.entity?.deactivated) continue
+
                                 if (eid && !seen.has(eid)) {
                                     seen.add(eid)
                                     unique.push(d)
@@ -203,7 +222,25 @@ export default function Dashboard() {
             }
         }
         fetchHistory()
-        return () => { mounted = false }
+
+        // Setup real-time listener for incoming messages
+        let unsubscribe = null
+        subscribeToMessages(selectedChatId, (newMessage) => {
+            if (mounted) {
+                setMessages(prev => {
+                    // Avoid duplicating optimistic messages or already received updates
+                    if (prev.some(m => m.id === newMessage.id)) return prev
+                    return [newMessage, ...prev]
+                })
+            }
+        }).then(unsub => {
+            unsubscribe = unsub
+        })
+
+        return () => {
+            mounted = false
+            if (unsubscribe) unsubscribe()
+        }
     }, [selectedChatId])
 
     const handleBack = () => {

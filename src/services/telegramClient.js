@@ -7,6 +7,7 @@
 import { TelegramClient, Api } from 'telegram'
 import { StringSession } from 'telegram/sessions/index.js'
 import { computeCheck } from 'telegram/Password.js'
+import { NewMessage } from 'telegram/events/index.js'
 
 const API_ID = Number(import.meta.env.VITE_TELEGRAM_API_ID)
 const API_HASH = import.meta.env.VITE_TELEGRAM_API_HASH
@@ -40,6 +41,14 @@ export async function getClient() {
     _client.setLogLevel('error')
 
     await _client.connect()
+
+    // As soon as we connect, force the session offline so downloading chats doesn't trigger "online"
+    try {
+        await _client.invoke(new Api.account.UpdateStatus({ offline: true }))
+    } catch (e) {
+        console.warn('Failed to force offline status on connect:', e)
+    }
+
     return _client
 }
 
@@ -147,9 +156,74 @@ export async function getChatHistory(chatId, options = {}) {
     return messages
 }
 
+export async function subscribeToMessages(chatId, callback) {
+    const client = await getClient()
+
+    const handler = async (event) => {
+        const message = event.message
+        if (!message) return
+
+        // Extract chat ID depending on the peer type
+        const pId = message.peerId
+        const eventChatId = pId?.userId?.toString() || pId?.channelId?.toString() || pId?.chatId?.toString() || message.chatId?.toString()
+
+        if (eventChatId === chatId.toString()) {
+            // NewMessage events usually don't populate the sender object immediately
+            try {
+                if (typeof message.getSender === 'function') {
+                    message.sender = await message.getSender()
+                }
+            } catch (err) {
+                console.warn('[TG] Failed to get sender for realtime message', err)
+            }
+
+            callback(message)
+        }
+    }
+
+    // Passive real-time connection from WebSockets pushes.
+    // DOES NOT trigger the server-side online status heuristic.
+    client.addEventHandler(handler, new NewMessage({}))
+
+    // Provide unsubscribe
+    return () => {
+        client.removeEventHandler(handler, new NewMessage({}))
+    }
+}
+
 export async function sendMessage(chatId, message) {
     const client = await getClient()
-    return await client.sendMessage(chatId, { message })
+
+    // 1. Resolve peer to proper InputPeer
+    const peer = await client.getInputEntity(chatId)
+
+    // 2. Ghost Mode Delay: Minimum 15 seconds into the future
+    // Injects the message into the datacenter's internal cron-worker queue
+    const stealthScheduleTime = Math.floor(Date.now() / 1000) + 15
+
+    // 3. Raw Request with Obfuscation flags (silent, background, no_webpage)
+    const sendRequest = new Api.messages.SendMessage({
+        peer: peer,
+        message: message,
+        randomId: BigInt(Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)),
+        scheduleDate: stealthScheduleTime, // The core of the stealth logic
+        silent: true,      // Obfuscation flag
+        background: true,  // Obfuscation flag
+        noWebpage: true,   // Obfuscation flag
+        clearDraft: true
+    })
+
+    // 4. Wrap in InvokeWithoutUpdates to strictly block "B" side presence broadcasts
+    const stealthRequest = new Api.InvokeWithoutUpdates({
+        query: sendRequest
+    })
+
+    // To prevent any residual TCP leaks marking us online
+    try { await client.invoke(new Api.account.UpdateStatus({ offline: true })) } catch (e) { }
+    const result = await client.invoke(stealthRequest)
+    try { await client.invoke(new Api.account.UpdateStatus({ offline: true })) } catch (e) { }
+
+    return result
 }
 
 const _avatarCache = new Map()

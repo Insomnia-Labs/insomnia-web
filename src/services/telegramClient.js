@@ -205,11 +205,12 @@ export async function subscribeToMessages(chatId, callback) {
 
     // Passive real-time connection from WebSockets pushes.
     // DOES NOT trigger the server-side online status heuristic.
-    client.addEventHandler(handler, new NewMessage({}))
+    const messageFilter = new NewMessage({})
+    client.addEventHandler(handler, messageFilter)
 
     // Provide unsubscribe
     return () => {
-        client.removeEventHandler(handler, new NewMessage({}))
+        client.removeEventHandler(handler, messageFilter)
     }
 }
 

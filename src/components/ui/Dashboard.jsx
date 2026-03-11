@@ -4,6 +4,11 @@ import { getChatHistory, getDialogs, getMe, getProfilePhoto, getChatFolders, sen
 import { motion, AnimatePresence } from 'framer-motion'
 import './terminal-mode.css'
 
+const HISTORY_BATCH_SIZE = 100
+const HISTORY_TOP_THRESHOLD = 48
+const STICK_TO_BOTTOM_THRESHOLD = 120
+const EXPORT_BATCH_DELAY_MS = 140
+
 export default function Dashboard() {
     const { selectedChatId, setPostLoginView, setSelectedChatId } = useStore()
     const [messages, setMessages] = useState([])
@@ -20,12 +25,179 @@ export default function Dashboard() {
     const [terminalMode, setTerminalMode] = useState(true)
     const [typingUsers, setTypingUsers] = useState({})
     const [draftMessage, setDraftMessage] = useState('')
+    const [hasMoreHistory, setHasMoreHistory] = useState(true)
+    const [loadingOlderHistory, setLoadingOlderHistory] = useState(false)
+    const [showExportMenu, setShowExportMenu] = useState(false)
+    const [isExportingHistory, setIsExportingHistory] = useState(false)
+    const [exportedHistoryCount, setExportedHistoryCount] = useState(0)
+    const [exportHistoryError, setExportHistoryError] = useState(null)
     const chatMenuRef = useRef(null)
+    const exportMenuRef = useRef(null)
+    const chatContainerRef = useRef(null)
     const allDialogsCache = useRef(null) // cache all dialogs for custom folder filtering
     const chatFoldersRef = useRef([]) // ref to avoid triggering re-fetches
+    const activeChatIdRef = useRef(selectedChatId)
+    const loadingOlderHistoryRef = useRef(false)
+    const pendingScrollRestoreRef = useRef(null)
+    const shouldScrollToBottomRef = useRef(false)
+    const exportCancelRef = useRef(false)
+
+    const getMessageIdKey = (message) => {
+        if (message?.id === undefined || message?.id === null) return ''
+        return message.id.toString()
+    }
+
+    const isNearBottom = (el) => {
+        const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+        return distanceToBottom <= STICK_TO_BOTTOM_THRESHOLD
+    }
+
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+    const sanitizeFileName = (value) => {
+        const base = (value || 'chat_history').toString().trim()
+        const safe = base
+            .normalize('NFKD')
+            .replace(/[^\w\- .()]+/g, '_')
+            .replace(/\s+/g, '_')
+            .replace(/_+/g, '_')
+            .replace(/^_+|_+$/g, '')
+        return safe || 'chat_history'
+    }
+
+    const getCurrentChatTitle = () => {
+        const dialogTitle = dialogs.find(d => d.entity?.id?.toString() === selectedChatId)?.title
+        if (dialogTitle) return dialogTitle
+        if (selectedChatId === myId?.toString()) return 'Saved Messages'
+        return `chat_${selectedChatId || 'unknown'}`
+    }
+
+    const formatExportMessageLine = (msg) => {
+        const timestamp = msg?.date
+            ? new Date(msg.date * 1000).toLocaleString('ru-RU', { hour12: false })
+            : 'unknown_time'
+        const senderName = msg?.out
+            ? 'you'
+            : (msg?.sender?.firstName || msg?.sender?.title || 'unknown')
+
+        if (msg?.message && msg.message.trim().length > 0) {
+            const safeText = msg.message.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+            return `[${timestamp}] <${senderName}> ${safeText}`
+        }
+
+        const media = msg?.media
+        if (media?.photo) return `[${timestamp}] <${senderName}> [photo]`
+        if (media?.webpage) return `[${timestamp}] <${senderName}> [link] ${media.webpage.url || media.webpage.displayUrl || ''}`.trim()
+        if (media?.document) {
+            const attrs = Array.isArray(media.document.attributes) ? media.document.attributes : []
+            const filenameAttr = attrs.find(a => a.className === 'DocumentAttributeFilename')
+            const fileName = filenameAttr?.fileName || 'file'
+            const mime = media.document.mimeType || 'application/octet-stream'
+            return `[${timestamp}] <${senderName}> [document] ${fileName} (${mime})`
+        }
+        return `[${timestamp}] <${senderName}> [attachment]`
+    }
+
+    const collectFullChatHistory = async (chatId) => {
+        const allMessages = []
+        const seenIds = new Set()
+        let offsetId = 0
+
+        while (true) {
+            if (exportCancelRef.current) {
+                throw new Error('EXPORT_CANCELLED')
+            }
+
+            const batch = await getChatHistory(chatId, {
+                limit: HISTORY_BATCH_SIZE,
+                offsetId
+            })
+
+            if (!Array.isArray(batch) || batch.length === 0) break
+
+            const uniqueBatch = batch.filter(msg => {
+                const key = getMessageIdKey(msg)
+                if (!key || seenIds.has(key)) return false
+                seenIds.add(key)
+                return true
+            })
+
+            if (uniqueBatch.length === 0) break
+
+            allMessages.push(...uniqueBatch)
+            setExportedHistoryCount(allMessages.length)
+
+            const oldestMessage = uniqueBatch[uniqueBatch.length - 1]
+            if (!oldestMessage?.id || batch.length < HISTORY_BATCH_SIZE) break
+            offsetId = oldestMessage.id
+
+            await delay(EXPORT_BATCH_DELAY_MS)
+        }
+
+        return allMessages
+    }
+
+    const handleExportFullHistory = async () => {
+        const chatId = activeChatIdRef.current
+        if (!chatId || isExportingHistory) return
+
+        setExportHistoryError(null)
+        setExportedHistoryCount(0)
+        setIsExportingHistory(true)
+        exportCancelRef.current = false
+
+        try {
+            const allMessagesNewestFirst = await collectFullChatHistory(chatId)
+            if (allMessagesNewestFirst.length === 0) {
+                throw new Error('EMPTY_HISTORY')
+            }
+
+            const chatTitle = getCurrentChatTitle()
+            const generatedAt = new Date().toLocaleString('ru-RU', { hour12: false })
+            const lines = allMessagesNewestFirst
+                .slice()
+                .reverse()
+                .map(formatExportMessageLine)
+
+            const content = [
+                `Chat: ${chatTitle}`,
+                `Chat ID: ${chatId}`,
+                `Exported at: ${generatedAt}`,
+                `Messages: ${allMessagesNewestFirst.length}`,
+                '',
+                ...lines
+            ].join('\n')
+
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+            a.href = url
+            a.download = `${sanitizeFileName(chatTitle)}_${stamp}.txt`
+            document.body.appendChild(a)
+            a.click()
+            a.remove()
+            URL.revokeObjectURL(url)
+            setShowExportMenu(false)
+        } catch (err) {
+            if (err?.message === 'EXPORT_CANCELLED') {
+                setExportHistoryError('Экспорт отменен')
+            } else if (err?.message === 'EMPTY_HISTORY') {
+                setExportHistoryError('В этом чате пока нет сообщений для экспорта')
+            } else if (err?.message?.includes?.('FLOOD_WAIT')) {
+                setExportHistoryError('Telegram временно ограничил частоту запросов. Попробуйте позже.')
+            } else {
+                setExportHistoryError('Не удалось экспортировать историю')
+            }
+        } finally {
+            setIsExportingHistory(false)
+            exportCancelRef.current = false
+        }
+    }
 
     // Keep ref in sync
     useEffect(() => { chatFoldersRef.current = chatFolders }, [chatFolders])
+    useEffect(() => { activeChatIdRef.current = selectedChatId }, [selectedChatId])
 
     useEffect(() => {
         let mounted = true
@@ -295,31 +467,153 @@ export default function Dashboard() {
             if (chatMenuRef.current && !chatMenuRef.current.contains(e.target)) {
                 setShowChatMenu(false)
             }
+            if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
+                setShowExportMenu(false)
+            }
         }
         document.addEventListener('mousedown', handleClick)
         return () => document.removeEventListener('mousedown', handleClick)
     }, [])
 
+    // Close chat on Escape
     useEffect(() => {
-        if (!selectedChatId) return
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                setSelectedChatId(null)
+            }
+        }
+        document.addEventListener('keydown', handleKeyDown)
+        return () => document.removeEventListener('keydown', handleKeyDown)
+    }, [setSelectedChatId])
+
+    const loadOlderHistory = async () => {
+        const chatId = activeChatIdRef.current
+        if (!chatId || loading || loadingOlderHistoryRef.current || !hasMoreHistory || messages.length === 0) return
+
+        const oldestLoadedMessage = messages[messages.length - 1]
+        const oldestMessageId = oldestLoadedMessage?.id
+        if (!oldestMessageId) {
+            setHasMoreHistory(false)
+            return
+        }
+
+        const el = chatContainerRef.current
+        pendingScrollRestoreRef.current = el
+            ? { previousTop: el.scrollTop, previousHeight: el.scrollHeight }
+            : null
+
+        loadingOlderHistoryRef.current = true
+        setLoadingOlderHistory(true)
+
+        try {
+            const olderMessages = await getChatHistory(chatId, {
+                limit: HISTORY_BATCH_SIZE,
+                offsetId: oldestMessageId
+            })
+
+            if (activeChatIdRef.current !== chatId) {
+                pendingScrollRestoreRef.current = null
+                return
+            }
+
+            if (!Array.isArray(olderMessages) || olderMessages.length === 0) {
+                setHasMoreHistory(false)
+                pendingScrollRestoreRef.current = null
+                return
+            }
+
+            const knownIds = new Set(messages.map(msg => getMessageIdKey(msg)).filter(Boolean))
+            const uniqueOlderMessages = olderMessages.filter(msg => {
+                const key = getMessageIdKey(msg)
+                return key && !knownIds.has(key)
+            })
+
+            if (uniqueOlderMessages.length === 0) {
+                setHasMoreHistory(false)
+                pendingScrollRestoreRef.current = null
+                return
+            }
+
+            setMessages(prev => {
+                const prevIds = new Set(prev.map(msg => getMessageIdKey(msg)).filter(Boolean))
+                const trulyUniqueOlder = uniqueOlderMessages.filter(msg => {
+                    const key = getMessageIdKey(msg)
+                    return key && !prevIds.has(key)
+                })
+
+                if (trulyUniqueOlder.length === 0) {
+                    pendingScrollRestoreRef.current = null
+                    return prev
+                }
+
+                return [...prev, ...trulyUniqueOlder]
+            })
+
+            if (olderMessages.length < HISTORY_BATCH_SIZE) {
+                setHasMoreHistory(false)
+            }
+        } catch (err) {
+            console.error('Failed to load older chat history:', err)
+            pendingScrollRestoreRef.current = null
+        } finally {
+            loadingOlderHistoryRef.current = false
+            if (activeChatIdRef.current === chatId) {
+                setLoadingOlderHistory(false)
+            }
+        }
+    }
+
+    const handleChatScroll = () => {
+        const el = chatContainerRef.current
+        if (!el || loading || loadingOlderHistoryRef.current || !hasMoreHistory) return
+        if (el.scrollTop <= HISTORY_TOP_THRESHOLD) {
+            loadOlderHistory()
+        }
+    }
+
+    useEffect(() => {
+        if (!selectedChatId) {
+            exportCancelRef.current = true
+            loadingOlderHistoryRef.current = false
+            pendingScrollRestoreRef.current = null
+            shouldScrollToBottomRef.current = false
+            setMessages([])
+            setHasMoreHistory(false)
+            setLoadingOlderHistory(false)
+            setLoading(false)
+            setError(null)
+            setShowExportMenu(false)
+            setIsExportingHistory(false)
+            setExportedHistoryCount(0)
+            setExportHistoryError(null)
+            return
+        }
 
         let mounted = true
+        loadingOlderHistoryRef.current = false
+        pendingScrollRestoreRef.current = null
+        shouldScrollToBottomRef.current = false
         setLoading(true)
         setError(null)
+        setLoadingOlderHistory(false)
+        setHasMoreHistory(true)
 
         const fetchHistory = async () => {
             try {
-                // Fetch up to 100 messages for the initial view
-                const history = await getChatHistory(selectedChatId, { limit: 100 })
+                const history = await getChatHistory(selectedChatId, { limit: HISTORY_BATCH_SIZE })
                 if (mounted) {
-                    setMessages(history)
+                    const normalizedHistory = Array.isArray(history) ? history : []
+                    setMessages(normalizedHistory)
+                    setHasMoreHistory(normalizedHistory.length === HISTORY_BATCH_SIZE)
+                    shouldScrollToBottomRef.current = true
                     setLoading(false)
                 }
             } catch (err) {
-                console.error("Failed to load chat history:", err)
+                console.error('Failed to load chat history:', err)
                 if (mounted) {
                     setError(err.message)
                     setLoading(false)
+                    setHasMoreHistory(false)
                 }
             }
         }
@@ -329,10 +623,26 @@ export default function Dashboard() {
         let unsubscribe = null
         subscribeToMessages(selectedChatId, (newMessage) => {
             if (mounted) {
+                const el = chatContainerRef.current
+                if (!el || isNearBottom(el)) {
+                    shouldScrollToBottomRef.current = true
+                }
+
+                const newMessageId = getMessageIdKey(newMessage)
                 setMessages(prev => {
-                    // Avoid duplicating optimistic messages or already received updates
-                    if (prev.some(m => m.id === newMessage.id)) return prev
-                    return [newMessage, ...prev]
+                    // Avoid duplicating already received updates
+                    if (newMessageId && prev.some(m => getMessageIdKey(m) === newMessageId)) return prev
+
+                    let next = prev
+                    if (newMessage.out) {
+                        // find a pending message with the same text to remove it
+                        const pendingIdx = prev.findIndex(m => m.isPending && m.message === newMessage.message)
+                        if (pendingIdx !== -1) {
+                            next = [...prev]
+                            next.splice(pendingIdx, 1)
+                        }
+                    }
+                    return [newMessage, ...next]
                 })
             }
         }).then(unsub => {
@@ -341,6 +651,7 @@ export default function Dashboard() {
 
         return () => {
             mounted = false
+            exportCancelRef.current = true
             if (unsubscribe) unsubscribe()
         }
     }, [selectedChatId])
@@ -356,23 +667,31 @@ export default function Dashboard() {
         const msgText = draftMessage
         setDraftMessage('')
 
-        // Optimistically add message
-        const now = Math.floor(Date.now() / 1000)
-        const optimisticMsg = {
-            id: 'temp_' + now,
+        // Pending message to show in queue
+        const pendingId = 'pending_' + Date.now() + Math.random();
+        const pendingMsg = {
+            id: pendingId,
             message: msgText,
             out: true,
-            date: now,
-            sender: { id: myId, firstName: 'Вы' }
+            date: Math.floor(Date.now() / 1000),
+            sender: { id: myId, firstName: 'Вы' },
+            isPending: true
         }
-        setMessages(prev => [optimisticMsg, ...prev])
+
+        shouldScrollToBottomRef.current = true
+        setMessages(prev => [pendingMsg, ...prev])
 
         try {
             await sendMessage(selectedChatId, msgText)
-            // Ideally re-fetch or rely on a websocket update, but for now optimistic UI is enough
+
+            // Failsafe: hide if it somehow never arrives via ws
+            setTimeout(() => {
+                setMessages(prev => prev.filter(m => m.id !== pendingId))
+            }, 20000)
         } catch (err) {
             console.error('Failed to send message:', err)
-            // Revert message on failure could be implemented here
+            // Revert on failure
+            setMessages(prev => prev.filter(m => m.id !== pendingId))
         }
     }
 
@@ -519,18 +838,26 @@ export default function Dashboard() {
         )
     }
 
-    const chatContainerRef = useRef(null)
-
-    // Force scroll to bottom after messages render
+    // Keep scroll position when loading older history; otherwise stick to bottom only when needed.
     useLayoutEffect(() => {
-        // Small delay to ensure DOM is fully painted
         requestAnimationFrame(() => {
             const el = chatContainerRef.current
-            if (el) {
+            if (!el) return
+
+            if (pendingScrollRestoreRef.current) {
+                const { previousTop, previousHeight } = pendingScrollRestoreRef.current
+                const heightDiff = el.scrollHeight - previousHeight
+                el.scrollTop = Math.max(0, previousTop + heightDiff)
+                pendingScrollRestoreRef.current = null
+                return
+            }
+
+            if (shouldScrollToBottomRef.current) {
                 el.scrollTop = el.scrollHeight
+                shouldScrollToBottomRef.current = false
             }
         })
-    }, [messages, selectedChatId, loading, activeSection])
+    }, [messages, selectedChatId, loading, activeSection, terminalMode])
 
     const renderChatMessages = () => {
         if (loading) {
@@ -553,8 +880,11 @@ export default function Dashboard() {
         // ─── TERMINAL MODE: IRC-style log ───
         if (terminalMode) {
             return (
-                <div ref={chatContainerRef} className="flex-1 overflow-y-auto scrollable bg-black">
+                <div ref={chatContainerRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto scrollable bg-black">
                     <div className="px-3 py-2" style={{ fontFamily: 'monospace', fontSize: '13px', lineHeight: '1.6' }}>
+                        {loadingOlderHistory && (
+                            <div style={{ color: '#666', marginBottom: '6px' }}>--- загружаю более старые сообщения ---</div>
+                        )}
                         {chatMessages.length === 0 ? (
                             <div style={{ color: '#555' }}>--- нет сообщений ---</div>
                         ) : (
@@ -565,17 +895,32 @@ export default function Dashboard() {
                                 const showDate = dateStr !== lastDate
                                 lastDate = dateStr
                                 const name = msg.out ? 'you' : (msg.sender?.firstName || msg.sender?.title || '???')
-                                const text = msg.message || '[attachment]'
+
+                                let textContent = msg.message;
+                                let isJson = false;
+                                if (!textContent) {
+                                    try {
+                                        textContent = JSON.stringify(msg.media || msg, (key, value) => typeof value === 'bigint' ? value.toString() : value);
+                                        isJson = true;
+                                    } catch (e) {
+                                        textContent = '[unparseable attachment]';
+                                    }
+                                }
 
                                 return (
                                     <React.Fragment key={msg.id}>
                                         {showDate && (
                                             <div style={{ color: '#555', margin: '4px 0' }}>--- {dateStr} ---</div>
                                         )}
-                                        <div style={{ color: msg.out ? '#b0b0b0' : '#e0e0e0' }}>
-                                            <span style={{ color: '#666' }}>[{timeStr}]</span>{' '}
-                                            <span style={{ color: msg.out ? '#5faf5f' : '#5fafff' }}>&lt;{name}&gt;</span>{' '}
-                                            <span>{text}</span>
+                                        <div style={{ color: msg.out ? '#b0b0b0' : '#e0e0e0', display: 'flex', alignItems: 'flex-start', gap: '8px', opacity: msg.isPending ? 0.6 : 1 }}>
+                                            <div style={{ flexShrink: 0 }}>
+                                                <span style={{ color: '#666' }}>[{timeStr}]</span>{' '}
+                                                {msg.isPending && <span style={{ color: '#d75f5f' }}>[QUEUED] </span>}
+                                                <span style={{ color: msg.out ? '#5faf5f' : '#5fafff' }}>&lt;{name}&gt;</span>
+                                            </div>
+                                            <div style={{ flex: 1, wordBreak: 'break-word', whiteSpace: isJson ? 'pre-wrap' : 'normal', color: isJson ? '#9ea3c4' : 'inherit' }}>
+                                                {textContent}
+                                            </div>
                                         </div>
                                     </React.Fragment>
                                 )
@@ -589,8 +934,11 @@ export default function Dashboard() {
         // ─── NORMAL MODE: bubbles ───
 
         return (
-            <div ref={chatContainerRef} className="flex-1 overflow-y-auto scrollable rounded-2xl bg-[#1a1b26] relative">
+            <div ref={chatContainerRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto scrollable rounded-2xl bg-[#1a1b26] relative">
                 <div className="flex flex-col gap-0 px-4 py-4">
+                    {loadingOlderHistory && (
+                        <div className="flex items-center justify-center py-2 text-[11px] text-[#787c99]">Загрузка старых сообщений...</div>
+                    )}
                     {chatMessages.length === 0 ? (
                         <div className="flex items-center justify-center py-20 text-[#787c99] text-sm">Нет сообщений</div>
                     ) : (
@@ -623,10 +971,10 @@ export default function Dashboard() {
                                             {senderName && !isContinuation && (
                                                 <span className={`text-[11px] font-semibold mb-1 px-2 ${isOut ? 'text-[#9ece6a]' : 'text-[#7aa2f7]'}`}>{senderName}</span>
                                             )}
-                                            <div className={`relative px-3.5 py-2 ${isOut
+                                            <div className={`relative px-3.5 py-2 transition-opacity duration-300 ${isOut
                                                 ? `bg-[#7aa2f7] text-[#0f0f14] ${isContinuation ? 'rounded-2xl rounded-tr-lg' : 'rounded-2xl rounded-br-sm'}`
                                                 : `bg-[#2a2a35] text-[#e4e4e7] ${isContinuation ? 'rounded-2xl rounded-tl-lg' : 'rounded-2xl rounded-bl-sm'}`
-                                                }`}>
+                                                }`} style={{ opacity: msg.isPending ? 0.7 : 1 }}>
                                                 {msg.message ? (
                                                     <p className="whitespace-pre-wrap break-words text-[14px] leading-[1.45]">{msg.message}</p>
                                                 ) : (
@@ -635,9 +983,13 @@ export default function Dashboard() {
                                                 <div className={`flex items-center gap-1.5 mt-0.5 ${isOut ? 'justify-end' : 'justify-start'}`}>
                                                     <span className={`text-[10px] ${isOut ? 'text-[#0f0f14]/50' : 'text-[#787c99]'}`}>{timeStr}</span>
                                                     {isOut && (
-                                                        <svg viewBox="0 0 16 16" fill="currentColor" className={`w-3.5 h-3.5 ${msg.views !== undefined ? 'text-[#0f0f14]/40' : 'text-[#0f0f14]/50'}`}>
-                                                            <path d="M1.5 8.5l3 3 7-7" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                                        </svg>
+                                                        msg.isPending ? (
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-[#0f0f14]/60"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                                        ) : (
+                                                            <svg viewBox="0 0 16 16" fill="currentColor" className={`w-3.5 h-3.5 ${msg.views !== undefined ? 'text-[#0f0f14]/40' : 'text-[#0f0f14]/50'}`}>
+                                                                <path d="M1.5 8.5l3 3 7-7" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                                            </svg>
+                                                        )
                                                     )}
                                                 </div>
                                             </div>
@@ -658,6 +1010,47 @@ export default function Dashboard() {
         { id: 'video', label: 'Видео', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-[18px] h-[18px]"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg> },
         { id: 'archive', label: 'Архивы', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-[18px] h-[18px]"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg> },
     ]
+
+    const metaBtnBaseClass = "inline-flex items-center justify-center gap-1.5 h-7 px-2.5 text-[11px] font-mono tracking-wide border transition-colors select-none"
+    const editMetaBtnClass = terminalMode
+        ? `${metaBtnBaseClass} border-[#333] bg-[#0d0d0d] text-[#8b95aa] hover:text-[#5fafff] hover:bg-[#131313]`
+        : `${metaBtnBaseClass} rounded-md border-[#2f3b54] bg-[#151c2b] text-[#94a9d7] hover:text-[#d3e1ff] hover:bg-[#1a273b]`
+    const exportMetaBtnClass = terminalMode
+        ? `${metaBtnBaseClass} border-[#333] ${showExportMenu ? 'bg-[#151515] text-[#5fafff]' : 'bg-[#0d0d0d] text-[#8b95aa]'} hover:text-[#5fafff] hover:bg-[#151515]`
+        : `${metaBtnBaseClass} rounded-md border-[#2f3b54] ${showExportMenu ? 'bg-[#1a273b] text-[#d3e1ff] border-[#4a638f]' : 'bg-[#151c2b] text-[#94a9d7]'} hover:text-[#d3e1ff] hover:bg-[#1d2c42]`
+    const exportPanelClass = terminalMode
+        ? "export-menu-panel absolute left-0 top-full mt-2 min-w-[340px] max-w-[420px] z-50"
+        : "export-menu-panel absolute left-0 top-full mt-2 min-w-[340px] rounded-xl border border-[#2f3b54] bg-[#0f1624]/95 backdrop-blur-sm shadow-[0_18px_40px_rgba(0,0,0,0.42)] z-50 overflow-hidden"
+    const exportActionClass = terminalMode
+        ? "export-menu-action w-full flex items-center justify-between gap-3 text-left px-3 py-2 border border-[#27364f] text-[#c7ddff] bg-[#0a101a] hover:bg-[#0f1724] disabled:opacity-50 disabled:cursor-not-allowed"
+        : "w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg bg-[#151c2b] border border-[#2f3b54] text-[#cfe0ff] hover:bg-[#1d2c42] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+    const exportCancelClass = terminalMode
+        ? "export-menu-cancel mt-1 text-[11px] px-2.5 py-1 border border-[#4a2f2f] text-[#ff9d9d] bg-[#170d0d] hover:bg-[#221111]"
+        : "mt-2 text-[11px] px-2.5 py-1 rounded-md bg-[#d75f5f]/10 text-[#ff8a8a] border border-[#d75f5f]/30 hover:bg-[#d75f5f]/15 transition-colors"
+    const exportHeadClass = terminalMode
+        ? "export-menu-head"
+        : "flex items-center justify-between gap-3 px-3 py-2 border-b border-[#2f3b54] bg-[#131d30]"
+    const exportHeadTitleClass = terminalMode
+        ? "export-menu-head-title"
+        : "text-[11px] font-mono uppercase tracking-[0.08em] text-[#9ec4ff]"
+    const exportHeadSubClass = terminalMode
+        ? "export-menu-head-sub"
+        : "text-[10px] font-mono text-[#6f86b4]"
+    const exportBodyClass = terminalMode
+        ? "export-menu-body"
+        : "p-2.5 bg-[#0f1624]"
+    const exportStatusClass = terminalMode
+        ? "export-menu-status"
+        : "mt-2 px-1 text-[11px] text-[#7d87ab] flex items-center gap-1.5"
+    const exportStatusDotClass = terminalMode
+        ? `export-menu-status-dot ${isExportingHistory ? 'is-running' : ''}`
+        : `w-1.5 h-1.5 rounded-full ${isExportingHistory ? 'bg-[#7aa2f7]' : 'bg-[#4d6388]'}`
+    const exportErrorClass = terminalMode
+        ? "export-menu-error"
+        : "mt-2 px-1 text-[11px] text-[#ff8a8a]"
+    const exportTagClass = terminalMode
+        ? "export-menu-tag"
+        : "inline-flex items-center px-1.5 py-0.5 rounded border border-[#4c6491] text-[10px] text-[#9ec4ff] bg-[#121f36] font-mono"
 
     return (
         <>
@@ -986,15 +1379,56 @@ export default function Dashboard() {
                     {/* Main Content Area */}
                     <main className="flex-1 flex flex-col bg-[#1a1b26] overflow-hidden min-w-0">
                         {terminalMode ? (
-                            <header className="h-[73px] flex items-center px-4 border-b border-[#5e5e75] bg-[#16161e] shrink-0" style={{ fontFamily: 'monospace', fontSize: '13px' }}>
-                                <span style={{ color: '#5fafff' }}>$</span>
-                                <span style={{ color: '#e0e0e0', marginLeft: '8px' }}>
+                            <header className="h-[73px] flex items-center px-4 border-b border-[#5e5e75] bg-[#16161e] shrink-0 overflow-hidden" style={{ fontFamily: 'monospace', fontSize: '13px' }}>
+                                <span style={{ color: '#5fafff', flexShrink: 0 }}>$</span>
+                                <span style={{ color: '#e0e0e0', marginLeft: '8px', flexShrink: 0 }}>
                                     {activeSection === 'main' ? 'cat' : 'tail -f'} {selectedChatId ? `chat_${selectedChatId.slice(-6)}` : 'stdin'}
                                 </span>
-                                <span style={{ color: '#333', marginLeft: '8px' }}>|</span>
-                                <span style={{ color: '#444', marginLeft: '8px', flex: 1 }}>
+                                <span style={{ color: '#333', marginLeft: '8px', flexShrink: 0 }}>|</span>
+                                <span style={{ color: '#444', marginLeft: '8px', flexShrink: 0 }}>
                                     {activeSection === 'chats' && dialogs.find(d => d.entity?.id?.toString() === selectedChatId)?.title}
                                 </span>
+                                {activeSection === 'chats' && (
+                                    <div className="flex-1 min-w-0 flex justify-start items-center gap-4 ml-6 overflow-hidden" style={{ color: '#666', fontSize: '12px' }}>
+                                        {dialogs.filter(d => {
+                                            const normalizedTitle = (d.title || '').toString().trim().toLowerCase()
+                                            return (
+                                                (d.entity?.status?.className === 'UserStatusOnline' || d.entity?.status?.className === 'UserStatusOffline') &&
+                                                d.entity?.id?.toString() !== myId?.toString() &&
+                                                normalizedTitle !== 'telegram'
+                                            )
+                                        }).sort((a, b) => {
+                                            const aOnline = a.entity?.status?.className === 'UserStatusOnline';
+                                            const bOnline = b.entity?.status?.className === 'UserStatusOnline';
+                                            if (aOnline && !bOnline) return -1;
+                                            if (!aOnline && bOnline) return 1;
+                                            const aTime = a.entity?.status?.wasOnline || 0;
+                                            const bTime = b.entity?.status?.wasOnline || 0;
+                                            return bTime - aTime;
+                                        }).slice(0, 8).map(d => {
+                                            const isOnline = d.entity?.status?.className === 'UserStatusOnline'
+                                            const forceHide = d.entity?.status?.className === 'UserStatusRecently' || d.entity?.status?.className === 'UserStatusEmpty'
+                                            const wasOnline = d.entity?.status?.wasOnline;
+
+                                            let timeStr = '';
+                                            if (!isOnline && wasOnline) {
+                                                const dateObj = new Date(wasOnline * 1000);
+                                                timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                            }
+
+                                            const emojiRegex = /[\u{1f300}-\u{1f5ff}\u{1f900}-\u{1f9ff}\u{1f600}-\u{1f64f}\u{1f680}-\u{1f6ff}\u{2600}-\u{26ff}\u{2700}-\u{27bf}\u{1f1e6}-\u{1f1ff}\u{1f191}-\u{1f251}\u{1f004}\u{1f0cf}\u{1f170}-\u{1f171}\u{1f17e}-\u{1f17f}\u{1f18e}\u{3030}\u{2b50}\u{2b55}\u{2934}-\u{2935}\u{2b05}-\u{2b07}\u{2b1b}-\u{2b1c}\u{3297}\u{3299}\u{303d}\u{00a9}\u{00ae}\u{2122}\u{23f3}\u{24c2}\u{23e9}-\u{23ef}\u{25b6}\u{23f8}-\u{23fa}]/gu
+                                            const title = (d.title || 'unknown').replace(emojiRegex, '').trim().toLowerCase().replace(/\s+/g, '_').replace(/_+/g, '_').replace(/_$/, '')
+
+                                            return (
+                                                <div key={d.entity.id.toString()} className="flex items-center gap-1.5 shrink-0" title={d.title + (isOnline ? ' (В сети)' : ` (Был в ${timeStr})`)}>
+                                                    <span style={{ color: isOnline ? '#00ff41' : '#e0af68', fontSize: '10px' }}>●</span>
+                                                    <span className="truncate max-w-[100px]">{title}</span>
+                                                    {!isOnline && timeStr && <span style={{ color: '#555', fontSize: '11px', marginLeft: '-2px' }}>{timeStr}</span>}
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                )}
                             </header>
                         ) : (
                             <header className="h-[73px] flex items-center justify-between px-6 border-b border-[#5e5e75] bg-[#16161e] shrink-0">
@@ -1038,19 +1472,99 @@ export default function Dashboard() {
 
                                     {renderFileRows()}
                                 </>
+                            ) : !selectedChatId ? (
+                                <div className="flex-1 flex items-center justify-center text-[#787c99] h-full">
+                                    {terminalMode ? (
+                                        <span style={{ fontFamily: 'monospace', fontSize: '13px', color: '#555' }}>&gt; waiting for connection...</span>
+                                    ) : (
+                                        <div className="px-5 py-2.5 rounded-2xl bg-[#2a2a35]/50 text-sm font-medium">Выберите чат для просмотра</div>
+                                    )}
+                                </div>
                             ) : (
                                 <>
                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
-                                        <div className="flex flex-col">
-                                            <h2 className="text-2xl font-manrope font-medium text-white flex items-center gap-3">
-                                                {dialogs.find(d => d.entity?.id?.toString() === selectedChatId)?.title || (selectedChatId === myId?.toString() ? "Saved Messages" : "Чат")}
-                                            </h2>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-sm text-[#787c99] font-mono tracking-wide">ID: {selectedChatId || 'Облако'}</span>
-                                                <button onClick={() => setPostLoginView('chats')} className="text-[11px] px-2 py-0.5 rounded bg-white/5 text-[#7aa2f7]/80 hover:bg-[#7aa2f7]/10 hover:text-[#7aa2f7] transition-colors shadow-sm">Изменить</button>
+                                    <div className="flex flex-col">
+                                        <h2 className="text-2xl font-manrope font-medium text-white flex items-center gap-3">
+                                            {dialogs.find(d => d.entity?.id?.toString() === selectedChatId)?.title || (selectedChatId === myId?.toString() ? "Saved Messages" : "Чат")}
+                                        </h2>
+                                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                            <span className="text-sm text-[#787c99] font-mono tracking-wide">ID: {selectedChatId}</span>
+                                            <button onClick={() => setPostLoginView('chats')} className={editMetaBtnClass}>Изменить</button>
+                                            <div className="relative" ref={exportMenuRef}>
+                                                <button
+                                                    onClick={() => {
+                                                        setShowExportMenu(prev => !prev)
+                                                        setExportHistoryError(null)
+                                                    }}
+                                                    className={exportMetaBtnClass}
+                                                >
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
+                                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                                    </svg>
+                                                    Export
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`w-3 h-3 transition-transform ${showExportMenu ? 'rotate-180' : ''}`}>
+                                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                                    </svg>
+                                                </button>
+                                                {showExportMenu && (
+                                                    <div className={exportPanelClass}>
+                                                        <div className={exportHeadClass}>
+                                                            <span className={exportHeadTitleClass}>Экспорт истории</span>
+                                                            <span className={exportHeadSubClass}>plain text</span>
+                                                        </div>
+                                                        <div className={exportBodyClass}>
+                                                            <button
+                                                                onClick={handleExportFullHistory}
+                                                                disabled={isExportingHistory}
+                                                                className={exportActionClass}
+                                                            >
+                                                                <span className="inline-flex items-center gap-2 min-w-0">
+                                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 shrink-0">
+                                                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                                                    </svg>
+                                                                    <span className="truncate">Скачать всю историю</span>
+                                                                </span>
+                                                                <span className="inline-flex items-center gap-2 shrink-0">
+                                                                    <span className={exportTagClass}>.txt</span>
+                                                                    {isExportingHistory && (
+                                                                        <span className={terminalMode ? "text-[11px] text-[#5fafff]" : "text-[11px] text-[#7aa2f7]"}>...</span>
+                                                                    )}
+                                                                </span>
+                                                            </button>
+
+                                                            <div className={exportStatusClass}>
+                                                                <span className={exportStatusDotClass}></span>
+                                                                <span>
+                                                                    {isExportingHistory
+                                                                        ? `Загрузка истории: ${exportedHistoryCount} сообщений`
+                                                                        : `Готово к экспорту`}
+                                                                </span>
+                                                            </div>
+
+                                                            {isExportingHistory && (
+                                                                <button
+                                                                    onClick={() => { exportCancelRef.current = true }}
+                                                                    className={exportCancelClass}
+                                                                >
+                                                                    Отменить экспорт
+                                                                </button>
+                                                            )}
+
+                                                            {exportHistoryError && (
+                                                                <div className={exportErrorClass}>
+                                                                    {exportHistoryError}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
+                                </div>
                                     {renderChatMessages()}
                                     <form onSubmit={handleSendMessage} className={terminalMode ? "flex gap-2 shrink-0 border-t border-[#333] pt-2 mt-2" : "flex gap-3 shrink-0 p-2 bg-[#16161e] border border-[#5e5e75] rounded-xl shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] mt-auto"}>
                                         <input

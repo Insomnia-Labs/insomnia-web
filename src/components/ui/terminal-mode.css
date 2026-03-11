@@ -206,3 +206,105 @@
 .terminal-mode .terminal-list>div:hover {
     background: #111 !important;
 }
+
+/* ========== EXPORT MENU (TERMINAL) ========== */
+.terminal-mode .export-menu-panel {
+    border: 1px solid #2b3748 !important;
+    background: linear-gradient(180deg, #070b12 0%, #05080e 100%) !important;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55) !important;
+    overflow: hidden !important;
+}
+
+.terminal-mode .export-menu-head {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    padding: 8px 10px !important;
+    border-bottom: 1px solid #1e2a3d !important;
+    background: #0b1220 !important;
+}
+
+.terminal-mode .export-menu-head-title {
+    color: #9cc3ff !important;
+    font-size: 11px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+}
+
+.terminal-mode .export-menu-head-sub {
+    color: #5f7397 !important;
+    font-size: 10px !important;
+}
+
+.terminal-mode .export-menu-body {
+    padding: 9px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    background: #060b14 !important;
+}
+
+.terminal-mode .export-menu-action {
+    border-color: #304466 !important;
+}
+
+.terminal-mode .export-menu-action:hover {
+    border-color: #45689e !important;
+}
+
+.terminal-mode .export-menu-tag {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 1px 6px !important;
+    border: 1px solid #3e5f90 !important;
+    background: #10203a !important;
+    color: #9cc3ff !important;
+    font-size: 10px !important;
+}
+
+.terminal-mode .export-menu-status {
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    font-size: 11px !important;
+    color: #6b80a6 !important;
+    padding: 0 1px !important;
+}
+
+.terminal-mode .export-menu-status-dot {
+    width: 6px !important;
+    height: 6px !important;
+    border-radius: 999px !important;
+    background: #4e6387 !important;
+}
+
+.terminal-mode .export-menu-status-dot.is-running {
+    background: #5fafff !important;
+    animation: export-status-pulse 1.1s infinite !important;
+}
+
+.terminal-mode .export-menu-cancel {
+    width: fit-content !important;
+}
+
+.terminal-mode .export-menu-error {
+    border-top: 1px dashed #462828 !important;
+    padding-top: 7px !important;
+    color: #ff9d9d !important;
+    font-size: 11px !important;
+}
+
+@keyframes export-status-pulse {
+    0% {
+        opacity: 0.35;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.35;
+    }
+}

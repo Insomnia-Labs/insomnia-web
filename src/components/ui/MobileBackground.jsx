@@ -136,24 +136,37 @@ export default function MobileBackground() {
 
     return (
         <div
+            className="mobile-background-scroll"
             ref={containerRef}
             onScroll={handleScroll}
             style={{
-                minHeight: '100vh', width: '100%', overflowY: 'auto',
-                background: 'transparent', color: '#EDEDED',
+                width: '100%', overflowY: 'auto',
+                overscrollBehavior: 'contain',
+                WebkitOverflowScrolling: 'touch',
+                background: '#050505',
+                color: '#EDEDED',
                 fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
                 position: 'relative',
+                isolation: 'isolate',
             }}
         >
             {/* ── Full-screen fixed black hole background ── */}
             <div style={{
                 position: 'fixed', inset: 0,
                 zIndex: 0,
-                background: '#0a0a0f',
+                background: 'radial-gradient(120% 80% at 50% 10%, #080a11 0%, #04050a 45%, #020203 100%)',
                 pointerEvents: 'none',
+                transform: 'translateZ(0)',
+                willChange: 'transform',
             }}>
                 <MobileBlackHole scrollProgress={scrollProgress} isMenuOpen={isMenuOpen} />
             </div>
+            <div style={{
+                position: 'fixed', inset: 0,
+                zIndex: 1,
+                background: 'rgba(2, 3, 8, 0.46)',
+                pointerEvents: 'none',
+            }} />
 
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -240,8 +253,8 @@ export default function MobileBackground() {
             `}</style>
 
             {/* ══ HERO ══════════════════════════════════════════ */}
-            <section style={{
-                minHeight: '100vh', display: 'flex', flexDirection: 'column',
+            <section className="mobile-hero-section" style={{
+                display: 'flex', flexDirection: 'column',
                 justifyContent: 'center', padding: '88px 24px 48px',
                 position: 'relative', overflow: 'hidden',
                 zIndex: 1,

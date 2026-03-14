@@ -40,7 +40,10 @@ function App() {
   }, [isMobile, section])
 
   return (
-    <div ref={containerRef} className={`w-full h-screen relative ${postLoginView ? 'bg-[#1a1b26]' : ''}`}>
+    <div
+      ref={containerRef}
+      className={`w-full relative ${isMobile ? 'app-mobile-shell' : 'h-screen'} ${postLoginView ? 'bg-[#1a1b26]' : ''}`}
+    >
       {!postLoginView && (
         <>
           {!isMobile ? (

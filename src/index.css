@@ -15,6 +15,49 @@ body {
   font-family: 'Manrope', sans-serif;
 }
 
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  background: #050505;
+}
+
+/* Mobile viewport units with graceful fallback (vh -> svh -> dvh) */
+.app-mobile-shell,
+.mobile-background-scroll {
+  min-height: 100vh;
+  height: 100vh;
+}
+
+.mobile-hero-section {
+  min-height: 100vh;
+}
+
+@supports (height: 100svh) {
+  .app-mobile-shell,
+  .mobile-background-scroll {
+    min-height: 100svh;
+    height: 100svh;
+  }
+
+  .mobile-hero-section {
+    min-height: 100svh;
+  }
+}
+
+@supports (height: 100dvh) {
+  .app-mobile-shell,
+  .mobile-background-scroll {
+    min-height: 100dvh;
+    height: 100dvh;
+  }
+
+  .mobile-hero-section {
+    min-height: 100dvh;
+  }
+}
+
 @media (min-width: 768px) {
   body {
     overflow: hidden;

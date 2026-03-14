@@ -3,8 +3,8 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
 /* ── Counts ────────────────────────────────────────────────── */
-const DISK_COUNT = 4000
-const ORB_COUNT = 1200
+const DISK_COUNT = 1200
+const ORB_COUNT = 220
 
 /* ── Desktop camera position (matches CameraController home) ── */
 const BASE_CAM = new THREE.Vector3(7, 5, 3)
@@ -30,9 +30,9 @@ const diskVert = /* glsl */`
         float y = sin(angle * 3.0) * 0.04 * aRadius;
         vColor = aColor;
         float dist = aRadius;
-        vAlpha = smoothstep(3.8, 0.4, dist) * 0.85;
+        vAlpha = smoothstep(3.8, 0.4, dist) * 0.22;
         vec4 mv = modelViewMatrix * vec4(x, y, z, 1.0);
-        gl_PointSize = aSize * (280.0 / -mv.z);
+        gl_PointSize = aSize * (180.0 / -mv.z);
         gl_Position  = projectionMatrix * mv;
     }
 `
@@ -70,9 +70,9 @@ const orbVert = /* glsl */`
         float ty = cz * sin(aTilt);
         float tz = cz * cos(aTilt);
         vColor = aColor;
-        vAlpha = 0.55;
+        vAlpha = 0.14;
         vec4 mv = modelViewMatrix * vec4(tx, ty, tz, 1.0);
-        gl_PointSize = aSize * (220.0 / -mv.z);
+        gl_PointSize = aSize * (160.0 / -mv.z);
         gl_Position  = projectionMatrix * mv;
     }
 `
@@ -100,11 +100,11 @@ function makeDiskGeometry() {
     const colors = new Float32Array(DISK_COUNT * 3)
 
     const palette = [
-        new THREE.Color('#ff6a00'),
-        new THREE.Color('#ff9d00'),
-        new THREE.Color('#ffcc44'),
-        new THREE.Color('#fff0b0'),
-        new THREE.Color('#ff4400'),
+        new THREE.Color('#3b1e0b'),
+        new THREE.Color('#45240e'),
+        new THREE.Color('#5a2f12'),
+        new THREE.Color('#4a2610'),
+        new THREE.Color('#2f190b'),
     ]
 
     for (let i = 0; i < DISK_COUNT; i++) {
@@ -115,9 +115,9 @@ function makeDiskGeometry() {
         sizes[i] = 1.5 + Math.random() * 2.5
         const c = palette[Math.floor(Math.random() * palette.length)]
         const t = Math.random()
-        colors[i * 3] = c.r * (0.7 + t * 0.3)
-        colors[i * 3 + 1] = c.g * (0.5 + t * 0.5)
-        colors[i * 3 + 2] = c.b * (0.3 + t * 0.7)
+        colors[i * 3] = c.r * (0.24 + t * 0.12)
+        colors[i * 3 + 1] = c.g * (0.18 + t * 0.10)
+        colors[i * 3 + 2] = c.b * (0.14 + t * 0.08)
     }
 
     const geo = new THREE.BufferGeometry()
@@ -140,10 +140,10 @@ function makeOrbGeometry() {
     const colors = new Float32Array(ORB_COUNT * 3)
 
     const palette = [
-        new THREE.Color('#7040ff'),
-        new THREE.Color('#4488ff'),
-        new THREE.Color('#a0c8ff'),
-        new THREE.Color('#ffffff'),
+        new THREE.Color('#202a4f'),
+        new THREE.Color('#22365a'),
+        new THREE.Color('#29456a'),
+        new THREE.Color('#313f63'),
     ]
 
     for (let i = 0; i < ORB_COUNT; i++) {
@@ -154,9 +154,9 @@ function makeOrbGeometry() {
         sizes[i] = 1.0 + Math.random() * 1.8
         tilts[i] = (Math.random() - 0.5) * Math.PI * 0.6
         const c = palette[Math.floor(Math.random() * palette.length)]
-        colors[i * 3] = c.r
-        colors[i * 3 + 1] = c.g
-        colors[i * 3 + 2] = c.b
+        colors[i * 3] = c.r * 0.28
+        colors[i * 3 + 1] = c.g * 0.28
+        colors[i * 3 + 2] = c.b * 0.28
     }
 
     const geo = new THREE.BufferGeometry()
@@ -198,7 +198,7 @@ function BlackHoleScene({ scrollProgress, isMenuOpen }) {
 
         // Scroll-based full 360° camera orbit (same elevation as desktop)
         const progress = scrollProgress.current ?? 0
-        const theta = progress * Math.PI * 2  // full orbit
+        const theta = (progress - 0.5) * Math.PI * 0.4  // subtle parallax only
 
         const cam = state.camera
         cam.position.set(
@@ -226,7 +226,7 @@ function BlackHoleScene({ scrollProgress, isMenuOpen }) {
                     uniforms={diskUniforms}
                     transparent
                     depthWrite={false}
-                    blending={THREE.AdditiveBlending}
+                    blending={THREE.NormalBlending}
                 />
             </points>
 
@@ -239,7 +239,7 @@ function BlackHoleScene({ scrollProgress, isMenuOpen }) {
                     uniforms={orbUniforms}
                     transparent
                     depthWrite={false}
-                    blending={THREE.AdditiveBlending}
+                    blending={THREE.NormalBlending}
                 />
             </points>
         </>
@@ -269,7 +269,7 @@ export default function MobileBlackHole({ scrollProgress, isMenuOpen }) {
                 width: '100%', height: '100%', background: 'transparent',
                 // Hide canvas when menu open — avoids context loss from dynamic frameloop
                 // GPU still renders to invisible canvas (safer than context loss)
-                opacity: isMenuOpen ? 0 : 1,
+                opacity: isMenuOpen ? 0 : 0.35,
                 transition: 'opacity 0.15s',
             }}
         >

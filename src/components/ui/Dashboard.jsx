@@ -25,6 +25,7 @@ export default function Dashboard() {
     const [terminalMode, setTerminalMode] = useState(true)
     const [typingUsers, setTypingUsers] = useState({})
     const [draftMessage, setDraftMessage] = useState('')
+    const [clockNowMs, setClockNowMs] = useState(() => Date.now())
     const [hasMoreHistory, setHasMoreHistory] = useState(true)
     const [loadingOlderHistory, setLoadingOlderHistory] = useState(false)
     const [showExportMenu, setShowExportMenu] = useState(false)
@@ -53,6 +54,46 @@ export default function Dashboard() {
     }
 
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+    const formatTimeWithSeconds = (value) => {
+        return new Date(value).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        })
+    }
+
+    const formatTimeShort = (value) => {
+        return new Date(value).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        })
+    }
+
+    const getLastOnlineDisplayTime = (entity) => {
+        const statusClass = entity?.status?.className
+        if (statusClass === 'UserStatusOnline') {
+            return formatTimeShort(clockNowMs)
+        }
+
+        if (statusClass === 'UserStatusOffline' && entity?.status?.wasOnline) {
+            return formatTimeShort(entity.status.wasOnline * 1000)
+        }
+
+        return ''
+    }
+
+    const formatElapsedDuration = (seconds) => {
+        const safe = Math.max(0, Math.floor(seconds || 0))
+        const days = Math.floor(safe / 86400)
+        const hours = Math.floor((safe % 86400) / 3600)
+        const minutes = Math.floor((safe % 3600) / 60)
+        const secs = safe % 60
+        const hhmmss = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+        return days > 0 ? `${days}d ${hhmmss}` : hhmmss
+    }
 
     const sanitizeFileName = (value) => {
         const base = (value || 'chat_history').toString().trim()
@@ -198,6 +239,12 @@ export default function Dashboard() {
     // Keep ref in sync
     useEffect(() => { chatFoldersRef.current = chatFolders }, [chatFolders])
     useEffect(() => { activeChatIdRef.current = selectedChatId }, [selectedChatId])
+    useEffect(() => {
+        const timerId = window.setInterval(() => {
+            setClockNowMs(Date.now())
+        }, 1000)
+        return () => window.clearInterval(timerId)
+    }, [])
 
     useEffect(() => {
         let mounted = true
@@ -1191,7 +1238,7 @@ export default function Dashboard() {
 
                                         const isSelected = selectedChatId === idStr
                                         const unreadCount = chat.unreadCount || 0
-                                        const msgTime = chat.message?.date ? new Date(chat.message.date * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+                                        const msgTime = getLastOnlineDisplayTime(chat.entity)
 
                                         const isOnline = chat.entity?.status?.className === 'UserStatusOnline';
 
@@ -1317,7 +1364,7 @@ export default function Dashboard() {
                                         const colorIndex = Math.abs(parseInt(idStr.slice(-5) || '0', 16)) % gradients.length
                                         const avatarBg = isMe ? "bg-[#353545] border border-white/10" : `bg-gradient-to-br ${gradients[colorIndex]}`
 
-                                        const msgTime = chat.message?.date ? new Date(chat.message.date * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+                                        const msgTime = getLastOnlineDisplayTime(chat.entity)
                                         const unreadCount = chat.unreadCount || 0
                                         const avatarUrl = avatarUrls[idStr]
 
@@ -1389,44 +1436,60 @@ export default function Dashboard() {
                                     {activeSection === 'chats' && dialogs.find(d => d.entity?.id?.toString() === selectedChatId)?.title}
                                 </span>
                                 {activeSection === 'chats' && (
-                                    <div className="flex-1 min-w-0 flex justify-start items-center gap-4 ml-6 overflow-hidden" style={{ color: '#666', fontSize: '12px' }}>
-                                        {dialogs.filter(d => {
-                                            const normalizedTitle = (d.title || '').toString().trim().toLowerCase()
-                                            return (
-                                                (d.entity?.status?.className === 'UserStatusOnline' || d.entity?.status?.className === 'UserStatusOffline') &&
-                                                d.entity?.id?.toString() !== myId?.toString() &&
-                                                normalizedTitle !== 'telegram'
-                                            )
-                                        }).sort((a, b) => {
-                                            const aOnline = a.entity?.status?.className === 'UserStatusOnline';
-                                            const bOnline = b.entity?.status?.className === 'UserStatusOnline';
-                                            if (aOnline && !bOnline) return -1;
-                                            if (!aOnline && bOnline) return 1;
-                                            const aTime = a.entity?.status?.wasOnline || 0;
-                                            const bTime = b.entity?.status?.wasOnline || 0;
-                                            return bTime - aTime;
-                                        }).slice(0, 8).map(d => {
-                                            const isOnline = d.entity?.status?.className === 'UserStatusOnline'
-                                            const forceHide = d.entity?.status?.className === 'UserStatusRecently' || d.entity?.status?.className === 'UserStatusEmpty'
-                                            const wasOnline = d.entity?.status?.wasOnline;
+                                    <div className="flex-1 min-w-0 flex items-center gap-4 ml-6">
+                                        <div className="flex-1 min-w-0 flex justify-start items-center gap-3 overflow-hidden" style={{ color: '#768199', fontSize: '12px' }}>
+                                            {dialogs.filter(d => {
+                                                const normalizedTitle = (d.title || '').toString().trim().toLowerCase()
+                                                return (
+                                                    (d.entity?.status?.className === 'UserStatusOnline' || d.entity?.status?.className === 'UserStatusOffline') &&
+                                                    d.entity?.id?.toString() !== myId?.toString() &&
+                                                    normalizedTitle !== 'telegram'
+                                                )
+                                            }).sort((a, b) => {
+                                                const aOnline = a.entity?.status?.className === 'UserStatusOnline'
+                                                const bOnline = b.entity?.status?.className === 'UserStatusOnline'
+                                                if (aOnline && !bOnline) return -1
+                                                if (!aOnline && bOnline) return 1
+                                                const aTime = a.entity?.status?.wasOnline || 0
+                                                const bTime = b.entity?.status?.wasOnline || 0
+                                                return bTime - aTime
+                                            }).slice(0, 8).map(d => {
+                                                const isOnline = d.entity?.status?.className === 'UserStatusOnline'
+                                                const wasOnline = d.entity?.status?.wasOnline
+                                                const timeStr = (!isOnline && wasOnline) ? formatTimeWithSeconds(wasOnline * 1000) : ''
+                                                const offlineAgo = (!isOnline && wasOnline)
+                                                    ? formatElapsedDuration(Math.floor(clockNowMs / 1000) - wasOnline)
+                                                    : ''
+                                                const contactChipStyle = isOnline
+                                                    ? { borderColor: '#263747', background: '#0a0f15' }
+                                                    : { borderColor: '#32302c', background: '#11100d' }
 
-                                            let timeStr = '';
-                                            if (!isOnline && wasOnline) {
-                                                const dateObj = new Date(wasOnline * 1000);
-                                                timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                            }
+                                                const emojiRegex = /[\u{1f300}-\u{1f5ff}\u{1f900}-\u{1f9ff}\u{1f600}-\u{1f64f}\u{1f680}-\u{1f6ff}\u{2600}-\u{26ff}\u{2700}-\u{27bf}\u{1f1e6}-\u{1f1ff}\u{1f191}-\u{1f251}\u{1f004}\u{1f0cf}\u{1f170}-\u{1f171}\u{1f17e}-\u{1f17f}\u{1f18e}\u{3030}\u{2b50}\u{2b55}\u{2934}-\u{2935}\u{2b05}-\u{2b07}\u{2b1b}-\u{2b1c}\u{3297}\u{3299}\u{303d}\u{00a9}\u{00ae}\u{2122}\u{23f3}\u{24c2}\u{23e9}-\u{23ef}\u{25b6}\u{23f8}-\u{23fa}]/gu
+                                                const title = (d.title || 'unknown').replace(emojiRegex, '').trim().toLowerCase().replace(/\s+/g, '_').replace(/_+/g, '_').replace(/_$/, '')
 
-                                            const emojiRegex = /[\u{1f300}-\u{1f5ff}\u{1f900}-\u{1f9ff}\u{1f600}-\u{1f64f}\u{1f680}-\u{1f6ff}\u{2600}-\u{26ff}\u{2700}-\u{27bf}\u{1f1e6}-\u{1f1ff}\u{1f191}-\u{1f251}\u{1f004}\u{1f0cf}\u{1f170}-\u{1f171}\u{1f17e}-\u{1f17f}\u{1f18e}\u{3030}\u{2b50}\u{2b55}\u{2934}-\u{2935}\u{2b05}-\u{2b07}\u{2b1b}-\u{2b1c}\u{3297}\u{3299}\u{303d}\u{00a9}\u{00ae}\u{2122}\u{23f3}\u{24c2}\u{23e9}-\u{23ef}\u{25b6}\u{23f8}-\u{23fa}]/gu
-                                            const title = (d.title || 'unknown').replace(emojiRegex, '').trim().toLowerCase().replace(/\s+/g, '_').replace(/_+/g, '_').replace(/_$/, '')
-
-                                            return (
-                                                <div key={d.entity.id.toString()} className="flex items-center gap-1.5 shrink-0" title={d.title + (isOnline ? ' (В сети)' : ` (Был в ${timeStr})`)}>
-                                                    <span style={{ color: isOnline ? '#00ff41' : '#e0af68', fontSize: '10px' }}>●</span>
-                                                    <span className="truncate max-w-[100px]">{title}</span>
-                                                    {!isOnline && timeStr && <span style={{ color: '#555', fontSize: '11px', marginLeft: '-2px' }}>{timeStr}</span>}
-                                                </div>
-                                            )
-                                        })}
+                                                return (
+                                                    <div
+                                                        key={d.entity.id.toString()}
+                                                        className="flex items-center gap-1.5 shrink-0 border"
+                                                        style={{ padding: '2px 7px', ...contactChipStyle }}
+                                                        title={d.title + (isOnline ? ' (В сети)' : ` (Был в ${timeStr}, прошло ${offlineAgo})`)}
+                                                    >
+                                                        <span style={{ color: isOnline ? '#67be94' : '#c6a277', fontSize: '10px' }}>●</span>
+                                                        <span className="truncate max-w-[116px]" style={{ color: isOnline ? '#cad6ec' : '#d8ccb9', fontWeight: 500 }}>{title}</span>
+                                                        {!isOnline && timeStr && <span style={{ color: '#7f8faa', fontSize: '11px' }}>{timeStr}</span>}
+                                                        {!isOnline && offlineAgo && <span style={{ color: '#66768f', fontSize: '10px' }}>+{offlineAgo}</span>}
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                        <div
+                                            className="shrink-0 flex items-center gap-2 pl-3 border-l border-[#243246]"
+                                            style={{ fontFamily: 'monospace', fontSize: '12px', color: '#8096ba' }}
+                                            title="Текущее время"
+                                        >
+                                            <span style={{ color: '#5f7599' }}>time</span>
+                                            <span style={{ color: '#adc1de', fontWeight: 500 }}>{formatTimeWithSeconds(clockNowMs)}</span>
+                                        </div>
                                     </div>
                                 )}
                             </header>

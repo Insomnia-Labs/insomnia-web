@@ -35,6 +35,7 @@ export default function Dashboard() {
     const [exportedHistoryCount, setExportedHistoryCount] = useState(0)
     const [exportHistoryError, setExportHistoryError] = useState(null)
     const [mobileUploadInProgress, setMobileUploadInProgress] = useState(false)
+    const [mobileUploadProgress, setMobileUploadProgress] = useState(0)
     const [mobileUploadNotice, setMobileUploadNotice] = useState(null)
     const [mobileUploadDetailsOpen, setMobileUploadDetailsOpen] = useState(false)
     const [mobileUploadCopyState, setMobileUploadCopyState] = useState('idle')
@@ -251,6 +252,7 @@ export default function Dashboard() {
         setMobileUploadNotice(null)
         setMobileUploadDetailsOpen(false)
         setMobileUploadCopyState('idle')
+        setMobileUploadProgress(0)
     }, [selectedChatId])
     useEffect(() => {
         if (!mobileSearchOpen) return
@@ -766,6 +768,7 @@ export default function Dashboard() {
         setMobileUploadNotice(null)
         setMobileUploadDetailsOpen(false)
         setMobileUploadCopyState('idle')
+        setMobileUploadProgress(0)
         if (!selectedChatId) {
             setPostLoginView('chats')
             return
@@ -780,6 +783,7 @@ export default function Dashboard() {
         setMobileUploadNotice(null)
         setMobileUploadDetailsOpen(false)
         setMobileUploadCopyState('idle')
+        setMobileUploadProgress(0)
     }
 
     const handleMobileFileSelected = async (event) => {
@@ -796,9 +800,17 @@ export default function Dashboard() {
         setMobileUploadNotice(null)
         setMobileUploadDetailsOpen(false)
         setMobileUploadCopyState('idle')
+        setMobileUploadProgress(0)
 
         try {
-            const uploadedMessage = await sendFileToChat(selectedChatId, file, { workers: 1 })
+            const uploadedMessage = await sendFileToChat(selectedChatId, file, {
+                workers: 1,
+                onProgress: (rawValue) => {
+                    const numeric = Number(rawValue)
+                    const percent = Number.isFinite(numeric) ? Math.round(Math.max(0, Math.min(1, numeric)) * 100) : 0
+                    setMobileUploadProgress(prev => (percent === prev ? prev : percent))
+                }
+            })
             if (uploadedMessage) {
                 shouldScrollToBottomRef.current = true
                 setMessages(prev => {
@@ -819,6 +831,7 @@ export default function Dashboard() {
             })
         } finally {
             setMobileUploadInProgress(false)
+            setMobileUploadProgress(0)
             if (event?.target) event.target.value = ''
         }
     }
@@ -1739,6 +1752,21 @@ export default function Dashboard() {
                     )}
                 </AnimatePresence>
 
+                {mobileUploadInProgress && (
+                    <div className="absolute left-4 right-24 bottom-[94px] z-10 rounded-xl border border-[#2f4e7b] bg-[#111a27]/95 px-3 py-2 shadow-[0_8px_20px_rgba(0,0,0,0.35)]">
+                        <div className="flex items-center justify-between text-[11px] text-[#b4c5de]">
+                            <span>Загрузка файла</span>
+                            <span className="font-semibold text-[#d8e9ff]">{mobileUploadProgress}%</span>
+                        </div>
+                        <div className="mt-1.5 h-1.5 rounded-full bg-[#25344b] overflow-hidden">
+                            <div
+                                className="h-full rounded-full bg-[#7ea8d2] transition-[width] duration-200 ease-out"
+                                style={{ width: `${mobileUploadProgress}%` }}
+                            ></div>
+                        </div>
+                    </div>
+                )}
+
                 <button
                     onClick={openMobileFilePicker}
                     disabled={mobileUploadInProgress}
@@ -1746,10 +1774,13 @@ export default function Dashboard() {
                     title={mobileUploadInProgress ? 'Загрузка файла...' : 'Добавить файл с устройства'}
                 >
                     {mobileUploadInProgress ? (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-6 h-6 animate-spin">
-                            <circle cx="12" cy="12" r="9" strokeOpacity="0.3"></circle>
-                            <path d="M21 12a9 9 0 0 0-9-9"></path>
-                        </svg>
+                        <div className="flex flex-col items-center leading-none">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-5 h-5 animate-spin">
+                                <circle cx="12" cy="12" r="9" strokeOpacity="0.3"></circle>
+                                <path d="M21 12a9 9 0 0 0-9-9"></path>
+                            </svg>
+                            <span className="mt-0.5 text-[10px] font-semibold">{mobileUploadProgress}%</span>
+                        </div>
                     ) : (
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-6 h-6">
                             <path d="M5 12h14"></path>

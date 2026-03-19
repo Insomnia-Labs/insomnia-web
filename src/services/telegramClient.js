@@ -420,6 +420,14 @@ export async function sendFileToChat(chatId, file, options = {}) {
     const silent = options.silent !== false
     const workers = Number.isFinite(options.workers) ? options.workers : 1
     const forceDocument = options.forceDocument === true
+    const progressHandler = typeof options.onProgress === 'function'
+        ? options.onProgress
+        : (typeof options.progressCallback === 'function' ? options.progressCallback : null)
+    const progressCallback = progressHandler
+        ? (value) => {
+            try { progressHandler(value) } catch { }
+        }
+        : undefined
 
     try { await client.invoke(new Api.account.UpdateStatus({ offline: true })) } catch (e) { }
 
@@ -429,7 +437,8 @@ export async function sendFileToChat(chatId, file, options = {}) {
             caption,
             forceDocument,
             silent,
-            workers
+            workers,
+            progressCallback
         })
         return result
     } finally {

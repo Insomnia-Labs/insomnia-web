@@ -789,6 +789,7 @@ export default function Dashboard() {
         const dateObj = msg?.date ? new Date(msg.date * 1000) : new Date()
         const timeLabel = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         const dateLabel = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+        const captionText = typeof msg?.message === 'string' ? msg.message.trim() : ''
 
         let type = 'file'
         let fileName = 'Файл'
@@ -800,15 +801,53 @@ export default function Dashboard() {
             const attributes = media.document.attributes || []
             const filenameAttr = attributes.find(attr => attr.className === 'DocumentAttributeFilename')
             const mime = (media.document.mimeType || '').toLowerCase()
+            const isVideo = attributes.some(a => a.className === 'DocumentAttributeVideo') || mime.startsWith('video/')
+            const isAudio = attributes.some(a => a.className === 'DocumentAttributeAudio') || mime.startsWith('audio/')
+            const isArchive = mime.includes('zip') || mime.includes('rar') || mime.includes('tar') || mime.includes('7z') || mime.includes('archive')
+            const isSticker = attributes.some(a => a.className === 'DocumentAttributeSticker')
+
+            const mimeToExt = () => {
+                if (mime.includes('quicktime')) return 'mov'
+                if (mime.includes('x-matroska')) return 'mkv'
+                if (mime.includes('mpeg')) return 'mp3'
+                if (mime.includes('ogg')) return 'ogg'
+                if (mime.includes('flac')) return 'flac'
+                if (mime.includes('wav')) return 'wav'
+                if (mime.includes('webp')) return 'webp'
+                if (mime.includes('png')) return 'png'
+                if (mime.includes('jpeg') || mime.includes('jpg')) return 'jpg'
+                if (mime.includes('pdf')) return 'pdf'
+                if (mime.includes('json')) return 'json'
+                if (mime.includes('zip')) return 'zip'
+                if (mime.includes('rar')) return 'rar'
+                if (mime.includes('7z')) return '7z'
+                if (mime.includes('tar')) return 'tar'
+                if (mime.startsWith('video/')) return mime.split('/')[1]?.split(';')[0] || 'mp4'
+                if (mime.startsWith('audio/')) return mime.split('/')[1]?.split(';')[0] || 'mp3'
+                return ''
+            }
+
+            const getCaptionFileName = () => {
+                if (!captionText) return ''
+                const firstLine = captionText.split('\n')[0].trim()
+                if (!firstLine || firstLine.length > 120) return ''
+                if (/^https?:\/\//i.test(firstLine)) return ''
+                if (/\.[a-z0-9]{2,8}$/i.test(firstLine)) return firstLine
+                return ''
+            }
 
             if (filenameAttr?.fileName) {
                 fileName = filenameAttr.fileName
-            } else if (attributes.some(a => a.className === 'DocumentAttributeVideo')) {
-                fileName = 'Видео'
-            } else if (attributes.some(a => a.className === 'DocumentAttributeAudio')) {
-                fileName = 'Аудио'
-            } else if (attributes.some(a => a.className === 'DocumentAttributeSticker')) {
-                fileName = 'Стикер'
+            } else {
+                const fromCaption = getCaptionFileName()
+                if (fromCaption) {
+                    fileName = fromCaption
+                } else {
+                    const ext = mimeToExt()
+                    const docIdTail = media.document?.id?.toString?.().slice(-6) || Math.floor(dateObj.getTime() / 1000).toString().slice(-6)
+                    const baseName = isVideo ? 'video' : isAudio ? 'audio' : isArchive ? 'archive' : isSticker ? 'sticker' : 'file'
+                    fileName = ext ? `${baseName}_${docIdTail}.${ext}` : `${baseName}_${docIdTail}`
+                }
             }
 
             fileSize = formatFileSize(media.document.size)
@@ -818,13 +857,13 @@ export default function Dashboard() {
                 extLabel = extMatch[1].toUpperCase()
             }
 
-            if (attributes.some(a => a.className === 'DocumentAttributeVideo') || mime.startsWith('video/')) {
+            if (isVideo) {
                 type = 'video'
                 if (!extMatch) extLabel = 'MP4'
-            } else if (attributes.some(a => a.className === 'DocumentAttributeAudio') || mime.startsWith('audio/')) {
+            } else if (isAudio) {
                 type = 'audio'
                 if (!extMatch) extLabel = 'AUDIO'
-            } else if (mime.includes('zip') || mime.includes('rar') || mime.includes('tar') || mime.includes('7z') || mime.includes('archive')) {
+            } else if (isArchive) {
                 type = 'archive'
                 if (!extMatch) extLabel = 'ZIP'
             }
@@ -834,8 +873,8 @@ export default function Dashboard() {
             extLabel = 'JPG'
         } else if (media.webpage) {
             type = 'link'
-            fileName = media.webpage.title || 'Веб-страница'
             fileUrl = media.webpage.url || media.webpage.displayUrl || ''
+            fileName = media.webpage.displayUrl || media.webpage.url || media.webpage.title || 'Ссылка'
             extLabel = 'LINK'
         }
 

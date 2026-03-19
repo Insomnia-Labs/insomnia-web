@@ -13,6 +13,8 @@ const API_ID = Number(import.meta.env.VITE_TELEGRAM_API_ID)
 const API_HASH = import.meta.env.VITE_TELEGRAM_API_HASH
 
 const SESSION_KEY = 'void_tg_session'
+const CONNECT_TIMEOUT_MS = 20000
+const AUTH_TIMEOUT_MS = 30000
 
 let _client = null
 let _phoneCodeHash = null
@@ -27,11 +29,32 @@ function persistSession() {
     if (_client) localStorage.setItem(SESSION_KEY, _client.session.save())
 }
 
+function withTimeout(promise, timeoutMs, code = 'REQUEST_TIMEOUT') {
+    let timeoutId
+    const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = window.setTimeout(() => {
+            const err = new Error(code)
+            err.code = code
+            reject(err)
+        }, timeoutMs)
+    })
+
+    return Promise.race([promise, timeoutPromise]).finally(() => {
+        window.clearTimeout(timeoutId)
+    })
+}
+
 /**
  * Returns a connected GramJS client (singleton, lazy-init).
  */
 export async function getClient() {
     if (_client && _client.connected) return _client
+
+    if (!Number.isFinite(API_ID) || API_ID <= 0 || !API_HASH) {
+        const err = new Error('TELEGRAM_CONFIG_MISSING')
+        err.code = 'TELEGRAM_CONFIG_MISSING'
+        throw err
+    }
 
     _client = new TelegramClient(getStoredSession(), API_ID, API_HASH, {
         connectionRetries: 5,
@@ -40,7 +63,7 @@ export async function getClient() {
 
     _client.setLogLevel('error')
 
-    await _client.connect()
+    await withTimeout(_client.connect(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')
 
     // As soon as we connect, force the session offline so downloading chats doesn't trigger "online"
     try {
@@ -58,15 +81,19 @@ export async function getClient() {
  * Step 1 – request a sign-in code to the given phone number.
  */
 export async function sendCode(phoneNumber) {
-    const client = await getClient()
+    const client = await withTimeout(getClient(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')
 
-    const result = await client.invoke(
-        new Api.auth.SendCode({
-            phoneNumber,
-            apiId: API_ID,
-            apiHash: API_HASH,
-            settings: new Api.CodeSettings({}),
-        })
+    const result = await withTimeout(
+        client.invoke(
+            new Api.auth.SendCode({
+                phoneNumber,
+                apiId: API_ID,
+                apiHash: API_HASH,
+                settings: new Api.CodeSettings({}),
+            })
+        ),
+        AUTH_TIMEOUT_MS,
+        'TELEGRAM_SEND_CODE_TIMEOUT'
     )
 
     _phoneCodeHash = result.phoneCodeHash
@@ -81,14 +108,18 @@ export async function sendCode(phoneNumber) {
 export async function signIn(phoneNumber, phoneCode) {
     if (!_phoneCodeHash) throw new Error('Call sendCode() first')
 
-    const client = await getClient()
+    const client = await withTimeout(getClient(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')
 
-    const result = await client.invoke(
-        new Api.auth.SignIn({
-            phoneNumber,
-            phoneCodeHash: _phoneCodeHash,
-            phoneCode,
-        })
+    const result = await withTimeout(
+        client.invoke(
+            new Api.auth.SignIn({
+                phoneNumber,
+                phoneCodeHash: _phoneCodeHash,
+                phoneCode,
+            })
+        ),
+        AUTH_TIMEOUT_MS,
+        'TELEGRAM_SIGN_IN_TIMEOUT'
     )
 
     persistSession()
@@ -101,16 +132,18 @@ export async function signIn(phoneNumber, phoneCode) {
  * Call this only when signIn() threw SESSION_PASSWORD_NEEDED.
  */
 export async function signInWith2FA(password) {
-    const client = await getClient()
+    const client = await withTimeout(getClient(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')
 
     // Fetch current 2FA password settings (SRP params) from Telegram
-    const passwordInfo = await client.invoke(new Api.account.GetPassword())
+    const passwordInfo = await withTimeout(client.invoke(new Api.account.GetPassword()), AUTH_TIMEOUT_MS, 'TELEGRAM_2FA_FETCH_TIMEOUT')
 
     // GramJS computes the SRP proof for us
     const srpCheck = await computeCheck(passwordInfo, password)
 
-    const result = await client.invoke(
-        new Api.auth.CheckPassword({ password: srpCheck })
+    const result = await withTimeout(
+        client.invoke(new Api.auth.CheckPassword({ password: srpCheck })),
+        AUTH_TIMEOUT_MS,
+        'TELEGRAM_2FA_CHECK_TIMEOUT'
     )
 
     persistSession()
@@ -287,30 +320,7 @@ export async function subscribeToTyping(callback) {
 
 export async function sendMessage(chatId, message) {
     const client = await getClient()
-
-    let peerId = chatId;
-    if (typeof chatId === 'string' && /^-?\d+$/.test(chatId)) {
-        try {
-            const me = await client.getMe();
-            if (me && me.id && me.id.toString() === chatId) {
-                peerId = "me";
-            }
-        } catch (e) { }
-    }
-
-    // 1. Resolve peer to proper InputPeer
-    let peer;
-    try {
-        peer = await client.getInputEntity(peerId)
-    } catch (err) {
-        if (err.message && err.message.includes("Could not find the input entity")) {
-            console.warn("[TG] Entity not found for sendMessage. Warming up cache...");
-            await client.getDialogs({ limit: 200 });
-            peer = await client.getInputEntity(peerId)
-        } else {
-            throw err;
-        }
-    }
+    const peer = await resolvePeerEntity(client, chatId, 'sendMessage')
 
     // 2. Ghost Mode Delay: Minimum 10-12 seconds into the future (Telegram API limit)
     // Injects the message into the datacenter's internal cron-worker queue
@@ -339,6 +349,56 @@ export async function sendMessage(chatId, message) {
     try { await client.invoke(new Api.account.UpdateStatus({ offline: true })) } catch (e) { }
 
     return result
+}
+
+async function resolvePeerEntity(client, chatId, context = 'resolvePeerEntity') {
+    let peerId = chatId
+    if (typeof chatId === 'string' && /^-?\d+$/.test(chatId)) {
+        try {
+            const me = await client.getMe()
+            if (me && me.id && me.id.toString() === chatId) {
+                peerId = 'me'
+            }
+        } catch (e) { }
+    }
+
+    try {
+        return await client.getInputEntity(peerId)
+    } catch (err) {
+        if (err.message && err.message.includes('Could not find the input entity')) {
+            console.warn(`[TG] Entity not found for ${context}. Warming up cache...`)
+            await client.getDialogs({ limit: 200 })
+            return await client.getInputEntity(peerId)
+        }
+        throw err
+    }
+}
+
+export async function sendFileToChat(chatId, file, options = {}) {
+    if (!file) throw new Error('NO_FILE_PROVIDED')
+
+    const client = await getClient()
+    const peer = await resolvePeerEntity(client, chatId, 'sendFileToChat')
+
+    const caption = typeof options.caption === 'string' ? options.caption : ''
+    const silent = options.silent !== false
+    const workers = Number.isFinite(options.workers) ? options.workers : 1
+    const forceDocument = options.forceDocument === true
+
+    try { await client.invoke(new Api.account.UpdateStatus({ offline: true })) } catch (e) { }
+
+    try {
+        const result = await client.sendFile(peer, {
+            file,
+            caption,
+            forceDocument,
+            silent,
+            workers
+        })
+        return result
+    } finally {
+        try { await client.invoke(new Api.account.UpdateStatus({ offline: true })) } catch (e) { }
+    }
 }
 
 const _avatarCache = new Map()

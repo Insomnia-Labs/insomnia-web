@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useState, useRef } from 'react'
 import { useStore } from '../../store/useStore'
-import { getChatHistory, getDialogs, getMe, getProfilePhoto, getChatFolders, sendMessage, subscribeToMessages, subscribeToPresence, subscribeToTyping } from '../../services/telegramClient'
+import { getChatHistory, getDialogs, getMe, getProfilePhoto, getChatFolders, sendMessage, sendFileToChat, subscribeToMessages, subscribeToPresence, subscribeToTyping } from '../../services/telegramClient'
 import { motion, AnimatePresence } from 'framer-motion'
 import './terminal-mode.css'
 
@@ -34,10 +34,13 @@ export default function Dashboard() {
     const [isExportingHistory, setIsExportingHistory] = useState(false)
     const [exportedHistoryCount, setExportedHistoryCount] = useState(0)
     const [exportHistoryError, setExportHistoryError] = useState(null)
+    const [mobileUploadInProgress, setMobileUploadInProgress] = useState(false)
+    const [mobileUploadError, setMobileUploadError] = useState('')
     const chatMenuRef = useRef(null)
     const exportMenuRef = useRef(null)
     const chatContainerRef = useRef(null)
     const mobileSearchInputRef = useRef(null)
+    const mobileFileInputRef = useRef(null)
     const allDialogsCache = useRef(null) // cache all dialogs for custom folder filtering
     const chatFoldersRef = useRef([]) // ref to avoid triggering re-fetches
     const activeChatIdRef = useRef(selectedChatId)
@@ -242,6 +245,9 @@ export default function Dashboard() {
     // Keep ref in sync
     useEffect(() => { chatFoldersRef.current = chatFolders }, [chatFolders])
     useEffect(() => { activeChatIdRef.current = selectedChatId }, [selectedChatId])
+    useEffect(() => {
+        setMobileUploadError('')
+    }, [selectedChatId])
     useEffect(() => {
         if (!mobileSearchOpen) return
         const timerId = window.setTimeout(() => {
@@ -749,6 +755,54 @@ export default function Dashboard() {
             console.error('Failed to send message:', err)
             // Revert on failure
             setMessages(prev => prev.filter(m => m.id !== pendingId))
+        }
+    }
+
+    const openMobileFilePicker = () => {
+        setMobileUploadError('')
+        if (!selectedChatId) {
+            setPostLoginView('chats')
+            return
+        }
+        const input = mobileFileInputRef.current
+        if (!input) return
+        input.value = ''
+        input.click()
+    }
+
+    const handleMobileFileSelected = async (event) => {
+        const file = event?.target?.files?.[0]
+        if (!file) return
+
+        if (!selectedChatId) {
+            setPostLoginView('chats')
+            event.target.value = ''
+            return
+        }
+
+        setMobileUploadInProgress(true)
+        setMobileUploadError('')
+
+        try {
+            const uploadedMessage = await sendFileToChat(selectedChatId, file, { workers: 1 })
+            if (uploadedMessage) {
+                shouldScrollToBottomRef.current = true
+                setMessages(prev => {
+                    const nextId = getMessageIdKey(uploadedMessage)
+                    if (nextId && prev.some(msg => getMessageIdKey(msg) === nextId)) return prev
+                    return [uploadedMessage, ...prev]
+                })
+            }
+        } catch (err) {
+            console.error('Failed to upload file:', err)
+            if (err?.message?.includes?.('FLOOD_WAIT')) {
+                setMobileUploadError('Слишком много запросов. Попробуйте позже.')
+            } else {
+                setMobileUploadError('Не удалось загрузить файл')
+            }
+        } finally {
+            setMobileUploadInProgress(false)
+            if (event?.target) event.target.value = ''
         }
     }
 
@@ -1460,15 +1514,36 @@ export default function Dashboard() {
                     )}
                 </div>
 
+                <input
+                    ref={mobileFileInputRef}
+                    type="file"
+                    className="hidden"
+                    onChange={handleMobileFileSelected}
+                />
+
+                {mobileUploadError && (
+                    <div className="absolute left-4 right-4 bottom-[88px] z-10 rounded-xl border border-[#6a2f2f] bg-[#2a1515]/95 px-3 py-2 text-[12px] text-[#ffb3b3]">
+                        {mobileUploadError}
+                    </div>
+                )}
+
                 <button
-                    onClick={() => setPostLoginView('chats')}
-                    className="absolute right-5 bottom-24 z-10 w-14 h-14 rounded-full bg-[#7ea8d2] text-[#1b1f29] shadow-[0_10px_24px_rgba(41,66,101,0.45)] flex items-center justify-center"
-                    title="Сменить источник"
+                    onClick={openMobileFilePicker}
+                    disabled={mobileUploadInProgress}
+                    className="absolute right-5 bottom-24 z-10 w-14 h-14 rounded-full bg-[#7ea8d2] text-[#1b1f29] shadow-[0_10px_24px_rgba(41,66,101,0.45)] flex items-center justify-center disabled:opacity-70"
+                    title={mobileUploadInProgress ? 'Загрузка файла...' : 'Добавить файл с устройства'}
                 >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-6 h-6">
-                        <path d="M5 12h14"></path>
-                        <path d="M12 5v14"></path>
-                    </svg>
+                    {mobileUploadInProgress ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-6 h-6 animate-spin">
+                            <circle cx="12" cy="12" r="9" strokeOpacity="0.3"></circle>
+                            <path d="M21 12a9 9 0 0 0-9-9"></path>
+                        </svg>
+                    ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-6 h-6">
+                            <path d="M5 12h14"></path>
+                            <path d="M12 5v14"></path>
+                        </svg>
+                    )}
                 </button>
 
                 <div className="absolute left-3 right-3 bottom-4 rounded-[28px] border border-white/10 bg-[#1a1d24]/95 backdrop-blur-md px-2 py-2">

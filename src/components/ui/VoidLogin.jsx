@@ -146,7 +146,20 @@ export default function VoidLogin() {
             setStage('code')
         } catch (err) {
             console.error('[VoidLogin] sendCode error:', err)
-            setError(err?.message ?? 'TRANSMISSION FAILED — CHECK PHONE NUMBER')
+            const msg = err?.message ?? ''
+            if (msg.includes('TELEGRAM_CONFIG_MISSING')) {
+                setError('APP CONFIG ERROR: TELEGRAM API KEYS MISSING')
+            } else if (msg.includes('TELEGRAM_CONNECT_TIMEOUT') || msg.includes('TELEGRAM_SEND_CODE_TIMEOUT')) {
+                setError('NETWORK TIMEOUT — CHECK INTERNET / VPN / FIREWALL')
+            } else if (msg.includes('PHONE_NUMBER_INVALID')) {
+                setError('INVALID PHONE NUMBER FORMAT')
+            } else if (msg.includes('FLOOD_WAIT')) {
+                setError('TOO MANY ATTEMPTS — TRY LATER')
+            } else if (msg.includes('API_ID_INVALID') || msg.includes('API_HASH_INVALID')) {
+                setError('INVALID TELEGRAM API CREDENTIALS')
+            } else {
+                setError(msg || 'TRANSMISSION FAILED — CHECK PHONE NUMBER')
+            }
             setStage('phone')
         }
     }
@@ -174,6 +187,8 @@ export default function VoidLogin() {
                 setError('')
                 setStage('password')
                 return
+            } else if (msg.includes('TELEGRAM_CONNECT_TIMEOUT') || msg.includes('TELEGRAM_SIGN_IN_TIMEOUT')) {
+                setError('NETWORK TIMEOUT — CHECK INTERNET / VPN / FIREWALL')
             } else if (msg.includes('PHONE_CODE_INVALID')) {
                 setError('INVALID CODE — TRY AGAIN')
             } else if (msg.includes('PHONE_CODE_EXPIRED')) {

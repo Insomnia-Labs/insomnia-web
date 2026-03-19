@@ -860,7 +860,6 @@ export default function Dashboard() {
 
         try {
             const uploadedMessage = await sendFileToChat(selectedChatId, file, {
-                workers: 1,
                 onProgress: (rawValue) => {
                     const numeric = Number(rawValue)
                     const percent = Number.isFinite(numeric) ? Math.round(Math.max(0, Math.min(1, numeric)) * 100) : 0

@@ -8,6 +8,7 @@ import { TelegramClient, Api } from 'telegram'
 import { StringSession } from 'telegram/sessions/index.js'
 import { computeCheck } from 'telegram/Password.js'
 import { NewMessage } from 'telegram/events/index.js'
+import { readBigIntFromBuffer, generateRandomBytes } from 'telegram/Helpers.js'
 
 const API_ID = Number(import.meta.env.VITE_TELEGRAM_API_ID)
 const API_HASH = import.meta.env.VITE_TELEGRAM_API_HASH
@@ -15,6 +16,12 @@ const API_HASH = import.meta.env.VITE_TELEGRAM_API_HASH
 const SESSION_KEY = 'void_tg_session'
 const CONNECT_TIMEOUT_MS = 20000
 const AUTH_TIMEOUT_MS = 30000
+const UPLOAD_PART_SIZE_KB = 512
+const UPLOAD_LARGE_FILE_THRESHOLD_BYTES = 10 * 1024 * 1024
+const UPLOAD_MAX_WORKERS = 16
+const UPLOAD_MIN_WORKERS = 1
+const UPLOAD_RETRY_LIMIT = 4
+const UPLOAD_RETRY_DELAY_MS = 250
 
 let _client = null
 let _phoneCodeHash = null
@@ -41,6 +48,148 @@ function withTimeout(promise, timeoutMs, code = 'REQUEST_TIMEOUT') {
 
     return Promise.race([promise, timeoutPromise]).finally(() => {
         window.clearTimeout(timeoutId)
+    })
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+function clampUploadWorkers(value, partCount) {
+    const numeric = Number(value)
+    const wanted = Number.isFinite(numeric) && numeric > 0 ? Math.floor(numeric) : UPLOAD_MIN_WORKERS
+    return Math.max(
+        UPLOAD_MIN_WORKERS,
+        Math.min(UPLOAD_MAX_WORKERS, Number.isFinite(partCount) ? partCount : UPLOAD_MAX_WORKERS, wanted)
+    )
+}
+
+function pickAdaptiveWorkers(fileSizeBytes) {
+    let workers = 8
+    if (fileSizeBytes >= 64 * 1024 * 1024) workers = 12
+    else if (fileSizeBytes <= 4 * 1024 * 1024) workers = 4
+
+    const effectiveType = typeof navigator !== 'undefined' && navigator?.connection?.effectiveType
+        ? navigator.connection.effectiveType
+        : ''
+
+    if (effectiveType.includes('2g')) workers = Math.min(workers, 2)
+    else if (effectiveType.includes('3g')) workers = Math.min(workers, 4)
+
+    return workers
+}
+
+function makeUploadFileId() {
+    return readBigIntFromBuffer(generateRandomBytes(8), true, true)
+}
+
+async function readUploadChunk(file, start, end) {
+    const chunkBlob = file.slice(start, end)
+    const ab = await chunkBlob.arrayBuffer()
+    return Buffer.from(ab)
+}
+
+async function uploadFileFast(client, file, options = {}) {
+    const size = Number(file?.size)
+    if (!Number.isFinite(size) || size <= 0) {
+        throw new Error('FILE_SIZE_INVALID')
+    }
+
+    const name = file?.name || 'upload.bin'
+    const partSize = UPLOAD_PART_SIZE_KB * 1024
+    const partCount = Math.max(1, Math.ceil(size / partSize))
+    const baseWorkers = Number.isFinite(options.workers) ? options.workers : pickAdaptiveWorkers(size)
+    const workers = clampUploadWorkers(baseWorkers, partCount)
+    const isLarge = size > UPLOAD_LARGE_FILE_THRESHOLD_BYTES
+    const onProgress = typeof options.onProgress === 'function' ? options.onProgress : null
+    const fileId = makeUploadFileId()
+
+    let uploadedParts = 0
+    let nextPart = 0
+
+    const emitProgress = () => {
+        if (!onProgress) return
+        try {
+            onProgress(Math.max(0, Math.min(1, uploadedParts / partCount)))
+        } catch { }
+    }
+
+    emitProgress()
+
+    const sendPart = async (sender, partIndex) => {
+        const start = partIndex * partSize
+        const end = Math.min(size, start + partSize)
+        const bytes = await readUploadChunk(file, start, end)
+
+        let attempt = 0
+        while (true) {
+            let activeSender = sender
+            try {
+                if (!activeSender || !activeSender.isConnected()) {
+                    activeSender = await client.getSender(client.session.dcId)
+                }
+
+                const request = isLarge
+                    ? new Api.upload.SaveBigFilePart({
+                        fileId,
+                        filePart: partIndex,
+                        fileTotalParts: partCount,
+                        bytes
+                    })
+                    : new Api.upload.SaveFilePart({
+                        fileId,
+                        filePart: partIndex,
+                        bytes
+                    })
+
+                await activeSender.send(request)
+                uploadedParts += 1
+                emitProgress()
+                return activeSender
+            } catch (err) {
+                attempt += 1
+                if (err?.seconds && err?.errorMessage?.includes?.('FLOOD_WAIT')) {
+                    await sleep(err.seconds * 1000)
+                    continue
+                }
+                if (attempt > UPLOAD_RETRY_LIMIT) throw err
+                await sleep(UPLOAD_RETRY_DELAY_MS * attempt)
+                try {
+                    activeSender = await client.getSender(client.session.dcId)
+                } catch { }
+                sender = activeSender
+            }
+        }
+    }
+
+    const runWorker = async () => {
+        let sender = await client.getSender(client.session.dcId)
+        while (true) {
+            const partIndex = nextPart
+            nextPart += 1
+            if (partIndex >= partCount) break
+            if (onProgress?.isCanceled) throw new Error('USER_CANCELED')
+            sender = await sendPart(sender, partIndex)
+        }
+    }
+
+    await Promise.all(Array.from({ length: workers }, () => runWorker()))
+
+    emitProgress()
+
+    if (isLarge) {
+        return new Api.InputFileBig({
+            id: fileId,
+            parts: partCount,
+            name
+        })
+    }
+
+    return new Api.InputFile({
+        id: fileId,
+        parts: partCount,
+        name,
+        md5Checksum: ''
     })
 }
 
@@ -418,7 +567,7 @@ export async function sendFileToChat(chatId, file, options = {}) {
 
     const caption = typeof options.caption === 'string' ? options.caption : ''
     const silent = options.silent !== false
-    const workers = Number.isFinite(options.workers) ? options.workers : 1
+    const workers = Number.isFinite(options.workers) ? options.workers : undefined
     const forceDocument = options.forceDocument === true
     const progressHandler = typeof options.onProgress === 'function'
         ? options.onProgress
@@ -429,20 +578,36 @@ export async function sendFileToChat(chatId, file, options = {}) {
         }
         : undefined
 
-    try { await client.invoke(new Api.account.UpdateStatus({ offline: true })) } catch (e) { }
+    try { client.invoke(new Api.account.UpdateStatus({ offline: true })).catch(() => { }) } catch (e) { }
 
     try {
+        let uploadHandle = null
+        try {
+            uploadHandle = await uploadFileFast(client, normalizedFile, {
+                workers,
+                onProgress: progressCallback
+            })
+        } catch (uploadErr) {
+            console.warn('[TG] Fast upload failed, fallback to default sendFile', uploadErr)
+        }
+
         const result = await client.sendFile(peer, {
-            file: normalizedFile,
+            file: uploadHandle || normalizedFile,
             caption,
             forceDocument,
             silent,
             workers,
-            progressCallback
+            progressCallback: uploadHandle ? undefined : progressCallback,
+            supportsStreaming: normalizedFile?.type?.startsWith?.('video/') || false
         })
+
+        if (uploadHandle && progressCallback) {
+            try { progressCallback(1) } catch { }
+        }
+
         return result
     } finally {
-        try { await client.invoke(new Api.account.UpdateStatus({ offline: true })) } catch (e) { }
+        try { client.invoke(new Api.account.UpdateStatus({ offline: true })).catch(() => { }) } catch (e) { }
     }
 }
 

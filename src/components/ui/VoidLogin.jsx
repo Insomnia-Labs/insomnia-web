@@ -290,7 +290,7 @@ export default function VoidLogin() {
                 .vl-input {
                     background: transparent;
                     border: none;
-                    border-bottom: 1px solid rgba(139,92,246,.35);
+                    border-bottom: 1px solid rgba(139,92,246,.5);
                     color: #e2d9f3;
                     font-family: 'Courier New', monospace;
                     font-size: 1.05rem;
@@ -302,13 +302,13 @@ export default function VoidLogin() {
                     caret-color: #a78bfa;
                 }
                 .vl-input:focus { border-bottom-color: rgba(139,92,246,.85); }
-                .vl-input::placeholder { color: rgba(139,92,246,.3); }
+                .vl-input::placeholder { color: rgba(139,92,246,.42); }
 
                 .vl-btn {
                     position: relative; overflow: hidden;
-                    border: 1px solid rgba(139,92,246,.45);
+                    border: 1px solid rgba(139,92,246,.58);
                     background: transparent;
-                    color: rgba(167,139,250,.8);
+                    color: rgba(167,139,250,.9);
                     font-family: 'Courier New', monospace;
                     font-size: .68rem;
                     letter-spacing: .35em; text-transform: uppercase;
@@ -329,7 +329,7 @@ export default function VoidLogin() {
 
                 .vl-link-btn {
                     background: transparent; border: none;
-                    color: rgba(139,92,246,.35); cursor: pointer;
+                    color: rgba(139,92,246,.48); cursor: pointer;
                     font-family: 'Courier New', monospace;
                     font-size: .6rem; letter-spacing: .3em; text-transform: uppercase;
                     padding: 8px 0; transition: color .3s; width: 100%;
@@ -407,8 +407,8 @@ export default function VoidLogin() {
                                 fontSize: 'clamp(2.4rem, 7vw, 3.8rem)',
                                 fontWeight: 700,
                                 letterSpacing: '.35em',
-                                color: 'rgba(167,139,250,.1)',
-                                textShadow: '0 0 80px rgba(139,92,246,.14)',
+                                color: 'rgba(167,139,250,.2)',
+                                textShadow: '0 0 80px rgba(139,92,246,.22)',
                                 userSelect: 'none', lineHeight: 1,
                             }}
                         >
@@ -417,7 +417,7 @@ export default function VoidLogin() {
                         <div className="vl-flicker" style={{
                             fontFamily: 'Courier New, monospace',
                             fontSize: '.58rem', letterSpacing: '.5em',
-                            color: 'rgba(139,92,246,.5)', marginTop: 12,
+                            color: 'rgba(139,92,246,.62)', marginTop: 12,
                             textTransform: 'uppercase',
                         }}>
                             SECURE ACCESS TERMINAL
@@ -428,7 +428,7 @@ export default function VoidLogin() {
                     {(stage === 'check' || stage === 'boot') && (
                         <div className="vl-panel" style={{
                             fontFamily: 'Courier New, monospace', fontSize: '.7rem',
-                            color: 'rgba(139,92,246,.65)', letterSpacing: '.1em', lineHeight: 1.8,
+                            color: 'rgba(139,92,246,.75)', letterSpacing: '.1em', lineHeight: 1.8,
                             width: '100%',
                         }}>
                             {stage === 'check'
@@ -450,7 +450,7 @@ export default function VoidLogin() {
                             <div>
                                 <div style={{
                                     fontFamily: 'Courier New, monospace', fontSize: '.58rem',
-                                    color: 'rgba(139,92,246,.5)', letterSpacing: '.4em',
+                                    color: 'rgba(139,92,246,.62)', letterSpacing: '.4em',
                                     textTransform: 'uppercase', marginBottom: 10,
                                 }}>
                                     &gt; SIGNAL FREQUENCY (PHONE NUMBER)
@@ -487,11 +487,11 @@ export default function VoidLogin() {
 
                             <div style={{
                                 fontFamily: 'Courier New, monospace', fontSize: '.63rem',
-                                color: 'rgba(139,92,246,.55)', letterSpacing: '.08em', lineHeight: 1.7,
+                                color: 'rgba(139,92,246,.66)', letterSpacing: '.08em', lineHeight: 1.7,
                             }}>
                                 &gt; CODE SENT TO <span style={{ color: '#a78bfa' }}>{phone}</span>
                                 <br />
-                                <span style={{ fontSize: '.55rem', color: 'rgba(139,92,246,.35)' }}>
+                                <span style={{ fontSize: '.55rem', color: 'rgba(139,92,246,.46)' }}>
                                     CHECK TELEGRAM APP OR SMS
                                 </span>
                             </div>
@@ -499,7 +499,7 @@ export default function VoidLogin() {
                             <div>
                                 <div style={{
                                     fontFamily: 'Courier New, monospace', fontSize: '.58rem',
-                                    color: 'rgba(139,92,246,.5)', letterSpacing: '.4em',
+                                    color: 'rgba(139,92,246,.62)', letterSpacing: '.4em',
                                     textTransform: 'uppercase', marginBottom: 10,
                                 }}>
                                     &gt; ENTER QUANTUM KEY
@@ -542,11 +542,11 @@ export default function VoidLogin() {
 
                             <div style={{
                                 fontFamily: 'Courier New, monospace', fontSize: '.63rem',
-                                color: 'rgba(139,92,246,.55)', letterSpacing: '.08em', lineHeight: 1.7,
+                                color: 'rgba(139,92,246,.66)', letterSpacing: '.08em', lineHeight: 1.7,
                             }}>
                                 &gt; TWO-FACTOR AUTHENTICATION ENABLED
                                 <br />
-                                <span style={{ fontSize: '.55rem', color: 'rgba(139,92,246,.35)' }}>
+                                <span style={{ fontSize: '.55rem', color: 'rgba(139,92,246,.46)' }}>
                                     ENTER YOUR TELEGRAM CLOUD PASSWORD
                                 </span>
                             </div>
@@ -554,7 +554,7 @@ export default function VoidLogin() {
                             <div>
                                 <div style={{
                                     fontFamily: 'Courier New, monospace', fontSize: '.58rem',
-                                    color: 'rgba(139,92,246,.5)', letterSpacing: '.4em',
+                                    color: 'rgba(139,92,246,.62)', letterSpacing: '.4em',
                                     textTransform: 'uppercase', marginBottom: 10,
                                 }}>
                                     &gt; CLOUD PASSWORD
@@ -621,7 +621,7 @@ export default function VoidLogin() {
                     {(stage === 'phone' || stage === 'code' || stage === 'password') && (
                         <div style={{
                             fontFamily: 'Courier New, monospace', fontSize: '.52rem',
-                            color: 'rgba(139,92,246,.22)', letterSpacing: '.18em',
+                            color: 'rgba(139,92,246,.32)', letterSpacing: '.18em',
                             textTransform: 'uppercase', textAlign: 'center',
                         }}>
                             TELEGRAM MTProto · END-TO-END ENCRYPTED

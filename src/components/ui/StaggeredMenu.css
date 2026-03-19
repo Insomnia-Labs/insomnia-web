@@ -17,12 +17,20 @@
 
 .staggered-menu-wrapper.fixed-wrapper {
     position: fixed;
-    top: 0;
-    left: 0;
+    inset: 0;
     width: 100vw;
     height: 100vh;
+    min-height: 100vh;
     z-index: 40;
     overflow: hidden;
+}
+
+@supports (height: 100dvh) {
+    .staggered-menu-wrapper.fixed-wrapper {
+        width: 100dvw;
+        height: 100dvh;
+        min-height: 100dvh;
+    }
 }
 
 .staggered-menu-header {
@@ -359,24 +367,29 @@
 
 @media (max-width: 640px) {
 
-    /* Wrapper: svh = small viewport height = safe when browser chrome is visible */
+    /* Wrapper should always fill visual viewport, including fullscreen mode */
     .staggered-menu-wrapper.fixed-wrapper {
         height: 100vh;
-        /* fallback for older browsers */
-        height: 100svh;
-        /* modern: safe viewport, accounts for browser address bar */
+        min-height: 100vh;
+    }
+
+    @supports (height: 100dvh) {
+        .staggered-menu-wrapper.fixed-wrapper {
+            height: 100dvh;
+            min-height: 100dvh;
+        }
     }
 
     /* Full-screen panel */
     .staggered-menu-panel {
         width: 100%;
         max-width: none;
-        height: 100vh;
-        /* fallback */
-        height: 100svh;
-        /* match wrapper */
-        left: 0;
+        top: 0;
         right: 0;
+        bottom: 0;
+        left: 0;
+        height: auto;
+        min-height: 100%;
         padding: 5.5em 1.75rem 0 1.75rem;
         backdrop-filter: none;
         background: #050505;
@@ -385,6 +398,18 @@
         overflow-y: auto;
         /* safety fallback on very small phones */
         overflow-x: hidden;
+    }
+
+    /* Layers should also span full panel width on mobile */
+    .sm-prelayers {
+        left: 0;
+        right: 0;
+        width: auto;
+    }
+
+    .sm-prelayer {
+        left: 0;
+        right: 0;
     }
 
     /* Inner: flex column, socials pushed to bottom */

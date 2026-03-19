@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useState, useRef } from 'react'
+import React, { useEffect, useLayoutEffect, useState, useRef, useMemo } from 'react'
 import { useStore } from '../../store/useStore'
 import { getChatHistory, getDialogs, getMe, getProfilePhoto, getChatFolders, sendMessage, sendFileToChat, subscribeToMessages, subscribeToPresence, subscribeToTyping } from '../../services/telegramClient'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -51,6 +51,9 @@ export default function Dashboard() {
     const pendingScrollRestoreRef = useRef(null)
     const shouldScrollToBottomRef = useRef(false)
     const exportCancelRef = useRef(false)
+    const mobileUploadDisplayedProgressRef = useRef(0)
+    const mobileUploadProgressTargetRef = useRef(0)
+    const mobileUploadProgressFrameRef = useRef(0)
 
     const getMessageIdKey = (message) => {
         if (message?.id === undefined || message?.id === null) return ''
@@ -63,6 +66,54 @@ export default function Dashboard() {
     }
 
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+    const stopMobileUploadProgressAnimation = () => {
+        if (mobileUploadProgressFrameRef.current) {
+            window.cancelAnimationFrame(mobileUploadProgressFrameRef.current)
+            mobileUploadProgressFrameRef.current = 0
+        }
+    }
+
+    const runMobileUploadProgressAnimation = () => {
+        const current = mobileUploadDisplayedProgressRef.current
+        const target = mobileUploadProgressTargetRef.current
+        const delta = target - current
+
+        let next = current
+        if (Math.abs(delta) <= 0.2) {
+            next = target
+        } else {
+            next = current + delta * 0.18
+        }
+
+        mobileUploadDisplayedProgressRef.current = next
+        const rounded = Math.max(0, Math.min(100, Math.round(next)))
+        setMobileUploadProgress(prev => (prev === rounded ? prev : rounded))
+
+        if (Math.abs(target - next) > 0.01) {
+            mobileUploadProgressFrameRef.current = window.requestAnimationFrame(runMobileUploadProgressAnimation)
+            return
+        }
+
+        mobileUploadProgressFrameRef.current = 0
+    }
+
+    const setMobileUploadProgressTarget = (value) => {
+        const nextTarget = Math.max(0, Math.min(100, Number(value) || 0))
+        if (nextTarget < mobileUploadProgressTargetRef.current && nextTarget !== 0) return
+        mobileUploadProgressTargetRef.current = nextTarget
+
+        if (!mobileUploadProgressFrameRef.current) {
+            mobileUploadProgressFrameRef.current = window.requestAnimationFrame(runMobileUploadProgressAnimation)
+        }
+    }
+
+    const resetMobileUploadProgress = () => {
+        stopMobileUploadProgressAnimation()
+        mobileUploadDisplayedProgressRef.current = 0
+        mobileUploadProgressTargetRef.current = 0
+        setMobileUploadProgress(0)
+    }
 
     const formatTimeWithSeconds = (value) => {
         return new Date(value).toLocaleTimeString([], {
@@ -252,8 +303,13 @@ export default function Dashboard() {
         setMobileUploadNotice(null)
         setMobileUploadDetailsOpen(false)
         setMobileUploadCopyState('idle')
-        setMobileUploadProgress(0)
+        resetMobileUploadProgress()
     }, [selectedChatId])
+    useEffect(() => {
+        return () => {
+            stopMobileUploadProgressAnimation()
+        }
+    }, [])
     useEffect(() => {
         if (!mobileSearchOpen) return
         const timerId = window.setTimeout(() => {
@@ -768,7 +824,7 @@ export default function Dashboard() {
         setMobileUploadNotice(null)
         setMobileUploadDetailsOpen(false)
         setMobileUploadCopyState('idle')
-        setMobileUploadProgress(0)
+        resetMobileUploadProgress()
         if (!selectedChatId) {
             setPostLoginView('chats')
             return
@@ -783,7 +839,7 @@ export default function Dashboard() {
         setMobileUploadNotice(null)
         setMobileUploadDetailsOpen(false)
         setMobileUploadCopyState('idle')
-        setMobileUploadProgress(0)
+        resetMobileUploadProgress()
     }
 
     const handleMobileFileSelected = async (event) => {
@@ -800,7 +856,7 @@ export default function Dashboard() {
         setMobileUploadNotice(null)
         setMobileUploadDetailsOpen(false)
         setMobileUploadCopyState('idle')
-        setMobileUploadProgress(0)
+        resetMobileUploadProgress()
 
         try {
             const uploadedMessage = await sendFileToChat(selectedChatId, file, {
@@ -808,7 +864,7 @@ export default function Dashboard() {
                 onProgress: (rawValue) => {
                     const numeric = Number(rawValue)
                     const percent = Number.isFinite(numeric) ? Math.round(Math.max(0, Math.min(1, numeric)) * 100) : 0
-                    setMobileUploadProgress(prev => (percent === prev ? prev : percent))
+                    setMobileUploadProgressTarget(percent)
                 }
             })
             if (uploadedMessage) {
@@ -831,7 +887,7 @@ export default function Dashboard() {
             })
         } finally {
             setMobileUploadInProgress(false)
-            setMobileUploadProgress(0)
+            resetMobileUploadProgress()
             if (event?.target) event.target.value = ''
         }
     }
@@ -1438,10 +1494,10 @@ export default function Dashboard() {
         return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-[20px] h-[20px]"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
     }
 
-    const renderMobileDiskView = () => {
+    const mobileVisibleRows = useMemo(() => {
         const allFileRows = getFilteredFileMessages()
         const query = mobileSearchQuery.trim().toLowerCase()
-        const visibleRows = allFileRows
+        return allFileRows
             .map(msg => ({ msg, preview: getFilePreviewData(msg) }))
             .filter(({ preview }) => {
                 if (!query) return true
@@ -1451,6 +1507,42 @@ export default function Dashboard() {
                     preview.extLabel.toLowerCase().includes(query)
                 )
             })
+    }, [messages, activeTab, mobileSearchQuery])
+
+    const mobileVisibleRowItems = useMemo(() => {
+        return mobileVisibleRows.map(({ preview }) => (
+            <button
+                key={preview.id}
+                onClick={() => {
+                    if (preview.fileUrl) {
+                        window.open(preview.fileUrl, '_blank', 'noopener,noreferrer')
+                    }
+                }}
+                className="w-full rounded-2xl px-3 py-2.5 text-left hover:bg-white/[0.03] active:bg-white/[0.06] transition-colors"
+            >
+                <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-full border flex items-center justify-center shrink-0 ${getMobileFileTone(preview.type)}`}>
+                        {renderMobileFileIcon(preview.type)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-start gap-2">
+                            <span className="truncate text-[20px] leading-[1.1] font-semibold text-white">{preview.title}</span>
+                            <span className="ml-auto shrink-0 text-[13px] text-[#798195]">{preview.timeLabel}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                            <span className="truncate text-[14px] text-[#8c93a3]">{preview.subtitle}</span>
+                            <span className="shrink-0 inline-flex items-center h-5 px-2 rounded-full border border-white/10 bg-[#1d212b] text-[10px] font-semibold text-[#bdc8df] tracking-[0.08em]">
+                                {preview.extLabel}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </button>
+        ))
+    }, [mobileVisibleRows])
+
+    const renderMobileDiskView = () => {
+        const visibleRows = mobileVisibleRows
 
         const handleToggleMobileSearch = () => {
             if (mobileSearchOpen) {
@@ -1646,35 +1738,7 @@ export default function Dashboard() {
                         </div>
                     ) : (
                         <div className="flex flex-col">
-                            {visibleRows.map(({ preview }) => (
-                                <button
-                                    key={preview.id}
-                                    onClick={() => {
-                                        if (preview.fileUrl) {
-                                            window.open(preview.fileUrl, '_blank', 'noopener,noreferrer')
-                                        }
-                                    }}
-                                    className="w-full rounded-2xl px-3 py-2.5 text-left hover:bg-white/[0.03] active:bg-white/[0.06] transition-colors"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-12 h-12 rounded-full border flex items-center justify-center shrink-0 ${getMobileFileTone(preview.type)}`}>
-                                            {renderMobileFileIcon(preview.type)}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex items-start gap-2">
-                                                <span className="truncate text-[20px] leading-[1.1] font-semibold text-white">{preview.title}</span>
-                                                <span className="ml-auto shrink-0 text-[13px] text-[#798195]">{preview.timeLabel}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                <span className="truncate text-[14px] text-[#8c93a3]">{preview.subtitle}</span>
-                                                <span className="shrink-0 inline-flex items-center h-5 px-2 rounded-full border border-white/10 bg-[#1d212b] text-[10px] font-semibold text-[#bdc8df] tracking-[0.08em]">
-                                                    {preview.extLabel}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </button>
-                            ))}
+                            {mobileVisibleRowItems}
                         </div>
                     )}
                 </div>
@@ -1760,8 +1824,8 @@ export default function Dashboard() {
                         </div>
                         <div className="mt-1.5 h-1.5 rounded-full bg-[#25344b] overflow-hidden">
                             <div
-                                className="h-full rounded-full bg-[#7ea8d2] transition-[width] duration-200 ease-out"
-                                style={{ width: `${mobileUploadProgress}%` }}
+                                className="h-full w-full rounded-full bg-[#7ea8d2] origin-left will-change-transform transition-transform duration-100 ease-linear"
+                                style={{ transform: `scaleX(${Math.max(0, Math.min(100, mobileUploadProgress)) / 100})` }}
                             ></div>
                         </div>
                     </div>
@@ -1775,10 +1839,7 @@ export default function Dashboard() {
                 >
                     {mobileUploadInProgress ? (
                         <div className="flex flex-col items-center leading-none">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-5 h-5 animate-spin">
-                                <circle cx="12" cy="12" r="9" strokeOpacity="0.3"></circle>
-                                <path d="M21 12a9 9 0 0 0-9-9"></path>
-                            </svg>
+                            <div className="w-5 h-5 rounded-full border-2 border-white/35 border-t-white animate-spin"></div>
                             <span className="mt-0.5 text-[10px] font-semibold">{mobileUploadProgress}%</span>
                         </div>
                     ) : (

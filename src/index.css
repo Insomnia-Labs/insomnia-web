@@ -23,7 +23,8 @@ body,
   background: #050505;
 }
 
-/* Mobile viewport units with graceful fallback (vh -> svh -> dvh) */
+/* Mobile viewport units with graceful fallback (vh -> svh).
+   Keep home layout stable when browser chrome collapses/expands. */
 .app-mobile-shell,
 .mobile-background-scroll {
   min-height: 100vh;
@@ -43,18 +44,6 @@ body,
 
   .mobile-hero-section {
     min-height: 100svh;
-  }
-}
-
-@supports (height: 100dvh) {
-  .app-mobile-shell,
-  .mobile-background-scroll {
-    min-height: 100dvh;
-    height: 100dvh;
-  }
-
-  .mobile-hero-section {
-    min-height: 100dvh;
   }
 }
 

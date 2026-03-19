@@ -374,11 +374,47 @@ async function resolvePeerEntity(client, chatId, context = 'resolvePeerEntity') 
     }
 }
 
+function normalizeBrowserUploadFile(file) {
+    if (typeof File === 'undefined' || !(file instanceof File)) {
+        return file
+    }
+
+    // GramJS checks `"read" in file` before it handles browser File properly.
+    // We provide that method through a File subclass so the object keeps native File behavior.
+    if ('read' in file) {
+        return file
+    }
+
+    try {
+        class BrowserUploadFile extends File {
+            read(start = 0, end = this.size) {
+                return this.slice(start, end)
+            }
+        }
+
+        return new BrowserUploadFile([file], file.name || 'upload.bin', {
+            type: file.type || 'application/octet-stream',
+            lastModified: Number.isFinite(file.lastModified) ? file.lastModified : Date.now()
+        })
+    } catch (err) {
+        try {
+            Object.defineProperty(file, 'read', {
+                configurable: true,
+                enumerable: false,
+                writable: false,
+                value: (start = 0, end = file.size) => file.slice(start, end)
+            })
+        } catch { }
+        return file
+    }
+}
+
 export async function sendFileToChat(chatId, file, options = {}) {
     if (!file) throw new Error('NO_FILE_PROVIDED')
 
     const client = await getClient()
     const peer = await resolvePeerEntity(client, chatId, 'sendFileToChat')
+    const normalizedFile = normalizeBrowserUploadFile(file)
 
     const caption = typeof options.caption === 'string' ? options.caption : ''
     const silent = options.silent !== false
@@ -389,7 +425,7 @@ export async function sendFileToChat(chatId, file, options = {}) {
 
     try {
         const result = await client.sendFile(peer, {
-            file,
+            file: normalizedFile,
             caption,
             forceDocument,
             silent,

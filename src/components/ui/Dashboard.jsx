@@ -35,7 +35,9 @@ export default function Dashboard() {
     const [exportedHistoryCount, setExportedHistoryCount] = useState(0)
     const [exportHistoryError, setExportHistoryError] = useState(null)
     const [mobileUploadInProgress, setMobileUploadInProgress] = useState(false)
-    const [mobileUploadError, setMobileUploadError] = useState('')
+    const [mobileUploadNotice, setMobileUploadNotice] = useState(null)
+    const [mobileUploadDetailsOpen, setMobileUploadDetailsOpen] = useState(false)
+    const [mobileUploadCopyState, setMobileUploadCopyState] = useState('idle')
     const chatMenuRef = useRef(null)
     const exportMenuRef = useRef(null)
     const chatContainerRef = useRef(null)
@@ -246,7 +248,9 @@ export default function Dashboard() {
     useEffect(() => { chatFoldersRef.current = chatFolders }, [chatFolders])
     useEffect(() => { activeChatIdRef.current = selectedChatId }, [selectedChatId])
     useEffect(() => {
-        setMobileUploadError('')
+        setMobileUploadNotice(null)
+        setMobileUploadDetailsOpen(false)
+        setMobileUploadCopyState('idle')
     }, [selectedChatId])
     useEffect(() => {
         if (!mobileSearchOpen) return
@@ -759,7 +763,9 @@ export default function Dashboard() {
     }
 
     const openMobileFilePicker = () => {
-        setMobileUploadError('')
+        setMobileUploadNotice(null)
+        setMobileUploadDetailsOpen(false)
+        setMobileUploadCopyState('idle')
         if (!selectedChatId) {
             setPostLoginView('chats')
             return
@@ -768,6 +774,12 @@ export default function Dashboard() {
         if (!input) return
         input.value = ''
         input.click()
+    }
+
+    const handleCloseMobileUploadNotice = () => {
+        setMobileUploadNotice(null)
+        setMobileUploadDetailsOpen(false)
+        setMobileUploadCopyState('idle')
     }
 
     const handleMobileFileSelected = async (event) => {
@@ -781,7 +793,9 @@ export default function Dashboard() {
         }
 
         setMobileUploadInProgress(true)
-        setMobileUploadError('')
+        setMobileUploadNotice(null)
+        setMobileUploadDetailsOpen(false)
+        setMobileUploadCopyState('idle')
 
         try {
             const uploadedMessage = await sendFileToChat(selectedChatId, file, { workers: 1 })
@@ -795,11 +809,14 @@ export default function Dashboard() {
             }
         } catch (err) {
             console.error('Failed to upload file:', err)
-            if (err?.message?.includes?.('FLOOD_WAIT')) {
-                setMobileUploadError('Слишком много запросов. Попробуйте позже.')
-            } else {
-                setMobileUploadError('Не удалось загрузить файл')
-            }
+            const uiError = getMobileUploadErrorPresentation(err)
+            setMobileUploadNotice({
+                id: `${Date.now()}`,
+                title: uiError.title,
+                brief: uiError.brief,
+                details: buildMobileUploadErrorDetails(err, file, selectedChatId),
+                createdAt: Date.now()
+            })
         } finally {
             setMobileUploadInProgress(false)
             if (event?.target) event.target.value = ''
@@ -822,6 +839,87 @@ export default function Dashboard() {
         if (value >= 100) return `${Math.round(value)} ${units[idx]}`
         if (value >= 10) return `${value.toFixed(1)} ${units[idx]}`
         return `${value.toFixed(2)} ${units[idx]}`
+    }
+
+    const getMobileUploadErrorPresentation = (err) => {
+        const message = (err?.message || '').toUpperCase()
+        if (message.includes('FLOOD_WAIT')) {
+            return {
+                title: 'Слишком много запросов',
+                brief: 'Telegram временно ограничил загрузки. Попробуйте позже.'
+            }
+        }
+        if (message.includes('NETWORK') || message.includes('TIMEOUT')) {
+            return {
+                title: 'Проблема с сетью',
+                brief: 'Связь нестабильна. Проверьте интернет и повторите загрузку.'
+            }
+        }
+        return {
+            title: 'Не удалось загрузить файл',
+            brief: 'Нажмите, чтобы открыть детали ошибки.'
+        }
+    }
+
+    const buildMobileUploadErrorDetails = (err, file, chatId) => {
+        const now = new Date()
+        const infoLines = [
+            `Время: ${now.toLocaleString('ru-RU', { hour12: false })}`,
+            `Chat ID: ${chatId || 'не выбран'}`,
+            `Файл: ${file?.name || 'неизвестно'}`,
+            `Размер: ${formatFileSize(file?.size) || 'неизвестно'} (${Number.isFinite(file?.size) ? file.size : 'n/a'} B)`,
+            `MIME: ${file?.type || 'не указан'}`,
+            `Последнее изменение: ${file?.lastModified ? new Date(file.lastModified).toLocaleString('ru-RU', { hour12: false }) : 'неизвестно'}`,
+            '',
+            `Сообщение: ${err?.message || 'unknown error'}`
+        ]
+
+        if (err?.code) infoLines.push(`Код: ${err.code}`)
+        if (err?.className) infoLines.push(`Класс: ${err.className}`)
+        if (err?.name) infoLines.push(`Имя ошибки: ${err.name}`)
+
+        if (err?.stack) {
+            infoLines.push('', 'Stack trace:', err.stack)
+        }
+
+        return infoLines.join('\n')
+    }
+
+    const copyTextWithFallback = async (value) => {
+        if (!value) return false
+
+        try {
+            if (navigator?.clipboard?.writeText) {
+                await navigator.clipboard.writeText(value)
+                return true
+            }
+        } catch {
+            // Fallback below
+        }
+
+        try {
+            const textarea = document.createElement('textarea')
+            textarea.value = value
+            textarea.setAttribute('readonly', 'readonly')
+            textarea.style.position = 'fixed'
+            textarea.style.opacity = '0'
+            textarea.style.pointerEvents = 'none'
+            document.body.appendChild(textarea)
+            textarea.focus()
+            textarea.select()
+            textarea.setSelectionRange(0, textarea.value.length)
+            const copied = document.execCommand('copy')
+            textarea.remove()
+            return copied
+        } catch {
+            return false
+        }
+    }
+
+    const handleCopyMobileUploadDetails = async () => {
+        const detailsText = mobileUploadNotice?.details || ''
+        const copied = await copyTextWithFallback(detailsText)
+        setMobileUploadCopyState(copied ? 'copied' : 'failed')
     }
 
     const getFilteredFileMessages = (tab = activeTab) => {
@@ -1352,6 +1450,60 @@ export default function Dashboard() {
 
         return (
             <div className="md:hidden relative flex h-full w-full flex-col overflow-hidden bg-[#0b0c10] text-white">
+                <AnimatePresence>
+                    {mobileUploadNotice && (
+                        <motion.div
+                            key={mobileUploadNotice.id}
+                            initial={{ opacity: 0, y: -14 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -14 }}
+                            transition={{ duration: 0.18, ease: 'easeOut' }}
+                            className="absolute left-3 right-3 z-30"
+                            style={{ top: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}
+                        >
+                            <div
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => {
+                                    setMobileUploadDetailsOpen(true)
+                                    setMobileUploadCopyState('idle')
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault()
+                                        setMobileUploadDetailsOpen(true)
+                                        setMobileUploadCopyState('idle')
+                                    }
+                                }}
+                                className="rounded-2xl border border-[#7a3b3f] bg-[#32181c]/95 backdrop-blur-sm shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
+                            >
+                                <div className="flex items-start gap-2 px-3 py-2.5">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-[13px] font-semibold text-[#ffd9db]">{mobileUploadNotice.title}</p>
+                                        <p className="mt-0.5 text-[12px] text-[#efb4b7] leading-[1.3]">
+                                            {mobileUploadNotice.brief}
+                                        </p>
+                                        <p className="mt-1 text-[11px] text-[#cc8c93]">Нажмите, чтобы открыть подробности</p>
+                                    </div>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            handleCloseMobileUploadNotice()
+                                        }}
+                                        className="shrink-0 w-7 h-7 rounded-full border border-white/10 bg-white/[0.03] text-[#f0b6bb] hover:text-white hover:bg-white/[0.09] transition-colors"
+                                        title="Закрыть уведомление"
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-3.5 h-3.5 mx-auto">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 <div className="shrink-0 px-4 pt-3 pb-1.5 bg-[#0b0c10]">
                     <div className="relative h-9">
                         <div
@@ -1521,11 +1673,71 @@ export default function Dashboard() {
                     onChange={handleMobileFileSelected}
                 />
 
-                {mobileUploadError && (
-                    <div className="absolute left-4 right-4 bottom-[88px] z-10 rounded-xl border border-[#6a2f2f] bg-[#2a1515]/95 px-3 py-2 text-[12px] text-[#ffb3b3]">
-                        {mobileUploadError}
-                    </div>
-                )}
+                <AnimatePresence>
+                    {mobileUploadDetailsOpen && mobileUploadNotice && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.16, ease: 'easeOut' }}
+                            className="absolute inset-0 z-40 bg-black/65 flex items-end px-3 pb-4"
+                            onClick={() => setMobileUploadDetailsOpen(false)}
+                        >
+                            <motion.div
+                                initial={{ opacity: 0, y: 18 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 12 }}
+                                transition={{ duration: 0.2, ease: 'easeOut' }}
+                                className="w-full rounded-[24px] border border-[#2b3445] bg-[#11151d] p-3.5 shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="text-[15px] font-semibold text-white">{mobileUploadNotice.title}</p>
+                                        <p className="text-[12px] text-[#90a0bd] mt-0.5">Подробности ошибки загрузки</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setMobileUploadDetailsOpen(false)}
+                                        className="w-8 h-8 rounded-full border border-white/10 bg-white/[0.03] text-[#b8c2d4] hover:text-white hover:bg-white/[0.08] transition-colors"
+                                        title="Закрыть"
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-4 h-4 mx-auto">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <div className="mt-3 max-h-[45vh] overflow-y-auto rounded-xl border border-[#2a3140] bg-[#0b0f16] px-3 py-2.5">
+                                    <pre className="whitespace-pre-wrap break-words text-[11px] leading-[1.45] font-mono text-[#b9c8e6]">
+                                        {mobileUploadNotice.details}
+                                    </pre>
+                                </div>
+
+                                <div className="mt-3 flex items-center gap-2">
+                                    <button
+                                        onClick={handleCopyMobileUploadDetails}
+                                        className="h-10 px-4 rounded-xl bg-[#2c5fbf] text-white text-[13px] font-medium hover:bg-[#356edb] transition-colors"
+                                    >
+                                        {mobileUploadCopyState === 'copied' ? 'Скопировано' : 'Копировать детали'}
+                                    </button>
+                                    <button
+                                        onClick={() => setMobileUploadDetailsOpen(false)}
+                                        className="h-10 px-4 rounded-xl border border-white/10 bg-white/[0.03] text-[#c2ccdd] text-[13px] font-medium hover:text-white hover:bg-white/[0.08] transition-colors"
+                                    >
+                                        Закрыть
+                                    </button>
+                                </div>
+
+                                {mobileUploadCopyState === 'failed' && (
+                                    <p className="mt-2 text-[12px] text-[#ff8d8d]">
+                                        Не удалось скопировать автоматически. Выделите текст и скопируйте вручную.
+                                    </p>
+                                )}
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 <button
                     onClick={openMobileFilePicker}

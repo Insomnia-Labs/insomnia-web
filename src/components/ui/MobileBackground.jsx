@@ -126,6 +126,7 @@ export default function MobileBackground() {
     const scrollProgress = useRef(0)
     const containerRef = useRef()
     const isMenuOpen = useStore((s) => s.isMenuOpen)
+    const setShowVoidLogin = useStore((s) => s.setShowVoidLogin)
 
     const handleScroll = useCallback(() => {
         const el = containerRef.current
@@ -133,6 +134,10 @@ export default function MobileBackground() {
         const max = el.scrollHeight - el.clientHeight
         scrollProgress.current = max > 0 ? el.scrollTop / max : 0
     }, [])
+
+    const handleGetStarted = useCallback(() => {
+        setShowVoidLogin(true)
+    }, [setShowVoidLogin])
 
     return (
         <div
@@ -346,7 +351,9 @@ export default function MobileBackground() {
                         transition={{ delay: 0.6, duration: 0.45, ease: 'easeOut' }}
                         style={{ display: 'flex', flexDirection: 'column', gap: 10, willChange: 'transform, opacity' }}
                     >
-                        <button className="mb-cta-primary">Get Started — It's Free</button>
+                        <button className="mb-cta-primary" type="button" onClick={handleGetStarted}>
+                            Get Started — It's Free
+                        </button>
                         <button className="mb-cta-secondary">View Documentation</button>
                     </motion.div>
 

@@ -22,7 +22,7 @@ export default function Dashboard() {
     const [chatFolder, setChatFolder] = useState(0) // 0 = regular, 1 = archive, 2+ = custom folders
     const [showChatMenu, setShowChatMenu] = useState(false)
     const [chatFolders, setChatFolders] = useState([])
-    const [terminalMode, setTerminalMode] = useState(true)
+    const [terminalMode, setTerminalMode] = useState(false)
     const [typingUsers, setTypingUsers] = useState({})
     const [draftMessage, setDraftMessage] = useState('')
     const [clockNowMs, setClockNowMs] = useState(() => Date.now())

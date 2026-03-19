@@ -4,11 +4,9 @@
  * Session is persisted to localStorage so the user stays logged in.
  */
 
-import { TelegramClient, Api } from 'telegram'
-import { StringSession } from 'telegram/sessions/index.js'
-import { computeCheck } from 'telegram/Password.js'
-import { NewMessage } from 'telegram/events/index.js'
-import { readBigIntFromBuffer, generateRandomBytes } from 'telegram/Helpers.js'
+import { TelegramClient, Api, helpers as TelegramHelpers, password as TelegramPassword } from 'telegram'
+import { StringSession } from 'telegram/sessions'
+import { NewMessage } from 'telegram/events'
 
 const API_ID = Number(import.meta.env.VITE_TELEGRAM_API_ID)
 const API_HASH = import.meta.env.VITE_TELEGRAM_API_HASH
@@ -16,7 +14,9 @@ const API_HASH = import.meta.env.VITE_TELEGRAM_API_HASH
 const SESSION_KEY = 'void_tg_session'
 const CONNECT_TIMEOUT_MS = 20000
 const AUTH_TIMEOUT_MS = 30000
-const UPLOAD_PART_SIZE_KB = 512
+const UPLOAD_PART_SIZE_SMALL_KB = 256
+const UPLOAD_PART_SIZE_LARGE_KB = 512
+const UPLOAD_PART_SIZE_LARGE_THRESHOLD_BYTES = 64 * 1024 * 1024
 const UPLOAD_LARGE_FILE_THRESHOLD_BYTES = 10 * 1024 * 1024
 const UPLOAD_MAX_WORKERS = 16
 const UPLOAD_MIN_WORKERS = 1
@@ -25,6 +25,8 @@ const UPLOAD_RETRY_DELAY_MS = 250
 
 let _client = null
 let _phoneCodeHash = null
+
+const { readBigIntFromBuffer, generateRandomBytes } = TelegramHelpers
 
 /* ── Internals ──────────────────────────────────────────── */
 
@@ -51,6 +53,16 @@ function withTimeout(promise, timeoutMs, code = 'REQUEST_TIMEOUT') {
     })
 }
 
+function isSessionPasswordNeededError(err) {
+    const message = String(err?.message || '').toUpperCase()
+    return message.includes('SESSION_PASSWORD_NEEDED')
+}
+
+function isAuthKeyUnregisteredError(err) {
+    const message = String(err?.message || '').toUpperCase()
+    return message.includes('AUTH_KEY_UNREGISTERED')
+}
+
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
 }
@@ -66,8 +78,11 @@ function clampUploadWorkers(value, partCount) {
 
 function pickAdaptiveWorkers(fileSizeBytes) {
     let workers = 8
-    if (fileSizeBytes >= 64 * 1024 * 1024) workers = 12
-    else if (fileSizeBytes <= 4 * 1024 * 1024) workers = 4
+    if (fileSizeBytes <= 16 * 1024 * 1024) workers = 4
+    else if (fileSizeBytes <= 64 * 1024 * 1024) workers = 6
+    else if (fileSizeBytes <= 256 * 1024 * 1024) workers = 8
+    else if (fileSizeBytes <= 1024 * 1024 * 1024) workers = 10
+    else workers = 12
 
     const effectiveType = typeof navigator !== 'undefined' && navigator?.connection?.effectiveType
         ? navigator.connection.effectiveType
@@ -75,8 +90,27 @@ function pickAdaptiveWorkers(fileSizeBytes) {
 
     if (effectiveType.includes('2g')) workers = Math.min(workers, 2)
     else if (effectiveType.includes('3g')) workers = Math.min(workers, 4)
+    else if (effectiveType.includes('4g')) workers += 1
+
+    if (effectiveType.includes('5g')) workers += 2
+    if (typeof navigator !== 'undefined' && navigator?.connection?.saveData) {
+        workers = Math.max(2, workers - 2)
+    }
+
+    const cores = typeof navigator !== 'undefined' && Number.isFinite(navigator?.hardwareConcurrency)
+        ? navigator.hardwareConcurrency
+        : 4
+    const cpuCeiling = Math.max(4, Math.floor(cores * 0.75))
+    workers = Math.min(workers, cpuCeiling)
 
     return workers
+}
+
+function getUploadPartSizeBytes(fileSizeBytes) {
+    const partSizeKb = fileSizeBytes >= UPLOAD_PART_SIZE_LARGE_THRESHOLD_BYTES
+        ? UPLOAD_PART_SIZE_LARGE_KB
+        : UPLOAD_PART_SIZE_SMALL_KB
+    return partSizeKb * 1024
 }
 
 function makeUploadFileId() {
@@ -96,7 +130,7 @@ async function uploadFileFast(client, file, options = {}) {
     }
 
     const name = file?.name || 'upload.bin'
-    const partSize = UPLOAD_PART_SIZE_KB * 1024
+    const partSize = getUploadPartSizeBytes(size)
     const partCount = Math.max(1, Math.ceil(size / partSize))
     const baseWorkers = Number.isFinite(options.workers) ? options.workers : pickAdaptiveWorkers(size)
     const workers = clampUploadWorkers(baseWorkers, partCount)
@@ -259,21 +293,29 @@ export async function signIn(phoneNumber, phoneCode) {
 
     const client = await withTimeout(getClient(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')
 
-    const result = await withTimeout(
-        client.invoke(
-            new Api.auth.SignIn({
-                phoneNumber,
-                phoneCodeHash: _phoneCodeHash,
-                phoneCode,
-            })
-        ),
-        AUTH_TIMEOUT_MS,
-        'TELEGRAM_SIGN_IN_TIMEOUT'
-    )
+    try {
+        const result = await withTimeout(
+            client.invoke(
+                new Api.auth.SignIn({
+                    phoneNumber,
+                    phoneCodeHash: _phoneCodeHash,
+                    phoneCode,
+                })
+            ),
+            AUTH_TIMEOUT_MS,
+            'TELEGRAM_SIGN_IN_TIMEOUT'
+        )
 
-    persistSession()
-    console.log('[TG] signIn OK, user:', result.user?.firstName)
-    return result
+        persistSession()
+        console.log('[TG] signIn OK, user:', result.user?.firstName)
+        return result
+    } catch (err) {
+        // Preserve temporary auth session required for the next 2FA step.
+        if (isSessionPasswordNeededError(err)) {
+            persistSession()
+        }
+        throw err
+    }
 }
 
 /**
@@ -281,23 +323,125 @@ export async function signIn(phoneNumber, phoneCode) {
  * Call this only when signIn() threw SESSION_PASSWORD_NEEDED.
  */
 export async function signInWith2FA(password) {
-    const client = await withTimeout(getClient(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')
+    let client = await withTimeout(getClient(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')
+    const normalizedPassword = typeof password === 'string'
+        ? password.normalize('NFKC')
+        : String(password ?? '').normalize('NFKC')
 
-    // Fetch current 2FA password settings (SRP params) from Telegram
-    const passwordInfo = await withTimeout(client.invoke(new Api.account.GetPassword()), AUTH_TIMEOUT_MS, 'TELEGRAM_2FA_FETCH_TIMEOUT')
+    if (!normalizedPassword.trim()) {
+        const err = new Error('CLOUD_PASSWORD_REQUIRED')
+        err.code = 'CLOUD_PASSWORD_REQUIRED'
+        throw err
+    }
 
-    // GramJS computes the SRP proof for us
-    const srpCheck = await computeCheck(passwordInfo, password)
+    const runSrpCheck = async (activeClient) => {
+        const passwordInfo = await withTimeout(
+            activeClient.invoke(new Api.account.GetPassword()),
+            AUTH_TIMEOUT_MS,
+            'TELEGRAM_2FA_FETCH_TIMEOUT'
+        )
 
-    const result = await withTimeout(
-        client.invoke(new Api.auth.CheckPassword({ password: srpCheck })),
-        AUTH_TIMEOUT_MS,
-        'TELEGRAM_2FA_CHECK_TIMEOUT'
-    )
+        const srpCheck = await TelegramPassword.computeCheck(passwordInfo, normalizedPassword)
+        const srpIdRaw = srpCheck?.srpId
+        let srpIdSafe = srpIdRaw
+        if (typeof srpIdRaw === 'string') {
+            srpIdSafe = BigInt(srpIdRaw)
+        } else if (typeof srpIdRaw === 'number') {
+            srpIdSafe = BigInt(Math.trunc(srpIdRaw))
+        } else if (typeof srpIdRaw !== 'bigint' && srpIdRaw?.toString) {
+            try { srpIdSafe = BigInt(srpIdRaw.toString()) } catch { }
+        }
 
-    persistSession()
-    console.log('[TG] 2FA OK, user:', result.user?.firstName)
-    return result
+        const aBytes = Buffer.isBuffer(srpCheck?.A) ? srpCheck.A : Buffer.from(srpCheck?.A || [])
+        const m1Bytes = Buffer.isBuffer(srpCheck?.M1) ? srpCheck.M1 : Buffer.from(srpCheck?.M1 || [])
+
+        const safePasswordCheck = new Api.InputCheckPasswordSRP({
+            srpId: srpIdSafe,
+            A: aBytes,
+            M1: m1Bytes
+        })
+
+        return withTimeout(
+            activeClient.invoke(new Api.auth.CheckPassword({ password: safePasswordCheck })),
+            AUTH_TIMEOUT_MS,
+            'TELEGRAM_2FA_CHECK_TIMEOUT'
+        )
+    }
+
+    const runBuiltInCheck = async (activeClient) => {
+        const user = await withTimeout(
+            activeClient.signInWithPassword(
+                { apiId: API_ID, apiHash: API_HASH },
+                {
+                    password: async () => normalizedPassword,
+                    onError: async (err) => { throw err }
+                }
+            ),
+            AUTH_TIMEOUT_MS,
+            'TELEGRAM_2FA_CHECK_TIMEOUT'
+        )
+        return { user }
+    }
+
+    const runWithFallbackMethods = async (activeClient) => {
+        try {
+            return await runSrpCheck(activeClient)
+        } catch (srpErr) {
+            try {
+                return await runBuiltInCheck(activeClient)
+            } catch (builtInErr) {
+                const srpMessage = String(srpErr?.message || '')
+                const builtInMessage = String(builtInErr?.message || '')
+                if (/bytes\s+or\s+str\s+expected/i.test(srpMessage) && !/bytes\s+or\s+str\s+expected/i.test(builtInMessage)) {
+                    throw builtInErr
+                }
+                throw srpErr
+            }
+        }
+    }
+
+    let attemptsLeft = 2
+    while (attemptsLeft > 0) {
+        try {
+            const result = await runWithFallbackMethods(client)
+            persistSession()
+            console.log('[TG] 2FA OK, user:', result?.user?.firstName)
+            return result
+        } catch (err) {
+            attemptsLeft -= 1
+            const message = String(err?.message || '')
+            const isBytesError = /bytes\s+or\s+str\s+expected/i.test(message)
+
+            if (isAuthKeyUnregisteredError(err) && attemptsLeft > 0) {
+                // Recover from temporarily dropped auth key by rebuilding client from stored session.
+                try { await client.disconnect() } catch { }
+                _client = null
+                client = await withTimeout(getClient(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')
+                continue
+            }
+
+            if (isBytesError && attemptsLeft > 0) {
+                // Self-heal: clear GramJS TL schema cache and reconnect once.
+                try { localStorage.removeItem('GramJs:apiCache') } catch { }
+                try { await client.disconnect() } catch { }
+                _client = null
+                client = await withTimeout(getClient(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')
+                continue
+            }
+
+            if (isAuthKeyUnregisteredError(err)) {
+                const finalErr = new Error('TWO_FA_SESSION_EXPIRED')
+                finalErr.code = 'TWO_FA_SESSION_EXPIRED'
+                throw finalErr
+            }
+
+            throw err
+        }
+    }
+
+    const fallbackErr = new Error('TWO_FA_SESSION_EXPIRED')
+    fallbackErr.code = 'TWO_FA_SESSION_EXPIRED'
+    throw fallbackErr
 }
 
 /**

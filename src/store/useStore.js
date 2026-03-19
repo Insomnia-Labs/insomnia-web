@@ -1,5 +1,37 @@
 import { create } from 'zustand'
 
+const STORAGE_KEYS = {
+    selectedChatId: 'insomnia_selectedChatId',
+    postLoginView: 'insomnia_postLoginView',
+}
+
+function readStorage(key) {
+    try {
+        return localStorage.getItem(key)
+    } catch {
+        return null
+    }
+}
+
+function writeStorage(key, value) {
+    try {
+        if (value === null || value === undefined || value === '') {
+            localStorage.removeItem(key)
+        } else {
+            localStorage.setItem(key, value)
+        }
+    } catch { }
+}
+
+function getInitialPostLoginView() {
+    const stored = readStorage(STORAGE_KEYS.postLoginView)
+    return stored === 'chats' || stored === 'dashboard' ? stored : null
+}
+
+function getInitialSelectedChatId() {
+    return readStorage(STORAGE_KEYS.selectedChatId) || null
+}
+
 export const useStore = create((set) => ({
     section: 'home',
     setSection: (section) => set({ section }),
@@ -17,15 +49,15 @@ export const useStore = create((set) => ({
     setInsideBlackHole: (insideBlackHole) => set({ insideBlackHole }),
     isMenuOpen: false,
     setIsMenuOpen: (isMenuOpen) => set({ isMenuOpen }),
-    postLoginView: null, // null | 'chats' | 'dashboard'
-    setPostLoginView: (postLoginView) => set({ postLoginView }),
-    selectedChatId: localStorage.getItem('insomnia_selectedChatId') || null,
+    postLoginView: getInitialPostLoginView(), // null | 'chats' | 'dashboard'
+    setPostLoginView: (postLoginView) => {
+        const normalized = postLoginView === 'chats' || postLoginView === 'dashboard' ? postLoginView : null
+        writeStorage(STORAGE_KEYS.postLoginView, normalized)
+        set({ postLoginView: normalized })
+    },
+    selectedChatId: getInitialSelectedChatId(),
     setSelectedChatId: (selectedChatId) => {
-        if (selectedChatId) {
-            localStorage.setItem('insomnia_selectedChatId', selectedChatId)
-        } else {
-            localStorage.removeItem('insomnia_selectedChatId')
-        }
+        writeStorage(STORAGE_KEYS.selectedChatId, selectedChatId || null)
         set({ selectedChatId })
     },
 }))

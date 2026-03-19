@@ -13,6 +13,11 @@ export default function ChatList() {
     const [myId, setMyId] = useState(null)
 
     useEffect(() => {
+        // Keep current view persisted so accidental reload/tab discard returns here.
+        setPostLoginView('chats')
+    }, [setPostLoginView])
+
+    useEffect(() => {
         let mounted = true
         async function fetchChats() {
             try {

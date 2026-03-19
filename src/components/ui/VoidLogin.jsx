@@ -220,6 +220,10 @@ export default function VoidLogin() {
             const msg = err?.message ?? ''
             if (msg.includes('PASSWORD_HASH_INVALID')) {
                 setError('WRONG CLOUD PASSWORD — TRY AGAIN')
+            } else if (msg.includes('TWO_FA_SESSION_EXPIRED') || msg.includes('AUTH_KEY_UNREGISTERED')) {
+                setError('2FA SESSION EXPIRED — ENTER CODE AGAIN')
+                setStage('code')
+                return
             } else {
                 setError(msg || '2FA VERIFICATION FAILED')
             }

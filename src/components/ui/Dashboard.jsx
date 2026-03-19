@@ -55,6 +55,11 @@ export default function Dashboard() {
     const mobileUploadProgressTargetRef = useRef(0)
     const mobileUploadProgressFrameRef = useRef(0)
 
+    useEffect(() => {
+        // Keep current view persisted so accidental reload/tab discard returns here.
+        setPostLoginView('dashboard')
+    }, [setPostLoginView])
+
     const getMessageIdKey = (message) => {
         if (message?.id === undefined || message?.id === null) return ''
         return message.id.toString()

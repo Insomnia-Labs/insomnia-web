@@ -23,6 +23,7 @@ export default function Dashboard() {
     const [showChatMenu, setShowChatMenu] = useState(false)
     const [chatFolders, setChatFolders] = useState([])
     const [terminalMode, setTerminalMode] = useState(false)
+    const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
     const [mobileSearchQuery, setMobileSearchQuery] = useState('')
     const [typingUsers, setTypingUsers] = useState({})
     const [draftMessage, setDraftMessage] = useState('')
@@ -36,6 +37,7 @@ export default function Dashboard() {
     const chatMenuRef = useRef(null)
     const exportMenuRef = useRef(null)
     const chatContainerRef = useRef(null)
+    const mobileSearchInputRef = useRef(null)
     const allDialogsCache = useRef(null) // cache all dialogs for custom folder filtering
     const chatFoldersRef = useRef([]) // ref to avoid triggering re-fetches
     const activeChatIdRef = useRef(selectedChatId)
@@ -240,6 +242,13 @@ export default function Dashboard() {
     // Keep ref in sync
     useEffect(() => { chatFoldersRef.current = chatFolders }, [chatFolders])
     useEffect(() => { activeChatIdRef.current = selectedChatId }, [selectedChatId])
+    useEffect(() => {
+        if (!mobileSearchOpen) return
+        const timerId = window.setTimeout(() => {
+            mobileSearchInputRef.current?.focus()
+        }, 120)
+        return () => window.clearTimeout(timerId)
+    }, [mobileSearchOpen])
     useEffect(() => {
         const timerId = window.setInterval(() => {
             setClockNowMs(Date.now())
@@ -1278,41 +1287,99 @@ export default function Dashboard() {
                 )
             })
 
+        const handleToggleMobileSearch = () => {
+            if (mobileSearchOpen) {
+                setMobileSearchOpen(false)
+                setMobileSearchQuery('')
+                return
+            }
+            setMobileSearchOpen(true)
+        }
+
         return (
             <div className="md:hidden relative flex h-full w-full flex-col overflow-hidden bg-[#0b0c10] text-white">
                 <div className="shrink-0 px-4 pt-3 pb-1.5 bg-[#0b0c10]">
-                    <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                            <p className="text-[12px] uppercase tracking-[0.18em] text-[#7c8597]">Insomnia Cloud</p>
-                        </div>
-                        <button
-                            onClick={() => setPostLoginView(null)}
-                            className="shrink-0 w-9 h-9 rounded-full border border-white/10 bg-white/[0.03] text-[#b7bfce] hover:text-white hover:bg-white/[0.08] transition-colors"
-                            title="Вернуться на сайт"
+                    <div className="relative h-9">
+                        <div
+                            className={`absolute inset-0 flex items-center justify-between gap-3 transition-all duration-200 ${mobileSearchOpen
+                                ? 'opacity-0 -translate-x-2 pointer-events-none'
+                                : 'opacity-100 translate-x-0'
+                                }`}
                         >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 mx-auto">
-                                <circle cx="12" cy="12" r="9"></circle>
-                                <line x1="12" y1="8" x2="12" y2="12"></line>
-                                <circle cx="12" cy="16" r="1"></circle>
-                            </svg>
-                        </button>
+                            <div className="min-w-0">
+                                <p className="text-[12px] uppercase tracking-[0.18em] text-[#7c8597]">Insomnia Cloud</p>
+                            </div>
+                            <div className="shrink-0 flex items-center gap-2">
+                                <button
+                                    onClick={handleToggleMobileSearch}
+                                    className="w-9 h-9 rounded-full border border-white/10 bg-white/[0.03] text-[#b7bfce] hover:text-white hover:bg-white/[0.08] transition-colors"
+                                    title="Поиск"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 mx-auto">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                </button>
+                                <button
+                                    onClick={() => setPostLoginView(null)}
+                                    className="w-9 h-9 rounded-full border border-white/10 bg-white/[0.03] text-[#b7bfce] hover:text-white hover:bg-white/[0.08] transition-colors"
+                                    title="Вернуться на сайт"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 mx-auto">
+                                        <circle cx="12" cy="12" r="9"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <circle cx="12" cy="16" r="1"></circle>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div
+                            className={`absolute inset-0 transition-all duration-200 ${mobileSearchOpen
+                                ? 'opacity-100 translate-x-0'
+                                : 'opacity-0 translate-x-2 pointer-events-none'
+                                }`}
+                        >
+                            <div className="relative w-full">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-[16px] h-[16px] text-[#6e7687]">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <input
+                                    ref={mobileSearchInputRef}
+                                    type="text"
+                                    name="file_search"
+                                    value={mobileSearchQuery}
+                                    onChange={(e) => setMobileSearchQuery(e.target.value)}
+                                    placeholder="Поиск файлов"
+                                    autoComplete="off"
+                                    autoCorrect="off"
+                                    autoCapitalize="none"
+                                    spellCheck={false}
+                                    inputMode="search"
+                                    enterKeyHint="search"
+                                    data-lpignore="true"
+                                    data-1p-ignore="true"
+                                    className="w-full h-9 rounded-full border border-[#3f5d91] bg-[#1a1d24] pl-9 pr-10 text-[13px] text-white placeholder-[#6e7687] outline-none focus:border-[#4f6da1] focus:bg-[#1c2029] transition-colors"
+                                />
+                                <button
+                                    onClick={handleToggleMobileSearch}
+                                    className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full border border-white/10 bg-white/[0.03] text-[#b7bfce] hover:text-white hover:bg-white/[0.08] transition-colors"
+                                    title="Закрыть поиск"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-3.5 h-3.5 mx-auto">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="mt-2.5 relative">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-[17px] h-[17px] text-[#6e7687]">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                        <input
-                            type="text"
-                            value={mobileSearchQuery}
-                            onChange={(e) => setMobileSearchQuery(e.target.value)}
-                            placeholder="Поиск файлов"
-                            className="w-full h-10 rounded-2xl border border-white/5 bg-[#1a1d24] pl-10 pr-4 text-[14px] text-white placeholder-[#6e7687] outline-none focus:border-[#4f6da1] focus:bg-[#1c2029] transition-colors"
-                        />
-                    </div>
-
-                    <div className="mt-2.5 -mx-1 px-1 overflow-x-auto">
+                    <div
+                        className="mt-2.5 -mx-1 px-1 overflow-x-auto [&::-webkit-scrollbar]:hidden"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
                         <div className="min-w-max flex items-center gap-2">
                             {navItems.map(item => (
                                 <button

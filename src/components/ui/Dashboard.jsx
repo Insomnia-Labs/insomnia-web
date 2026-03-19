@@ -23,6 +23,7 @@ export default function Dashboard() {
     const [showChatMenu, setShowChatMenu] = useState(false)
     const [chatFolders, setChatFolders] = useState([])
     const [terminalMode, setTerminalMode] = useState(false)
+    const [mobileSearchQuery, setMobileSearchQuery] = useState('')
     const [typingUsers, setTypingUsers] = useState({})
     const [draftMessage, setDraftMessage] = useState('')
     const [clockNowMs, setClockNowMs] = useState(() => Date.now())
@@ -742,6 +743,124 @@ export default function Dashboard() {
         }
     }
 
+    const formatFileSize = (size) => {
+        const bytes = Number(size)
+        if (!Number.isFinite(bytes) || bytes <= 0) return ''
+        if (bytes < 1024) return `${bytes} B`
+
+        const units = ['KB', 'MB', 'GB', 'TB']
+        let value = bytes / 1024
+        let idx = 0
+        while (value >= 1024 && idx < units.length - 1) {
+            value /= 1024
+            idx += 1
+        }
+
+        if (value >= 100) return `${Math.round(value)} ${units[idx]}`
+        if (value >= 10) return `${value.toFixed(1)} ${units[idx]}`
+        return `${value.toFixed(2)} ${units[idx]}`
+    }
+
+    const getFilteredFileMessages = (tab = activeTab) => {
+        return messages.filter(msg => {
+            if (!msg?.media) return false
+
+            if (tab === 'all') return true
+
+            if (tab === 'photo') return !!msg.media.photo
+
+            if (msg.media.document) {
+                const attributes = msg.media.document.attributes || []
+                if (tab === 'video') {
+                    return attributes.some(a => a.className === 'DocumentAttributeVideo') || msg.media.document.mimeType?.startsWith('video/')
+                }
+                if (tab === 'archive') {
+                    const mime = (msg.media.document.mimeType || '').toLowerCase()
+                    return mime.includes('zip') || mime.includes('rar') || mime.includes('tar') || mime.includes('7z') || mime.includes('archive')
+                }
+            }
+
+            return false
+        })
+    }
+
+    const getFilePreviewData = (msg) => {
+        const media = msg?.media || {}
+        const dateObj = msg?.date ? new Date(msg.date * 1000) : new Date()
+        const timeLabel = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        const dateLabel = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+
+        let type = 'file'
+        let fileName = 'Файл'
+        let fileSize = ''
+        let fileUrl = ''
+        let extLabel = 'FILE'
+
+        if (media.document) {
+            const attributes = media.document.attributes || []
+            const filenameAttr = attributes.find(attr => attr.className === 'DocumentAttributeFilename')
+            const mime = (media.document.mimeType || '').toLowerCase()
+
+            if (filenameAttr?.fileName) {
+                fileName = filenameAttr.fileName
+            } else if (attributes.some(a => a.className === 'DocumentAttributeVideo')) {
+                fileName = 'Видео'
+            } else if (attributes.some(a => a.className === 'DocumentAttributeAudio')) {
+                fileName = 'Аудио'
+            } else if (attributes.some(a => a.className === 'DocumentAttributeSticker')) {
+                fileName = 'Стикер'
+            }
+
+            fileSize = formatFileSize(media.document.size)
+
+            const extMatch = fileName.match(/\.([a-z0-9]{1,7})$/i)
+            if (extMatch?.[1]) {
+                extLabel = extMatch[1].toUpperCase()
+            }
+
+            if (attributes.some(a => a.className === 'DocumentAttributeVideo') || mime.startsWith('video/')) {
+                type = 'video'
+                if (!extMatch) extLabel = 'MP4'
+            } else if (attributes.some(a => a.className === 'DocumentAttributeAudio') || mime.startsWith('audio/')) {
+                type = 'audio'
+                if (!extMatch) extLabel = 'AUDIO'
+            } else if (mime.includes('zip') || mime.includes('rar') || mime.includes('tar') || mime.includes('7z') || mime.includes('archive')) {
+                type = 'archive'
+                if (!extMatch) extLabel = 'ZIP'
+            }
+        } else if (media.photo) {
+            type = 'photo'
+            fileName = 'Фотография'
+            extLabel = 'JPG'
+        } else if (media.webpage) {
+            type = 'link'
+            fileName = media.webpage.title || 'Веб-страница'
+            fileUrl = media.webpage.url || media.webpage.displayUrl || ''
+            extLabel = 'LINK'
+        }
+
+        const subtitleParts = []
+        if (type === 'photo') subtitleParts.push('Изображение')
+        if (type === 'video') subtitleParts.push('Видео')
+        if (type === 'audio') subtitleParts.push('Аудио')
+        if (type === 'archive') subtitleParts.push('Архив')
+        if (type === 'link') subtitleParts.push('Ссылка')
+        if (fileSize) subtitleParts.push(fileSize)
+        subtitleParts.push(dateLabel)
+
+        return {
+            id: msg?.id?.toString?.() || Math.random().toString(),
+            type,
+            title: fileName,
+            sizeLabel: fileSize,
+            timeLabel,
+            dateLabel,
+            subtitle: subtitleParts.join(' • '),
+            extLabel,
+            fileUrl
+        }
+    }
+
     const renderFileRows = () => {
         if (loading) {
             return <div className="p-8 text-center text-[#787c99]">Загрузка файлов...</div>
@@ -750,28 +869,7 @@ export default function Dashboard() {
             return <div className="p-8 text-center text-red-400">Ошибка: {error}</div>
         }
 
-        // Filter messages to only those with media/documents
-        const fileMessages = messages.filter(msg => {
-            if (!msg.media) return false;
-
-            if (activeTab === 'all') return true;
-
-            if (activeTab === 'photo') {
-                return !!msg.media.photo;
-            }
-
-            if (msg.media.document) {
-                const attributes = msg.media.document.attributes || [];
-                if (activeTab === 'video') {
-                    return attributes.some(a => a.className === 'DocumentAttributeVideo') || msg.media.document.mimeType?.startsWith('video/');
-                }
-                if (activeTab === 'archive') {
-                    const mime = (msg.media.document.mimeType || '').toLowerCase();
-                    return mime.includes('zip') || mime.includes('rar') || mime.includes('tar') || mime.includes('7z') || mime.includes('archive');
-                }
-            }
-            return false;
-        });
+        const fileMessages = getFilteredFileMessages()
 
         if (fileMessages.length === 0) {
             return (
@@ -1099,11 +1197,218 @@ export default function Dashboard() {
         ? "export-menu-tag"
         : "inline-flex items-center px-1.5 py-0.5 rounded border border-[#4c6491] text-[10px] text-[#9ec4ff] bg-[#121f36] font-mono"
 
+    const getMobileFileTone = (type) => {
+        if (type === 'photo') return 'bg-[#1d3b59] border-[#2e5e8f] text-[#95d2ff]'
+        if (type === 'video') return 'bg-[#32234f] border-[#4f3a78] text-[#c7b5ff]'
+        if (type === 'archive') return 'bg-[#3d2e18] border-[#634a25] text-[#ffd896]'
+        if (type === 'audio') return 'bg-[#143834] border-[#22645d] text-[#88f0de]'
+        if (type === 'link') return 'bg-[#1f2a45] border-[#334775] text-[#9fc0ff]'
+        return 'bg-[#23242b] border-[#3b3d4b] text-[#c7c8d1]'
+    }
+
+    const renderMobileFileIcon = (type) => {
+        if (type === 'photo') {
+            return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-[20px] h-[20px]"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+        }
+        if (type === 'video') {
+            return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-[20px] h-[20px]"><rect x="3" y="5" width="15" height="14" rx="2"></rect><polygon points="10 9 15 12 10 15 10 9"></polygon><path d="M18 9l3-2v10l-3-2"></path></svg>
+        }
+        if (type === 'archive') {
+            return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-[20px] h-[20px]"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
+        }
+        if (type === 'audio') {
+            return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-[20px] h-[20px]"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+        }
+        if (type === 'link') {
+            return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-[20px] h-[20px]"><path d="M10 13a5 5 0 0 0 7.07 0l1.41-1.41a5 5 0 0 0-7.07-7.07L10 5"></path><path d="M14 11a5 5 0 0 0-7.07 0L5.52 12.41a5 5 0 0 0 7.07 7.07L14 19"></path></svg>
+        }
+        return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-[20px] h-[20px]"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+    }
+
+    const renderMobileDiskView = () => {
+        const allFileRows = getFilteredFileMessages()
+        const query = mobileSearchQuery.trim().toLowerCase()
+        const visibleRows = allFileRows
+            .map(msg => ({ msg, preview: getFilePreviewData(msg) }))
+            .filter(({ preview }) => {
+                if (!query) return true
+                return (
+                    preview.title.toLowerCase().includes(query) ||
+                    preview.subtitle.toLowerCase().includes(query) ||
+                    preview.extLabel.toLowerCase().includes(query)
+                )
+            })
+
+        return (
+            <div className="md:hidden relative flex h-full w-full flex-col overflow-hidden bg-[#0b0c10] text-white">
+                <div className="shrink-0 px-4 pt-3 pb-1.5 bg-[#0b0c10]">
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                            <p className="text-[12px] uppercase tracking-[0.18em] text-[#7c8597]">Insomnia Cloud</p>
+                        </div>
+                        <button
+                            onClick={() => setPostLoginView(null)}
+                            className="shrink-0 w-9 h-9 rounded-full border border-white/10 bg-white/[0.03] text-[#b7bfce] hover:text-white hover:bg-white/[0.08] transition-colors"
+                            title="Вернуться на сайт"
+                        >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 mx-auto">
+                                <circle cx="12" cy="12" r="9"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <circle cx="12" cy="16" r="1"></circle>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div className="mt-2.5 relative">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-[17px] h-[17px] text-[#6e7687]">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input
+                            type="text"
+                            value={mobileSearchQuery}
+                            onChange={(e) => setMobileSearchQuery(e.target.value)}
+                            placeholder="Поиск файлов"
+                            className="w-full h-10 rounded-2xl border border-white/5 bg-[#1a1d24] pl-10 pr-4 text-[14px] text-white placeholder-[#6e7687] outline-none focus:border-[#4f6da1] focus:bg-[#1c2029] transition-colors"
+                        />
+                    </div>
+
+                    <div className="mt-2.5 -mx-1 px-1 overflow-x-auto">
+                        <div className="min-w-max flex items-center gap-2">
+                            {navItems.map(item => (
+                                <button
+                                    key={item.id}
+                                    onClick={() => setActiveTab(item.id)}
+                                    className={`h-8 px-3.5 rounded-full text-[14px] font-medium transition-colors ${activeTab === item.id
+                                        ? 'bg-[#2b3342] text-[#dce8ff]'
+                                        : 'bg-[#1a1d24] text-[#8b93a5] hover:text-[#d5dbea]'
+                                        }`}
+                                >
+                                    {item.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-2 pt-0 pb-28">
+                    {!selectedChatId ? (
+                        <div className="h-full flex flex-col items-center justify-center px-6 text-center">
+                            <div className="w-16 h-16 rounded-full bg-[#1c2029] border border-white/10 flex items-center justify-center mb-4 text-[#93a1bd]">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-7 h-7">
+                                    <path d="M20 7L9 18l-5-5"></path>
+                                </svg>
+                            </div>
+                            <p className="text-[18px] font-semibold text-white mb-1">Источник файлов не выбран</p>
+                            <p className="text-[14px] text-[#7f8798] mb-4">Выберите чат, из которого нужно показать облачный диск.</p>
+                            <button
+                                onClick={() => setPostLoginView('chats')}
+                                className="h-11 px-5 rounded-full bg-[#2f6feb] text-white text-[14px] font-medium"
+                            >
+                                Выбрать источник
+                            </button>
+                        </div>
+                    ) : visibleRows.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center px-6 text-center">
+                            <div className="w-16 h-16 rounded-full bg-[#1c2029] border border-white/10 flex items-center justify-center mb-4 text-[#93a1bd]">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-7 h-7">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                            </div>
+                            <p className="text-[18px] font-semibold text-white mb-1">Файлы не найдены</p>
+                            <p className="text-[14px] text-[#7f8798]">Попробуйте другой фильтр или другой источник.</p>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col">
+                            {visibleRows.map(({ preview }) => (
+                                <button
+                                    key={preview.id}
+                                    onClick={() => {
+                                        if (preview.fileUrl) {
+                                            window.open(preview.fileUrl, '_blank', 'noopener,noreferrer')
+                                        }
+                                    }}
+                                    className="w-full rounded-2xl px-3 py-2.5 text-left hover:bg-white/[0.03] active:bg-white/[0.06] transition-colors"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-12 h-12 rounded-full border flex items-center justify-center shrink-0 ${getMobileFileTone(preview.type)}`}>
+                                            {renderMobileFileIcon(preview.type)}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-start gap-2">
+                                                <span className="truncate text-[20px] leading-[1.1] font-semibold text-white">{preview.title}</span>
+                                                <span className="ml-auto shrink-0 text-[13px] text-[#798195]">{preview.timeLabel}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <span className="truncate text-[14px] text-[#8c93a3]">{preview.subtitle}</span>
+                                                <span className="shrink-0 inline-flex items-center h-5 px-2 rounded-full border border-white/10 bg-[#1d212b] text-[10px] font-semibold text-[#bdc8df] tracking-[0.08em]">
+                                                    {preview.extLabel}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <button
+                    onClick={() => setPostLoginView('chats')}
+                    className="absolute right-5 bottom-24 z-10 w-14 h-14 rounded-full bg-[#7ea8d2] text-[#1b1f29] shadow-[0_10px_24px_rgba(41,66,101,0.45)] flex items-center justify-center"
+                    title="Сменить источник"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-6 h-6">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5v14"></path>
+                    </svg>
+                </button>
+
+                <div className="absolute left-3 right-3 bottom-4 rounded-[28px] border border-white/10 bg-[#1a1d24]/95 backdrop-blur-md px-2 py-2">
+                    <div className="grid grid-cols-4 gap-1">
+                        <button className="h-12 rounded-2xl bg-[#272d39] text-[#cfe0ff] text-[12px] font-semibold flex flex-col items-center justify-center gap-0.5">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            Файлы
+                        </button>
+                        <button className="h-12 rounded-2xl text-[#8c93a3] text-[12px] font-semibold flex flex-col items-center justify-center gap-0.5">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                            Избранное
+                        </button>
+                        <button className="h-12 rounded-2xl text-[#8c93a3] text-[12px] font-semibold flex flex-col items-center justify-center gap-0.5">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            Поиск
+                        </button>
+                        <button className="h-12 rounded-2xl text-[#8c93a3] text-[12px] font-semibold flex flex-col items-center justify-center gap-0.5">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                                <path d="M20 21a8 8 0 1 0-16 0"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            Профиль
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <>
 
-            <div id="dashboard-view" className={`fixed inset-0 z-[2000] bg-[#1a1b26] text-white font-manrope overflow-hidden flex flex-col md:flex-row ${terminalMode ? 'terminal-mode' : ''}`}>
-                <div className="flex h-full w-full bg-[#16161e]">
+            <div id="dashboard-view" className="fixed inset-0 z-[2000] bg-[#1a1b26] text-white font-manrope overflow-hidden flex flex-col md:flex-row">
+                {renderMobileDiskView()}
+
+                <div className={`hidden md:flex h-full w-full bg-[#16161e] ${terminalMode ? 'terminal-mode' : ''}`}>
                     {/* Sidebar Rail */}
                     {terminalMode ? (
                         <aside className="w-[76px] flex flex-col items-center py-4 border-r border-[#5e5e75] bg-[#16161e]/90 z-10 shrink-0" style={{ fontFamily: 'monospace', fontSize: '11px' }}>

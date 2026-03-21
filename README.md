@@ -35,6 +35,51 @@ npm run dev
 npm run build
 ```
 
+## 🔐 Telegram Auth Architecture (Cloudflare)
+
+Telegram API keys are now handled server-side via Cloudflare Pages Functions:
+
+- Frontend calls `/api/tg/*`
+- Pages Functions connect to Telegram (GramJS)
+- Browser never receives `TELEGRAM_API_ID` / `TELEGRAM_API_HASH`
+
+### Required Cloudflare Secrets
+
+In your **Cloudflare Pages project** (`Settings -> Environment variables`), add:
+
+- `TELEGRAM_API_ID`
+- `TELEGRAM_API_HASH`
+- `TELEGRAM_SESSION_SECRET` (long random string, 32+ chars)
+
+Add them for both environments you use (`Production` and `Preview`), then redeploy.
+
+### Important
+
+- Do **not** use `VITE_TELEGRAM_API_ID` / `VITE_TELEGRAM_API_HASH` anymore.
+- Anything prefixed with `VITE_` is exposed to browser users.
+
+### Optional frontend API base override
+
+By default, frontend calls same-origin `/api/tg/*`.
+If API is hosted on another domain, set:
+
+- `VITE_TELEGRAM_API_BASE_URL=https://your-api-domain`
+
+## ☁️ Cloudflare local run
+
+1. Create local secrets file from example:
+
+```bash
+cp .dev.vars.example .dev.vars
+```
+
+2. Fill real values in `.dev.vars`.
+3. Run local Pages environment:
+
+```bash
+npm run dev:pages
+```
+
 ## ⚡ Performance
 
 The project has been heavily optimized for smooth 60 FPS performance:

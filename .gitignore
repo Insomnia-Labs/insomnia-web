@@ -48,6 +48,9 @@ jspm_packages/
 .env.local
 .env.development
 .env.production
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
 
 # Stores VS Code state
 .history/

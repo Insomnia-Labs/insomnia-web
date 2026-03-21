@@ -1,873 +1,481 @@
 /**
- * telegramClient.js
- * Browser-side GramJS MTProto client (singleton).
- * Session is persisted to localStorage so the user stays logged in.
+ * Server-backed Telegram client adapter.
+ * Frontend calls Cloudflare Pages Functions (/api/tg/*);
+ * Telegram API credentials stay only on the server.
  */
 
-import { TelegramClient, Api, helpers as TelegramHelpers, password as TelegramPassword } from 'telegram'
-import { StringSession } from 'telegram/sessions'
-import { NewMessage } from 'telegram/events'
+const API_BASE = (import.meta.env.VITE_TELEGRAM_API_BASE_URL || '').replace(/\/$/, '')
+const API_PREFIX = `${API_BASE}/api/tg`
 
-const API_ID = Number(import.meta.env.VITE_TELEGRAM_API_ID)
-const API_HASH = import.meta.env.VITE_TELEGRAM_API_HASH
+const REQUEST_TIMEOUT_MS = 30_000
+const MESSAGE_POLL_INTERVAL_MS = 2_500
+const PRESENCE_POLL_INTERVAL_MS = 12_000
 
-const SESSION_KEY = 'void_tg_session'
-const CONNECT_TIMEOUT_MS = 20000
-const AUTH_TIMEOUT_MS = 30000
-const UPLOAD_PART_SIZE_SMALL_KB = 256
-const UPLOAD_PART_SIZE_LARGE_KB = 512
-const UPLOAD_PART_SIZE_LARGE_THRESHOLD_BYTES = 64 * 1024 * 1024
-const UPLOAD_LARGE_FILE_THRESHOLD_BYTES = 10 * 1024 * 1024
-const UPLOAD_MAX_WORKERS = 16
-const UPLOAD_MIN_WORKERS = 1
-const UPLOAD_RETRY_LIMIT = 4
-const UPLOAD_RETRY_DELAY_MS = 250
+const avatarCache = new Map()
+const messagePollers = new Map()
+const presenceSubscribers = new Set()
 
-let _client = null
-let _phoneCodeHash = null
+let presenceTimerId = 0
+let presenceTickInFlight = false
+let presenceSnapshot = new Map()
 
-const { readBigIntFromBuffer, generateRandomBytes } = TelegramHelpers
-
-/* ── Internals ──────────────────────────────────────────── */
-
-function getStoredSession() {
-    return new StringSession(localStorage.getItem(SESSION_KEY) ?? '')
-}
-
-function persistSession() {
-    if (_client) localStorage.setItem(SESSION_KEY, _client.session.save())
-}
-
-function withTimeout(promise, timeoutMs, code = 'REQUEST_TIMEOUT') {
-    let timeoutId
-    const timeoutPromise = new Promise((_, reject) => {
-        timeoutId = window.setTimeout(() => {
-            const err = new Error(code)
-            err.code = code
-            reject(err)
-        }, timeoutMs)
+function buildApiUrl(path, query) {
+  const url = new URL(`${API_PREFIX}${path}`, window.location.origin)
+  if (query && typeof query === 'object') {
+    Object.entries(query).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') return
+      url.searchParams.set(key, String(value))
     })
+  }
+  return url.toString()
+}
 
-    return Promise.race([promise, timeoutPromise]).finally(() => {
-        window.clearTimeout(timeoutId)
+function createError(code, message, status, details = null) {
+  const err = new Error(code || message || 'REQUEST_FAILED')
+  err.code = code || 'REQUEST_FAILED'
+  err.status = status || 0
+  err.details = details
+  return err
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+  const controller = new AbortController()
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    return await fetch(url, {
+      ...options,
+      credentials: 'include',
+      signal: controller.signal,
     })
-}
-
-function isSessionPasswordNeededError(err) {
-    const message = String(err?.message || '').toUpperCase()
-    return message.includes('SESSION_PASSWORD_NEEDED')
-}
-
-function isAuthKeyUnregisteredError(err) {
-    const message = String(err?.message || '').toUpperCase()
-    return message.includes('AUTH_KEY_UNREGISTERED')
-}
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-function clampUploadWorkers(value, partCount) {
-    const numeric = Number(value)
-    const wanted = Number.isFinite(numeric) && numeric > 0 ? Math.floor(numeric) : UPLOAD_MIN_WORKERS
-    return Math.max(
-        UPLOAD_MIN_WORKERS,
-        Math.min(UPLOAD_MAX_WORKERS, Number.isFinite(partCount) ? partCount : UPLOAD_MAX_WORKERS, wanted)
-    )
-}
-
-function pickAdaptiveWorkers(fileSizeBytes) {
-    let workers = 8
-    if (fileSizeBytes <= 16 * 1024 * 1024) workers = 4
-    else if (fileSizeBytes <= 64 * 1024 * 1024) workers = 6
-    else if (fileSizeBytes <= 256 * 1024 * 1024) workers = 8
-    else if (fileSizeBytes <= 1024 * 1024 * 1024) workers = 10
-    else workers = 12
-
-    const effectiveType = typeof navigator !== 'undefined' && navigator?.connection?.effectiveType
-        ? navigator.connection.effectiveType
-        : ''
-
-    if (effectiveType.includes('2g')) workers = Math.min(workers, 2)
-    else if (effectiveType.includes('3g')) workers = Math.min(workers, 4)
-    else if (effectiveType.includes('4g')) workers += 1
-
-    if (effectiveType.includes('5g')) workers += 2
-    if (typeof navigator !== 'undefined' && navigator?.connection?.saveData) {
-        workers = Math.max(2, workers - 2)
+  } catch (err) {
+    if (err?.name === 'AbortError') {
+      throw createError('REQUEST_TIMEOUT', 'Request timed out', 504)
     }
-
-    const cores = typeof navigator !== 'undefined' && Number.isFinite(navigator?.hardwareConcurrency)
-        ? navigator.hardwareConcurrency
-        : 4
-    const cpuCeiling = Math.max(4, Math.floor(cores * 0.75))
-    workers = Math.min(workers, cpuCeiling)
-
-    return workers
+    throw err
+  } finally {
+    window.clearTimeout(timeoutId)
+  }
 }
 
-function getUploadPartSizeBytes(fileSizeBytes) {
-    const partSizeKb = fileSizeBytes >= UPLOAD_PART_SIZE_LARGE_THRESHOLD_BYTES
-        ? UPLOAD_PART_SIZE_LARGE_KB
-        : UPLOAD_PART_SIZE_SMALL_KB
-    return partSizeKb * 1024
+async function readJsonSafely(response) {
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) return null
+  try {
+    return await response.json()
+  } catch {
+    return null
+  }
 }
 
-function makeUploadFileId() {
-    return readBigIntFromBuffer(generateRandomBytes(8), true, true)
+async function apiRequest(path, options = {}) {
+  const {
+    method = 'GET',
+    body,
+    formData,
+    query,
+    timeoutMs = REQUEST_TIMEOUT_MS,
+  } = options
+
+  const headers = new Headers(options.headers || {})
+  let payloadBody = undefined
+
+  if (formData) {
+    payloadBody = formData
+  } else if (body !== undefined) {
+    headers.set('content-type', 'application/json')
+    payloadBody = JSON.stringify(body)
+  }
+
+  const response = await fetchWithTimeout(
+    buildApiUrl(path, query),
+    {
+      method,
+      headers,
+      body: payloadBody,
+    },
+    timeoutMs
+  )
+
+  const payload = await readJsonSafely(response)
+
+  if (!response.ok || payload?.ok === false) {
+    const code = payload?.error?.code || `HTTP_${response.status}`
+    const message = payload?.error?.message || response.statusText || 'Request failed'
+    throw createError(code, message, response.status, payload?.error || null)
+  }
+
+  if (payload && Object.prototype.hasOwnProperty.call(payload, 'data')) {
+    return payload.data
+  }
+
+  return payload
 }
 
-async function readUploadChunk(file, start, end) {
-    const chunkBlob = file.slice(start, end)
-    const ab = await chunkBlob.arrayBuffer()
-    return Buffer.from(ab)
+function safeMessageId(message) {
+  if (message?.id === undefined || message?.id === null) return null
+  try {
+    return message.id.toString()
+  } catch {
+    return null
+  }
 }
 
-async function uploadFileFast(client, file, options = {}) {
-    const size = Number(file?.size)
-    if (!Number.isFinite(size) || size <= 0) {
-        throw new Error('FILE_SIZE_INVALID')
+function toBigIntOrNull(value) {
+  if (value === undefined || value === null) return null
+  const stringValue = String(value)
+  if (!/^-?\d+$/.test(stringValue)) return null
+  try {
+    return BigInt(stringValue)
+  } catch {
+    return null
+  }
+}
+
+function compareMessageIds(a, b) {
+  const aBig = toBigIntOrNull(a)
+  const bBig = toBigIntOrNull(b)
+
+  if (aBig !== null && bBig !== null) {
+    if (aBig === bBig) return 0
+    return aBig > bBig ? 1 : -1
+  }
+
+  const aStr = String(a || '')
+  const bStr = String(b || '')
+  if (aStr === bStr) return 0
+  return aStr > bStr ? 1 : -1
+}
+
+function resetMessagePolling() {
+  for (const poller of messagePollers.values()) {
+    if (poller.timerId) window.clearInterval(poller.timerId)
+    poller.callbacks.clear()
+  }
+  messagePollers.clear()
+}
+
+function resetPresencePolling() {
+  if (presenceTimerId) {
+    window.clearInterval(presenceTimerId)
+    presenceTimerId = 0
+  }
+  presenceSubscribers.clear()
+  presenceSnapshot = new Map()
+  presenceTickInFlight = false
+}
+
+function resetCaches() {
+  for (const cached of avatarCache.values()) {
+    if (typeof cached === 'string') {
+      try {
+        URL.revokeObjectURL(cached)
+      } catch {
+        // noop
+      }
     }
+  }
+  avatarCache.clear()
+}
 
-    const name = file?.name || 'upload.bin'
-    const partSize = getUploadPartSizeBytes(size)
-    const partCount = Math.max(1, Math.ceil(size / partSize))
-    const baseWorkers = Number.isFinite(options.workers) ? options.workers : pickAdaptiveWorkers(size)
-    const workers = clampUploadWorkers(baseWorkers, partCount)
-    const isLarge = size > UPLOAD_LARGE_FILE_THRESHOLD_BYTES
-    const onProgress = typeof options.onProgress === 'function' ? options.onProgress : null
-    const fileId = makeUploadFileId()
+function getHighestMessageId(messages) {
+  let maxId = null
+  for (const message of messages) {
+    const id = safeMessageId(message)
+    if (!id) continue
+    if (!maxId || compareMessageIds(id, maxId) > 0) maxId = id
+  }
+  return maxId
+}
 
-    let uploadedParts = 0
-    let nextPart = 0
+function ensureMessagePoller(chatId) {
+  const key = String(chatId)
+  if (messagePollers.has(key)) return messagePollers.get(key)
 
-    const emitProgress = () => {
-        if (!onProgress) return
-        try {
-            onProgress(Math.max(0, Math.min(1, uploadedParts / partCount)))
-        } catch { }
-    }
+  const poller = {
+    chatId: key,
+    callbacks: new Set(),
+    timerId: 0,
+    started: false,
+    running: false,
+    lastSeenId: null,
+  }
 
-    emitProgress()
+  const tick = async () => {
+    if (poller.running || poller.callbacks.size === 0) return
+    poller.running = true
 
-    const sendPart = async (sender, partIndex) => {
-        const start = partIndex * partSize
-        const end = Math.min(size, start + partSize)
-        const bytes = await readUploadChunk(file, start, end)
+    try {
+      const history = await getChatHistory(poller.chatId, { limit: 20 })
+      const list = Array.isArray(history) ? history : []
+      const highestId = getHighestMessageId(list)
 
-        let attempt = 0
-        while (true) {
-            let activeSender = sender
+      if (!poller.started) {
+        poller.lastSeenId = highestId
+        poller.started = true
+        return
+      }
+
+      if (!highestId || !poller.lastSeenId || compareMessageIds(highestId, poller.lastSeenId) <= 0) {
+        if (highestId && (!poller.lastSeenId || compareMessageIds(highestId, poller.lastSeenId) > 0)) {
+          poller.lastSeenId = highestId
+        }
+        return
+      }
+
+      const ordered = [...list].reverse()
+      const nextMessages = []
+      for (const item of ordered) {
+        const msgId = safeMessageId(item)
+        if (!msgId) continue
+        if (!poller.lastSeenId || compareMessageIds(msgId, poller.lastSeenId) > 0) {
+          nextMessages.push(item)
+        }
+      }
+
+      if (nextMessages.length > 0) {
+        poller.lastSeenId = highestId
+        for (const message of nextMessages) {
+          for (const callback of poller.callbacks) {
             try {
-                if (!activeSender || !activeSender.isConnected()) {
-                    activeSender = await client.getSender(client.session.dcId)
-                }
-
-                const request = isLarge
-                    ? new Api.upload.SaveBigFilePart({
-                        fileId,
-                        filePart: partIndex,
-                        fileTotalParts: partCount,
-                        bytes
-                    })
-                    : new Api.upload.SaveFilePart({
-                        fileId,
-                        filePart: partIndex,
-                        bytes
-                    })
-
-                await activeSender.send(request)
-                uploadedParts += 1
-                emitProgress()
-                return activeSender
-            } catch (err) {
-                attempt += 1
-                if (err?.seconds && err?.errorMessage?.includes?.('FLOOD_WAIT')) {
-                    await sleep(err.seconds * 1000)
-                    continue
-                }
-                if (attempt > UPLOAD_RETRY_LIMIT) throw err
-                await sleep(UPLOAD_RETRY_DELAY_MS * attempt)
-                try {
-                    activeSender = await client.getSender(client.session.dcId)
-                } catch { }
-                sender = activeSender
+              callback(message)
+            } catch {
+              // isolate subscriber errors
             }
+          }
         }
-    }
-
-    const runWorker = async () => {
-        let sender = await client.getSender(client.session.dcId)
-        while (true) {
-            const partIndex = nextPart
-            nextPart += 1
-            if (partIndex >= partCount) break
-            if (onProgress?.isCanceled) throw new Error('USER_CANCELED')
-            sender = await sendPart(sender, partIndex)
-        }
-    }
-
-    await Promise.all(Array.from({ length: workers }, () => runWorker()))
-
-    emitProgress()
-
-    if (isLarge) {
-        return new Api.InputFileBig({
-            id: fileId,
-            parts: partCount,
-            name
-        })
-    }
-
-    return new Api.InputFile({
-        id: fileId,
-        parts: partCount,
-        name,
-        md5Checksum: ''
-    })
-}
-
-/**
- * Returns a connected GramJS client (singleton, lazy-init).
- */
-export async function getClient() {
-    if (_client && _client.connected) return _client
-
-    if (!Number.isFinite(API_ID) || API_ID <= 0 || !API_HASH) {
-        const err = new Error('TELEGRAM_CONFIG_MISSING')
-        err.code = 'TELEGRAM_CONFIG_MISSING'
-        throw err
-    }
-
-    _client = new TelegramClient(getStoredSession(), API_ID, API_HASH, {
-        connectionRetries: 5,
-        useWSS: true, // Browser MUST use WebSocket transport
-    })
-
-    _client.setLogLevel('error')
-
-    await withTimeout(_client.connect(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')
-
-    // As soon as we connect, force the session offline so downloading chats doesn't trigger "online"
-    try {
-        await _client.invoke(new Api.account.UpdateStatus({ offline: true }))
-    } catch (e) {
-        console.warn('Failed to force offline status on connect:', e)
-    }
-
-    return _client
-}
-
-/* ── Public API ─────────────────────────────────────────── */
-
-/**
- * Step 1 – request a sign-in code to the given phone number.
- */
-export async function sendCode(phoneNumber) {
-    const client = await withTimeout(getClient(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')
-
-    const result = await withTimeout(
-        client.invoke(
-            new Api.auth.SendCode({
-                phoneNumber,
-                apiId: API_ID,
-                apiHash: API_HASH,
-                settings: new Api.CodeSettings({}),
-            })
-        ),
-        AUTH_TIMEOUT_MS,
-        'TELEGRAM_SEND_CODE_TIMEOUT'
-    )
-
-    _phoneCodeHash = result.phoneCodeHash
-    console.log('[TG] sendCode OK')
-    return { phoneCodeHash: _phoneCodeHash }
-}
-
-/**
- * Step 2 – verify the received code.
- * Throws with message 'SESSION_PASSWORD_NEEDED' if 2FA is enabled.
- */
-export async function signIn(phoneNumber, phoneCode) {
-    if (!_phoneCodeHash) throw new Error('Call sendCode() first')
-
-    const client = await withTimeout(getClient(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')
-
-    try {
-        const result = await withTimeout(
-            client.invoke(
-                new Api.auth.SignIn({
-                    phoneNumber,
-                    phoneCodeHash: _phoneCodeHash,
-                    phoneCode,
-                })
-            ),
-            AUTH_TIMEOUT_MS,
-            'TELEGRAM_SIGN_IN_TIMEOUT'
-        )
-
-        persistSession()
-        console.log('[TG] signIn OK, user:', result.user?.firstName)
-        return result
+      }
     } catch (err) {
-        // Preserve temporary auth session required for the next 2FA step.
-        if (isSessionPasswordNeededError(err)) {
-            persistSession()
-        }
-        throw err
+      console.warn('[TG API] message polling failed:', err)
+    } finally {
+      poller.running = false
     }
+  }
+
+  poller.timerId = window.setInterval(tick, MESSAGE_POLL_INTERVAL_MS)
+  void tick()
+
+  messagePollers.set(key, poller)
+  return poller
 }
 
-/**
- * Step 3 (optional) – complete 2FA with the cloud password.
- * Call this only when signIn() threw SESSION_PASSWORD_NEEDED.
- */
+async function tickPresence() {
+  if (presenceTickInFlight || presenceSubscribers.size === 0) return
+  presenceTickInFlight = true
+
+  try {
+    const dialogs = await getDialogs(300, 0)
+    const nextSnapshot = new Map()
+
+    for (const dialog of Array.isArray(dialogs) ? dialogs : []) {
+      const userId = dialog?.entity?.id?.toString?.() || null
+      const status = dialog?.entity?.status || null
+      if (!userId || !status) continue
+      nextSnapshot.set(userId, JSON.stringify(status))
+
+      const prevSerialized = presenceSnapshot.get(userId)
+      const nextSerialized = nextSnapshot.get(userId)
+      if (prevSerialized === nextSerialized) continue
+
+      const update = {
+        userId,
+        status,
+      }
+
+      for (const subscriber of presenceSubscribers) {
+        try {
+          subscriber(update)
+        } catch {
+          // noop
+        }
+      }
+    }
+
+    presenceSnapshot = nextSnapshot
+  } catch (err) {
+    console.warn('[TG API] presence polling failed:', err)
+  } finally {
+    presenceTickInFlight = false
+  }
+}
+
+function ensurePresencePolling() {
+  if (presenceTimerId) return
+  presenceTimerId = window.setInterval(() => {
+    void tickPresence()
+  }, PRESENCE_POLL_INTERVAL_MS)
+  void tickPresence()
+}
+
+export async function sendCode(phoneNumber) {
+  return apiRequest('/send-code', {
+    method: 'POST',
+    body: { phoneNumber },
+  })
+}
+
+export async function signIn(phoneNumber, phoneCode) {
+  return apiRequest('/sign-in', {
+    method: 'POST',
+    body: { phoneNumber, phoneCode },
+  })
+}
+
 export async function signInWith2FA(password) {
-    let client = await withTimeout(getClient(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')
-    const normalizedPassword = typeof password === 'string'
-        ? password.normalize('NFKC')
-        : String(password ?? '').normalize('NFKC')
-
-    if (!normalizedPassword.trim()) {
-        const err = new Error('CLOUD_PASSWORD_REQUIRED')
-        err.code = 'CLOUD_PASSWORD_REQUIRED'
-        throw err
-    }
-
-    const runSrpCheck = async (activeClient) => {
-        const passwordInfo = await withTimeout(
-            activeClient.invoke(new Api.account.GetPassword()),
-            AUTH_TIMEOUT_MS,
-            'TELEGRAM_2FA_FETCH_TIMEOUT'
-        )
-
-        const srpCheck = await TelegramPassword.computeCheck(passwordInfo, normalizedPassword)
-        const srpIdRaw = srpCheck?.srpId
-        let srpIdSafe = srpIdRaw
-        if (typeof srpIdRaw === 'string') {
-            srpIdSafe = BigInt(srpIdRaw)
-        } else if (typeof srpIdRaw === 'number') {
-            srpIdSafe = BigInt(Math.trunc(srpIdRaw))
-        } else if (typeof srpIdRaw !== 'bigint' && srpIdRaw?.toString) {
-            try { srpIdSafe = BigInt(srpIdRaw.toString()) } catch { }
-        }
-
-        const aBytes = Buffer.isBuffer(srpCheck?.A) ? srpCheck.A : Buffer.from(srpCheck?.A || [])
-        const m1Bytes = Buffer.isBuffer(srpCheck?.M1) ? srpCheck.M1 : Buffer.from(srpCheck?.M1 || [])
-
-        const safePasswordCheck = new Api.InputCheckPasswordSRP({
-            srpId: srpIdSafe,
-            A: aBytes,
-            M1: m1Bytes
-        })
-
-        return withTimeout(
-            activeClient.invoke(new Api.auth.CheckPassword({ password: safePasswordCheck })),
-            AUTH_TIMEOUT_MS,
-            'TELEGRAM_2FA_CHECK_TIMEOUT'
-        )
-    }
-
-    const runBuiltInCheck = async (activeClient) => {
-        const user = await withTimeout(
-            activeClient.signInWithPassword(
-                { apiId: API_ID, apiHash: API_HASH },
-                {
-                    password: async () => normalizedPassword,
-                    onError: async (err) => { throw err }
-                }
-            ),
-            AUTH_TIMEOUT_MS,
-            'TELEGRAM_2FA_CHECK_TIMEOUT'
-        )
-        return { user }
-    }
-
-    const runWithFallbackMethods = async (activeClient) => {
-        try {
-            return await runSrpCheck(activeClient)
-        } catch (srpErr) {
-            try {
-                return await runBuiltInCheck(activeClient)
-            } catch (builtInErr) {
-                const srpMessage = String(srpErr?.message || '')
-                const builtInMessage = String(builtInErr?.message || '')
-                if (/bytes\s+or\s+str\s+expected/i.test(srpMessage) && !/bytes\s+or\s+str\s+expected/i.test(builtInMessage)) {
-                    throw builtInErr
-                }
-                throw srpErr
-            }
-        }
-    }
-
-    let attemptsLeft = 2
-    while (attemptsLeft > 0) {
-        try {
-            const result = await runWithFallbackMethods(client)
-            persistSession()
-            console.log('[TG] 2FA OK, user:', result?.user?.firstName)
-            return result
-        } catch (err) {
-            attemptsLeft -= 1
-            const message = String(err?.message || '')
-            const isBytesError = /bytes\s+or\s+str\s+expected/i.test(message)
-
-            if (isAuthKeyUnregisteredError(err) && attemptsLeft > 0) {
-                // Recover from temporarily dropped auth key by rebuilding client from stored session.
-                try { await client.disconnect() } catch { }
-                _client = null
-                client = await withTimeout(getClient(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')
-                continue
-            }
-
-            if (isBytesError && attemptsLeft > 0) {
-                // Self-heal: clear GramJS TL schema cache and reconnect once.
-                try { localStorage.removeItem('GramJs:apiCache') } catch { }
-                try { await client.disconnect() } catch { }
-                _client = null
-                client = await withTimeout(getClient(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')
-                continue
-            }
-
-            if (isAuthKeyUnregisteredError(err)) {
-                const finalErr = new Error('TWO_FA_SESSION_EXPIRED')
-                finalErr.code = 'TWO_FA_SESSION_EXPIRED'
-                throw finalErr
-            }
-
-            throw err
-        }
-    }
-
-    const fallbackErr = new Error('TWO_FA_SESSION_EXPIRED')
-    fallbackErr.code = 'TWO_FA_SESSION_EXPIRED'
-    throw fallbackErr
+  return apiRequest('/sign-in-2fa', {
+    method: 'POST',
+    body: { password },
+  })
 }
 
-/**
- * Returns true if there's a valid, authorized session stored.
- */
 export async function isAuthorized() {
-    try {
-        const client = await getClient()
-        return await client.isUserAuthorized()
-    } catch {
-        return false
-    }
+  try {
+    const authorized = await apiRequest('/authorized')
+    return Boolean(authorized)
+  } catch {
+    return false
+  }
 }
 
 export async function getMe() {
-    const client = await getClient()
-    const me = await client.getMe()
-    return me
+  return apiRequest('/me')
 }
 
 export async function getDialogs(limit = 20, folder = undefined) {
-    const client = await getClient()
-    const opts = { limit }
-    if (folder !== undefined) opts.folder = folder
-    const dialogs = await client.getDialogs(opts)
-    return dialogs
+  return apiRequest('/dialogs', {
+    query: { limit, folder },
+  })
 }
 
 export async function getChatHistory(chatId, options = {}) {
-    const client = await getClient()
-    const limit = options.limit || 50
-    const offsetId = options.offsetId || 0
-
-    let peerId = chatId;
-    if (typeof chatId === 'string' && /^-?\d+$/.test(chatId)) {
-        try {
-            const me = await client.getMe();
-            if (me && me.id && me.id.toString() === chatId) {
-                peerId = "me";
-            }
-        } catch (e) { }
-    }
-
-    try {
-        const messages = await client.getMessages(peerId, {
-            limit: limit,
-            offsetId: offsetId
-        })
-        return messages
-    } catch (err) {
-        if (err.message && err.message.includes("Could not find the input entity")) {
-            console.warn("[TG] Entity not found. Fetching dialogs to warm up cache...");
-            await client.getDialogs({ limit: 200 });
-            return await client.getMessages(peerId, {
-                limit: limit,
-                offsetId: offsetId
-            })
-        }
-        throw err;
-    }
+  return apiRequest('/history', {
+    query: {
+      chatId,
+      limit: options.limit || 50,
+      offsetId: options.offsetId || 0,
+    },
+  })
 }
 
 export async function subscribeToMessages(chatId, callback) {
-    const client = await getClient()
+  const poller = ensureMessagePoller(chatId)
+  poller.callbacks.add(callback)
 
-    const handler = async (event) => {
-        const message = event.message
-        if (!message) return
-
-        // Extract chat ID depending on the peer type
-        const pId = message.peerId
-        const eventChatId = pId?.userId?.toString() || pId?.channelId?.toString() || pId?.chatId?.toString() || message.chatId?.toString()
-
-        if (eventChatId === chatId.toString()) {
-            // NewMessage events usually don't populate the sender object immediately
-            try {
-                if (typeof message.getSender === 'function') {
-                    message.sender = await message.getSender()
-                }
-            } catch (err) {
-                console.warn('[TG] Failed to get sender for realtime message', err)
-            }
-
-            callback(message)
-        }
+  return () => {
+    poller.callbacks.delete(callback)
+    if (poller.callbacks.size === 0) {
+      if (poller.timerId) window.clearInterval(poller.timerId)
+      messagePollers.delete(String(chatId))
     }
-
-    // Passive real-time connection from WebSockets pushes.
-    // DOES NOT trigger the server-side online status heuristic.
-    const messageFilter = new NewMessage({})
-    client.addEventHandler(handler, messageFilter)
-
-    // Provide unsubscribe
-    return () => {
-        client.removeEventHandler(handler, messageFilter)
-    }
+  }
 }
 
 export async function subscribeToPresence(callback) {
-    const client = await getClient()
+  presenceSubscribers.add(callback)
+  ensurePresencePolling()
 
-    const handler = (event) => {
-        // GramJS raw events
-        let update = event
-        if (event && event.update) update = event.update // Sometimes wrapped in an event object
-
-        if (update && update.className === 'UpdateUserStatus') {
-            callback({
-                userId: update.userId?.toString(),
-                status: update.status
-            })
-        } else if (update && update.className === 'UpdateShort' && update.update?.className === 'UpdateUserStatus') {
-            callback({
-                userId: update.update.userId?.toString(),
-                status: update.update.status
-            })
-        }
+  return () => {
+    presenceSubscribers.delete(callback)
+    if (presenceSubscribers.size === 0) {
+      resetPresencePolling()
     }
-
-    client.addEventHandler(handler)
-
-    return () => {
-        client.removeEventHandler(handler)
-    }
+  }
 }
 
-export async function subscribeToTyping(callback) {
-    const client = await getClient()
-
-    const handler = (event) => {
-        let update = event
-        if (event && event.update) update = event.update
-
-        if (update?.className === 'UpdateUserTyping') {
-            callback({
-                chatId: update.userId?.toString(),
-                userId: update.userId?.toString(),
-                action: update.action?.className
-            })
-        } else if (update?.className === 'UpdateChatUserTyping') {
-            // Provide neg (-) format if it's a group to match ChatId convention in GramJS dialogs but GramJS sometimes uses raw id
-            callback({
-                chatId: update.chatId?.toString(),
-                userId: update.userId?.toString(),
-                action: update.action?.className
-            })
-        } else if (update?.className === 'UpdateChannelUserTyping') {
-            // Same logic for channel
-            callback({
-                chatId: '-100' + update.channelId?.toString(),
-                userId: update.userId?.toString(),
-                action: update.action?.className
-            })
-        } else if (update?.className === 'UpdateShort' && update.update?.className === 'UpdateUserTyping') {
-            callback({
-                chatId: update.update.userId?.toString(),
-                userId: update.update.userId?.toString(),
-                action: update.update.action?.className
-            })
-        }
-    }
-
-    client.addEventHandler(handler)
-
-    return () => {
-        client.removeEventHandler(handler)
-    }
+export async function subscribeToTyping() {
+  // Server-side transport intentionally avoids exposing realtime MTProto update streams to the browser.
+  // Typing indicators can be added later through a dedicated push channel.
+  return () => {}
 }
 
 export async function sendMessage(chatId, message) {
-    const client = await getClient()
-    const peer = await resolvePeerEntity(client, chatId, 'sendMessage')
-
-    // 2. Ghost Mode Delay: Minimum 10-12 seconds into the future (Telegram API limit)
-    // Injects the message into the datacenter's internal cron-worker queue
-    const stealthScheduleTime = Math.floor(Date.now() / 1000) + 12
-
-    // 3. Raw Request with Obfuscation flags (silent, background, no_webpage)
-    const sendRequest = new Api.messages.SendMessage({
-        peer: peer,
-        message: message,
-        randomId: BigInt(Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)),
-        scheduleDate: stealthScheduleTime, // The core of the stealth logic
-        silent: true,      // Obfuscation flag
-        background: true,  // Obfuscation flag
-        noWebpage: true,   // Obfuscation flag
-        clearDraft: true
-    })
-
-    // 4. Wrap in InvokeWithoutUpdates to strictly block "B" side presence broadcasts
-    const stealthRequest = new Api.InvokeWithoutUpdates({
-        query: sendRequest
-    })
-
-    // To prevent any residual TCP leaks marking us online
-    try { await client.invoke(new Api.account.UpdateStatus({ offline: true })) } catch (e) { }
-    const result = await client.invoke(stealthRequest)
-    try { await client.invoke(new Api.account.UpdateStatus({ offline: true })) } catch (e) { }
-
-    return result
-}
-
-async function resolvePeerEntity(client, chatId, context = 'resolvePeerEntity') {
-    let peerId = chatId
-    if (typeof chatId === 'string' && /^-?\d+$/.test(chatId)) {
-        try {
-            const me = await client.getMe()
-            if (me && me.id && me.id.toString() === chatId) {
-                peerId = 'me'
-            }
-        } catch (e) { }
-    }
-
-    try {
-        return await client.getInputEntity(peerId)
-    } catch (err) {
-        if (err.message && err.message.includes('Could not find the input entity')) {
-            console.warn(`[TG] Entity not found for ${context}. Warming up cache...`)
-            await client.getDialogs({ limit: 200 })
-            return await client.getInputEntity(peerId)
-        }
-        throw err
-    }
-}
-
-function normalizeBrowserUploadFile(file) {
-    if (typeof File === 'undefined' || !(file instanceof File)) {
-        return file
-    }
-
-    // GramJS checks `"read" in file` before it handles browser File properly.
-    // We provide that method through a File subclass so the object keeps native File behavior.
-    if ('read' in file) {
-        return file
-    }
-
-    try {
-        class BrowserUploadFile extends File {
-            read(start = 0, end = this.size) {
-                return this.slice(start, end)
-            }
-        }
-
-        return new BrowserUploadFile([file], file.name || 'upload.bin', {
-            type: file.type || 'application/octet-stream',
-            lastModified: Number.isFinite(file.lastModified) ? file.lastModified : Date.now()
-        })
-    } catch (err) {
-        try {
-            Object.defineProperty(file, 'read', {
-                configurable: true,
-                enumerable: false,
-                writable: false,
-                value: (start = 0, end = file.size) => file.slice(start, end)
-            })
-        } catch { }
-        return file
-    }
+  return apiRequest('/send-message', {
+    method: 'POST',
+    body: { chatId, message },
+  })
 }
 
 export async function sendFileToChat(chatId, file, options = {}) {
-    if (!file) throw new Error('NO_FILE_PROVIDED')
+  if (!file) throw createError('NO_FILE_PROVIDED', 'No file provided', 400)
 
-    const client = await getClient()
-    const peer = await resolvePeerEntity(client, chatId, 'sendFileToChat')
-    const normalizedFile = normalizeBrowserUploadFile(file)
+  const onProgress = typeof options.onProgress === 'function'
+    ? options.onProgress
+    : (typeof options.progressCallback === 'function' ? options.progressCallback : null)
 
-    const caption = typeof options.caption === 'string' ? options.caption : ''
-    const silent = options.silent !== false
-    const workers = Number.isFinite(options.workers) ? options.workers : undefined
-    const forceDocument = options.forceDocument === true
-    const progressHandler = typeof options.onProgress === 'function'
-        ? options.onProgress
-        : (typeof options.progressCallback === 'function' ? options.progressCallback : null)
-    const progressCallback = progressHandler
-        ? (value) => {
-            try { progressHandler(value) } catch { }
-        }
-        : undefined
+  const formData = new FormData()
+  formData.set('chatId', String(chatId))
+  formData.set('file', file)
+  formData.set('caption', typeof options.caption === 'string' ? options.caption : '')
+  formData.set('silent', String(options.silent !== false))
+  formData.set('forceDocument', String(options.forceDocument === true))
+  formData.set('workers', String(Number.isFinite(options.workers) ? options.workers : 4))
 
-    try { client.invoke(new Api.account.UpdateStatus({ offline: true })).catch(() => { }) } catch (e) { }
+  if (onProgress) {
+    try { onProgress(0) } catch { /* noop */ }
+  }
 
-    try {
-        let uploadHandle = null
-        try {
-            uploadHandle = await uploadFileFast(client, normalizedFile, {
-                workers,
-                onProgress: progressCallback
-            })
-        } catch (uploadErr) {
-            console.warn('[TG] Fast upload failed, fallback to default sendFile', uploadErr)
-        }
+  const uploaded = await apiRequest('/send-file', {
+    method: 'POST',
+    formData,
+    timeoutMs: 180_000,
+  })
 
-        const result = await client.sendFile(peer, {
-            file: uploadHandle || normalizedFile,
-            caption,
-            forceDocument,
-            silent,
-            workers,
-            progressCallback: uploadHandle ? undefined : progressCallback,
-            supportsStreaming: normalizedFile?.type?.startsWith?.('video/') || false
-        })
+  if (onProgress) {
+    try { onProgress(1) } catch { /* noop */ }
+  }
 
-        if (uploadHandle && progressCallback) {
-            try { progressCallback(1) } catch { }
-        }
-
-        return result
-    } finally {
-        try { client.invoke(new Api.account.UpdateStatus({ offline: true })).catch(() => { }) } catch (e) { }
-    }
-}
-
-const _avatarCache = new Map()
-
-// Concurrency queue for profile photos to prevent crashing connection
-let _activeAvatarFetches = 0
-const _avatarQueue = []
-
-async function processAvatarQueue() {
-    if (_activeAvatarFetches >= 3 || _avatarQueue.length === 0) return
-    _activeAvatarFetches++
-    const { entity, resolve } = _avatarQueue.shift()
-
-    try {
-        const client = await getClient()
-        const buffer = await client.downloadProfilePhoto(entity, { isBig: false })
-        if (!buffer || buffer.length === 0) {
-            resolve(null)
-        } else {
-            const blob = new Blob([buffer], { type: 'image/jpeg' })
-            resolve(URL.createObjectURL(blob))
-        }
-    } catch {
-        resolve(null)
-    } finally {
-        _activeAvatarFetches--
-        processAvatarQueue()
-    }
+  return uploaded
 }
 
 export async function getProfilePhoto(entity) {
-    if (!entity) return null
-    const key = entity.id?.toString() || entity.toString()
-    if (_avatarCache.has(key)) return _avatarCache.get(key)
+  if (!entity) return null
 
-    // Set a temporary promise so multiple identical requests wait for same promise
-    if (!_avatarCache.has(key)) {
-        const promise = new Promise(resolve => {
-            _avatarQueue.push({ entity, resolve })
-            processAvatarQueue()
-        }).then(url => {
-            _avatarCache.set(key, url)
-            return url
-        })
-        _avatarCache.set(key, promise)
+  const key = entity?.id?.toString?.() || entity?.toString?.() || ''
+  if (!key) return null
+
+  const cached = avatarCache.get(key)
+  if (cached) {
+    return await cached
+  }
+
+  const pending = (async () => {
+    try {
+      const response = await fetchWithTimeout(
+        buildApiUrl('/profile-photo', { entityId: key }),
+        { method: 'GET' },
+        REQUEST_TIMEOUT_MS
+      )
+
+      if (!response.ok) return null
+
+      const contentType = response.headers.get('content-type') || ''
+      if (!contentType.includes('image/')) return null
+
+      const blob = await response.blob()
+      if (!blob || blob.size === 0) return null
+
+      return URL.createObjectURL(blob)
+    } catch {
+      return null
     }
+  })()
 
-    return await _avatarCache.get(key)
+  avatarCache.set(key, pending)
+  const resolved = await pending
+  avatarCache.set(key, resolved)
+  return resolved
 }
 
 export async function getChatFolders() {
-    try {
-        const client = await getClient()
-        const result = await client.invoke(new Api.messages.GetDialogFilters())
-        // result can be DialogFilters (with .filters array) or an array directly
-        let filters = []
-        if (Array.isArray(result)) {
-            filters = result
-        } else if (result && Array.isArray(result.filters)) {
-            filters = result.filters
-        } else {
-            console.warn('[TG] getChatFolders: unexpected result shape', result?.className)
-            return []
-        }
-
-        console.log('[TG] Raw chat folders from Telegram:', filters)
-
-        // helper: extract numeric peer ID from InputPeer objects
-        const getPeerId = (peer) => {
-            if (!peer) return null
-            return (peer.userId || peer.chatId || peer.channelId || peer.id || peer.peerId)?.toString() || null
-        }
-
-        return filters
-            .filter(f => f.className === 'DialogFilter' || f.className === 'DialogFilterChatlist')
-            .map(f => {
-                // title can be a string or a TextWithEntities object
-                let title = f.title
-                if (title && typeof title === 'object') {
-                    // fallback safely for TextWithEntities or other objects
-                    title = title.text || title.className || 'Folder'
-                }
-
-                let emoji = f.emoticon
-                if (emoji && typeof emoji !== 'string') {
-                    emoji = null // prevent React crash on complex animated emoji objects
-                }
-
-                return {
-                    id: f.id,
-                    title: typeof title === 'string' ? title : 'Folder',
-                    emoji: emoji || null,
-                    // peer lists for client-side filtering
-                    includePeers: (f.includePeers || []).map(getPeerId).filter(Boolean),
-                    excludePeers: (f.excludePeers || []).map(getPeerId).filter(Boolean),
-                    pinnedPeers: (f.pinnedPeers || []).map(getPeerId).filter(Boolean),
-                    // type flags
-                    contacts: !!f.contacts,
-                    nonContacts: !!f.nonContacts,
-                    groups: !!f.groups,
-                    broadcasts: !!f.broadcasts,
-                    bots: !!f.bots,
-                    excludeMuted: !!f.excludeMuted,
-                    excludeRead: !!f.excludeRead,
-                    excludeArchived: !!f.excludeArchived,
-                }
-            })
-    } catch (err) {
-        console.error('[TG] getChatFolders error:', err)
-        return []
-    }
+  return apiRequest('/chat-folders')
 }
 
 export function clearSession() {
-    localStorage.removeItem(SESSION_KEY)
-    _client = null
-    _phoneCodeHash = null
+  resetMessagePolling()
+  resetPresencePolling()
+  resetCaches()
+
+  void apiRequest('/logout', { method: 'POST' }).catch(() => {
+    // local session state is already cleared from the UI perspective
+  })
 }

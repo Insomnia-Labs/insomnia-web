@@ -2,6 +2,8 @@ import { Buffer } from 'node:buffer'
 import { Api, TelegramClient, password as TelegramPassword } from 'telegram'
 import { StringSession } from 'telegram/sessions/index.js'
 import { CustomFile } from 'telegram/client/uploads.js'
+import { ConnectionTCPObfuscated } from 'telegram/network/index.js'
+import { PromisedWebSockets } from 'telegram/extensions/index.js'
 
 const CONNECT_TIMEOUT_MS = 20_000
 const REQUEST_TIMEOUT_MS = 30_000
@@ -144,6 +146,10 @@ export async function runWithTelegramClient(env, sessionString, fn) {
   const session = new StringSession(sessionString || '')
 
   const client = new TelegramClient(session, apiId, apiHash, {
+    // Cloudflare Pages/Workers runtime is closer to browser sockets than Node net sockets.
+    // Explicitly use websocket transport to avoid runtime incompatibilities in wrangler 3.x.
+    connection: ConnectionTCPObfuscated,
+    networkSocket: PromisedWebSockets,
     connectionRetries: 5,
     useWSS: true,
   })

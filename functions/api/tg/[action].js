@@ -21,13 +21,15 @@ import {
   readSessionState,
 } from './_lib/session.js'
 
-const ROUTE_NOT_FOUND = json(
-  {
-    ok: false,
-    error: { code: 'NOT_FOUND', message: 'Route not found' },
-  },
-  { status: 404 }
-)
+function routeNotFoundResponse() {
+  return json(
+    {
+      ok: false,
+      error: { code: 'NOT_FOUND', message: 'Route not found' },
+    },
+    { status: 404 }
+  )
+}
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value))
@@ -449,7 +451,7 @@ export async function onRequest(context) {
     if (method === 'GET' && action === 'profile-photo') return await handleGetProfilePhoto({ request, env, state })
     if (method === 'POST' && action === 'logout') return handleLogout()
 
-    return ROUTE_NOT_FOUND
+    return routeNotFoundResponse()
   } catch (err) {
     return errorWithState(err, state, env)
   }

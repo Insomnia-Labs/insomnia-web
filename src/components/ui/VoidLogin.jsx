@@ -27,6 +27,192 @@ function Typewriter({ text, speed = 22, onDone }) {
     return <span>{displayed}<span className="vl-cursor">▮</span></span>
 }
 
+function extractAuthErrorCode(err) {
+    const candidates = [
+        err?.code,
+        err?.details?.code,
+        err?.message,
+        err?.details?.message,
+        err?.details?.raw,
+    ]
+        .filter(Boolean)
+        .map(value => String(value).trim())
+
+    for (const candidate of candidates) {
+        if (!candidate) continue
+
+        const normalizedCandidate = candidate.toUpperCase()
+
+        const explicitHttp = normalizedCandidate.match(/\bHTTP[_\s-]?(\d{3})\b/)
+        if (explicitHttp?.[1]) return `HTTP_${explicitHttp[1]}`
+
+        const cloudflareRuntime = normalizedCandidate.match(/\bERROR CODE:\s*(\d{3,4})\b/)
+        if (cloudflareRuntime?.[1]) return `CF_${cloudflareRuntime[1]}`
+
+        if (/^CF_\d{3,4}$/.test(normalizedCandidate)) return normalizedCandidate
+        if (/^[A-Z][A-Z0-9_]{2,}$/.test(normalizedCandidate)) return normalizedCandidate
+
+        const tokens = normalizedCandidate.match(/[A-Z][A-Z0-9_]{2,}/g) || []
+        const ignored = new Set(['ERROR', 'FAILED', 'REQUEST', 'INTERNAL', 'SERVER', 'STATUS', 'CODE'])
+        const token = tokens.find(item => !ignored.has(item))
+        if (token) return token
+    }
+
+    const status = Number(err?.status)
+    if (Number.isInteger(status) && status > 0) return `HTTP_${status}`
+    return 'UNKNOWN_ERROR'
+}
+
+function compactErrorMessage(err) {
+    const text = String(
+        err?.message
+        || err?.details?.message
+        || err?.details?.raw
+        || ''
+    )
+        .replace(/\s+/g, ' ')
+        .trim()
+
+    if (!text) return ''
+    if (text.length <= 120) return text
+    return `${text.slice(0, 117)}...`
+}
+
+function extractFloodWaitSeconds(err) {
+    const text = String(
+        err?.message
+        || err?.details?.message
+        || err?.details?.raw
+        || ''
+    )
+    const explicit = text.match(/FLOOD_WAIT[_\s-]?(\d+)/i)
+    if (explicit?.[1]) return Number(explicit[1]) || 0
+
+    const phrase = text.match(/wait of (\d+) seconds/i)
+    if (phrase?.[1]) return Number(phrase[1]) || 0
+    return 0
+}
+
+function withDiagnosticCode(message, code) {
+    const safeMessage = String(message || '').trim() || 'REQUEST FAILED'
+    const safeCode = String(code || '').trim().toUpperCase()
+    if (!safeCode || safeCode === 'UNKNOWN_ERROR') return safeMessage
+    if (safeMessage.toUpperCase().includes(safeCode)) return safeMessage
+    return `${safeMessage} [${safeCode}]`
+}
+
+function isNetworkTimeoutCode(code) {
+    return (
+        code === 'REQUEST_TIMEOUT'
+        || code === 'TELEGRAM_CONNECT_TIMEOUT'
+        || code === 'TELEGRAM_SEND_CODE_TIMEOUT'
+        || code === 'TELEGRAM_SIGN_IN_TIMEOUT'
+        || code === 'TELEGRAM_REQUEST_TIMEOUT'
+        || code === 'TELEGRAM_2FA_FETCH_TIMEOUT'
+        || code === 'TELEGRAM_2FA_CHECK_TIMEOUT'
+        || code === 'HTTP_504'
+    )
+}
+
+function resolveSendCodeError(err) {
+    const code = extractAuthErrorCode(err)
+
+    if (code === 'TELEGRAM_CONFIG_MISSING' || code === 'SESSION_SECRET_MISSING') {
+        return withDiagnosticCode('SERVER CONFIG ERROR: TELEGRAM KEYS ARE MISSING', code)
+    }
+    if (code === 'API_ID_INVALID' || code === 'API_HASH_INVALID') {
+        return withDiagnosticCode('INVALID TELEGRAM API CREDENTIALS', code)
+    }
+    if (code === 'PHONE_NUMBER_INVALID') {
+        return withDiagnosticCode('INVALID PHONE NUMBER FORMAT', code)
+    }
+    if (code.startsWith('FLOOD_WAIT')) {
+        const waitSeconds = extractFloodWaitSeconds(err)
+        if (waitSeconds > 0) {
+            return withDiagnosticCode(`TOO MANY ATTEMPTS — RETRY IN ${waitSeconds}S`, code)
+        }
+        return withDiagnosticCode('TOO MANY ATTEMPTS — TRY LATER', code)
+    }
+    if (isNetworkTimeoutCode(code)) {
+        return withDiagnosticCode('NETWORK TIMEOUT — CHECK INTERNET / VPN / FIREWALL', code)
+    }
+    if (code.startsWith('CF_') || code.startsWith('HTTP_5')) {
+        return withDiagnosticCode('SERVER ERROR — RETRY IN 10-20 SECONDS', code)
+    }
+
+    const fallback = compactErrorMessage(err)
+    return withDiagnosticCode(fallback || 'TRANSMISSION FAILED — CHECK PHONE NUMBER', code)
+}
+
+function resolveSignInError(err) {
+    const code = extractAuthErrorCode(err)
+
+    if (code === 'SESSION_PASSWORD_NEEDED') {
+        return { nextStage: 'password', text: '' }
+    }
+    if (code === 'PHONE_CODE_INVALID') {
+        return { nextStage: 'code', text: withDiagnosticCode('INVALID CODE — TRY AGAIN', code) }
+    }
+    if (code === 'PHONE_CODE_EXPIRED') {
+        return { nextStage: 'phone', text: withDiagnosticCode('CODE EXPIRED — REQUEST A NEW ONE', code) }
+    }
+    if (code === 'CALL_SEND_CODE_FIRST' || code === 'AUTH_KEY_UNREGISTERED' || code === 'TWO_FA_SESSION_EXPIRED') {
+        return { nextStage: 'phone', text: withDiagnosticCode('LOGIN SESSION EXPIRED — REQUEST A NEW CODE', code) }
+    }
+    if (code.startsWith('FLOOD_WAIT')) {
+        const waitSeconds = extractFloodWaitSeconds(err)
+        if (waitSeconds > 0) {
+            return { nextStage: 'code', text: withDiagnosticCode(`TOO MANY ATTEMPTS — RETRY IN ${waitSeconds}S`, code) }
+        }
+        return { nextStage: 'code', text: withDiagnosticCode('TOO MANY ATTEMPTS — TRY LATER', code) }
+    }
+    if (isNetworkTimeoutCode(code)) {
+        return { nextStage: 'code', text: withDiagnosticCode('NETWORK TIMEOUT — CHECK INTERNET / VPN / FIREWALL', code) }
+    }
+    if (code.startsWith('CF_') || code.startsWith('HTTP_5')) {
+        return { nextStage: 'code', text: withDiagnosticCode('SERVER ERROR — RETRY IN 10-20 SECONDS', code) }
+    }
+
+    const fallback = compactErrorMessage(err)
+    return {
+        nextStage: 'code',
+        text: withDiagnosticCode(fallback || 'AUTHENTICATION FAILED', code),
+    }
+}
+
+function resolve2FAError(err) {
+    const code = extractAuthErrorCode(err)
+
+    if (code === 'PASSWORD_HASH_INVALID') {
+        return { nextStage: 'password', text: withDiagnosticCode('WRONG CLOUD PASSWORD — TRY AGAIN', code) }
+    }
+    if (code === 'CLOUD_PASSWORD_REQUIRED') {
+        return { nextStage: 'password', text: withDiagnosticCode('CLOUD PASSWORD REQUIRED', code) }
+    }
+    if (code === 'TWO_FA_SESSION_EXPIRED' || code === 'AUTH_KEY_UNREGISTERED' || code === 'CALL_SEND_CODE_FIRST') {
+        return { nextStage: 'phone', text: withDiagnosticCode('2FA SESSION EXPIRED — REQUEST A NEW CODE', code) }
+    }
+    if (code.startsWith('FLOOD_WAIT')) {
+        const waitSeconds = extractFloodWaitSeconds(err)
+        if (waitSeconds > 0) {
+            return { nextStage: 'password', text: withDiagnosticCode(`TOO MANY ATTEMPTS — RETRY IN ${waitSeconds}S`, code) }
+        }
+        return { nextStage: 'password', text: withDiagnosticCode('TOO MANY ATTEMPTS — TRY LATER', code) }
+    }
+    if (isNetworkTimeoutCode(code)) {
+        return { nextStage: 'password', text: withDiagnosticCode('NETWORK TIMEOUT — CHECK INTERNET / VPN / FIREWALL', code) }
+    }
+    if (code.startsWith('CF_') || code.startsWith('HTTP_5')) {
+        return { nextStage: 'password', text: withDiagnosticCode('SERVER ERROR — RETRY IN 10-20 SECONDS', code) }
+    }
+
+    const fallback = compactErrorMessage(err)
+    return {
+        nextStage: 'password',
+        text: withDiagnosticCode(fallback || '2FA VERIFICATION FAILED', code),
+    }
+}
+
 /* ─────────────────────────────────────────────────────────────
    Main component
 ───────────────────────────────────────────────────────────── */
@@ -146,20 +332,7 @@ export default function VoidLogin() {
             setStage('code')
         } catch (err) {
             console.error('[VoidLogin] sendCode error:', err)
-            const msg = err?.message ?? ''
-            if (msg.includes('TELEGRAM_CONFIG_MISSING')) {
-                setError('APP CONFIG ERROR: TELEGRAM API KEYS MISSING')
-            } else if (msg.includes('TELEGRAM_CONNECT_TIMEOUT') || msg.includes('TELEGRAM_SEND_CODE_TIMEOUT') || msg.includes('REQUEST_TIMEOUT')) {
-                setError('NETWORK TIMEOUT — CHECK INTERNET / VPN / FIREWALL')
-            } else if (msg.includes('PHONE_NUMBER_INVALID')) {
-                setError('INVALID PHONE NUMBER FORMAT')
-            } else if (msg.includes('FLOOD_WAIT')) {
-                setError('TOO MANY ATTEMPTS — TRY LATER')
-            } else if (msg.includes('API_ID_INVALID') || msg.includes('API_HASH_INVALID')) {
-                setError('INVALID TELEGRAM API CREDENTIALS')
-            } else {
-                setError(msg || 'TRANSMISSION FAILED — CHECK PHONE NUMBER')
-            }
+            setError(resolveSendCodeError(err))
             setStage('phone')
         }
     }
@@ -181,24 +354,15 @@ export default function VoidLogin() {
             setStage('success')
         } catch (err) {
             console.error('[VoidLogin] signIn error:', err)
-            const msg = err?.message ?? ''
-            if (msg.includes('SESSION_PASSWORD_NEEDED')) {
-                // 2FA is enabled — show cloud password input
+            const resolved = resolveSignInError(err)
+            if (resolved.nextStage === 'password') {
+                // 2FA is enabled — show cloud password input.
                 setError('')
                 setStage('password')
                 return
-            } else if (msg.includes('TELEGRAM_CONNECT_TIMEOUT') || msg.includes('TELEGRAM_SIGN_IN_TIMEOUT') || msg.includes('REQUEST_TIMEOUT')) {
-                setError('NETWORK TIMEOUT — CHECK INTERNET / VPN / FIREWALL')
-            } else if (msg.includes('PHONE_CODE_INVALID')) {
-                setError('INVALID CODE — TRY AGAIN')
-            } else if (msg.includes('PHONE_CODE_EXPIRED')) {
-                setError('CODE EXPIRED — REQUEST A NEW ONE')
-                setStage('phone')
-                return
-            } else {
-                setError(msg || 'AUTHENTICATION FAILED')
             }
-            setStage('code')
+            setError(resolved.text)
+            setStage(resolved.nextStage || 'code')
         }
     }
 
@@ -217,17 +381,9 @@ export default function VoidLogin() {
             setStage('success')
         } catch (err) {
             console.error('[VoidLogin] 2FA error:', err)
-            const msg = err?.message ?? ''
-            if (msg.includes('PASSWORD_HASH_INVALID')) {
-                setError('WRONG CLOUD PASSWORD — TRY AGAIN')
-            } else if (msg.includes('TWO_FA_SESSION_EXPIRED') || msg.includes('AUTH_KEY_UNREGISTERED')) {
-                setError('2FA SESSION EXPIRED — ENTER CODE AGAIN')
-                setStage('code')
-                return
-            } else {
-                setError(msg || '2FA VERIFICATION FAILED')
-            }
-            setStage('password')
+            const resolved = resolve2FAError(err)
+            setError(resolved.text)
+            setStage(resolved.nextStage || 'password')
         }
     }
 

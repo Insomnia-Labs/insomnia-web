@@ -31,9 +31,29 @@ function buildApiUrl(path, query) {
   return url.toString()
 }
 
+function extractErrorCodeFromText(value) {
+  const text = String(value || '').trim()
+  if (!text) return ''
+
+  const normalized = text.toUpperCase()
+  const explicitHttpCode = normalized.match(/\bHTTP[_\s-]?(\d{3})\b/)
+  if (explicitHttpCode?.[1]) return `HTTP_${explicitHttpCode[1]}`
+
+  const cloudflareCode = normalized.match(/\bERROR CODE:\s*(\d{3,4})\b/)
+  if (cloudflareCode?.[1]) return `CF_${cloudflareCode[1]}`
+
+  const words = normalized.match(/[A-Z][A-Z0-9_]{2,}/g) || []
+  const ignore = new Set(['ERROR', 'FAILED', 'REQUEST', 'INTERNAL', 'SERVER', 'STATUS', 'CODE'])
+  return words.find(candidate => !ignore.has(candidate)) || ''
+}
+
 function createError(code, message, status, details = null) {
-  const err = new Error(code || message || 'REQUEST_FAILED')
-  err.code = code || 'REQUEST_FAILED'
+  const normalizedCode = String(code || '').trim().toUpperCase()
+    || (Number.isInteger(status) && status > 0 ? `HTTP_${status}` : 'REQUEST_FAILED')
+  const normalizedMessage = String(message || '').trim() || normalizedCode
+
+  const err = new Error(normalizedMessage)
+  err.code = normalizedCode
   err.status = status || 0
   err.details = details
   return err
@@ -63,9 +83,21 @@ async function readJsonSafely(response) {
   const contentType = response.headers.get('content-type') || ''
   if (!contentType.includes('application/json')) return null
   try {
-    return await response.json()
+    return await response.clone().json()
   } catch {
     return null
+  }
+}
+
+async function readTextSafely(response, maxLength = 700) {
+  try {
+    const text = await response.clone().text()
+    if (!text) return ''
+    const compact = text.replace(/\s+/g, ' ').trim()
+    if (!compact) return ''
+    return compact.slice(0, maxLength)
+  } catch {
+    return ''
   }
 }
 
@@ -99,11 +131,18 @@ async function apiRequest(path, options = {}) {
   )
 
   const payload = await readJsonSafely(response)
+  const fallbackText = payload ? '' : await readTextSafely(response)
 
   if (!response.ok || payload?.ok === false) {
-    const code = payload?.error?.code || `HTTP_${response.status}`
-    const message = payload?.error?.message || response.statusText || 'Request failed'
-    throw createError(code, message, response.status, payload?.error || null)
+    const code = payload?.error?.code
+      || extractErrorCodeFromText(fallbackText)
+      || `HTTP_${response.status}`
+    const message = payload?.error?.message
+      || fallbackText
+      || response.statusText
+      || 'Request failed'
+    const details = payload?.error || (fallbackText ? { raw: fallbackText } : null)
+    throw createError(code, message, response.status, details)
   }
 
   if (payload && Object.prototype.hasOwnProperty.call(payload, 'data')) {

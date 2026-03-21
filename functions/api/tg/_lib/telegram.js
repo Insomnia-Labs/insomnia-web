@@ -88,6 +88,34 @@ function isIpv4Address(value) {
 }
 
 function extractErrorCode(err) {
+  const numericCode = Number(err?.code)
+
+  const preferredCandidates = [
+    err?.errorMessage,
+    err?.message,
+    err?.code,
+  ]
+    .filter(value => value !== undefined && value !== null && String(value).trim() !== '')
+    .map(value => String(value).trim())
+
+  for (const candidate of preferredCandidates) {
+    // Skip plain numeric values like "401" here; we prefer symbolic Telegram error codes.
+    if (/^\d+$/.test(candidate)) continue
+
+    if (/^[A-Z][A-Z0-9_]{2,}$/.test(candidate)) return candidate
+
+    const normalized = candidate.toUpperCase()
+    const matches = normalized.match(/[A-Z][A-Z0-9_]{2,}/g)
+    if (!matches?.length) continue
+
+    const known = matches.find(item => KNOWN_STATUS_CODES.has(item))
+    if (known) return known
+  }
+
+  if (Number.isInteger(numericCode) && numericCode >= 400 && numericCode <= 599) {
+    return `HTTP_${numericCode}`
+  }
+
   const candidates = [
     err?.code,
     err?.errorMessage,
@@ -124,7 +152,8 @@ export function toApiError(err) {
   if (err instanceof ApiError) return err
 
   const code = extractErrorCode(err)
-  const status = KNOWN_STATUS_CODES.get(code) || 500
+  const numericHttpCode = /^HTTP_(\d{3})$/.exec(code)?.[1]
+  const status = KNOWN_STATUS_CODES.get(code) || (numericHttpCode ? Number(numericHttpCode) : 500)
   const message = typeof err?.message === 'string' ? err.message : code
   const details = err?.stack ? String(err.stack).slice(0, 2000) : null
   const wrapped = new ApiError(code, status, message, details)

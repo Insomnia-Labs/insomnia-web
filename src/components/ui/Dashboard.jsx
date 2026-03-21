@@ -915,14 +915,17 @@ export default function Dashboard() {
     }
 
     const getMobileUploadErrorPresentation = (err) => {
-        const message = (err?.message || '').toUpperCase()
-        if (message.includes('FLOOD_WAIT')) {
+        const code = String(err?.code || '').toUpperCase()
+        const message = String(err?.message || '').toUpperCase()
+        const fingerprint = `${code} ${message}`
+
+        if (fingerprint.includes('FLOOD_WAIT')) {
             return {
                 title: 'Слишком много запросов',
                 brief: 'Telegram временно ограничил загрузки. Попробуйте позже.'
             }
         }
-        if (message.includes('NETWORK') || message.includes('TIMEOUT')) {
+        if (fingerprint.includes('NETWORK') || fingerprint.includes('TIMEOUT')) {
             return {
                 title: 'Проблема с сетью',
                 brief: 'Связь нестабильна. Проверьте интернет и повторите загрузку.'

@@ -72,6 +72,21 @@ function toSafeText(value, fallback = '') {
   return fallback
 }
 
+function getWebDcHost(dcId) {
+  switch (Number(dcId)) {
+    case 1: return 'pluto.web.telegram.org'
+    case 2: return 'venus.web.telegram.org'
+    case 3: return 'aurora.web.telegram.org'
+    case 4: return 'vesta.web.telegram.org'
+    case 5: return 'flora.web.telegram.org'
+    default: return ''
+  }
+}
+
+function isIpv4Address(value) {
+  return /^\d{1,3}(?:\.\d{1,3}){3}$/.test(String(value || ''))
+}
+
 function extractErrorCode(err) {
   const candidates = [
     err?.code,
@@ -145,6 +160,14 @@ export async function runWithTelegramClient(env, sessionString, fn) {
   const { apiId, apiHash } = getApiConfig(env)
   const session = new StringSession(sessionString || '')
 
+  // Force web DC hostnames for WSS mode in Workers runtimes.
+  // Node-style IP DC routing can break websocket/TLS flows in Cloudflare.
+  const dcId = Number(session.dcId) || 4
+  const webDcHost = getWebDcHost(dcId) || getWebDcHost(4)
+  if (!session.serverAddress || isIpv4Address(session.serverAddress)) {
+    session.setDC(dcId, webDcHost, 443)
+  }
+
   const client = new TelegramClient(session, apiId, apiHash, {
     // Cloudflare Pages/Workers runtime is closer to browser sockets than Node net sockets.
     // Explicitly use websocket transport to avoid runtime incompatibilities in wrangler 3.x.
@@ -154,6 +177,11 @@ export async function runWithTelegramClient(env, sessionString, fn) {
     useWSS: true,
   })
   client.setLogLevel('error')
+
+  const originalGetDC = client.getDC.bind(client)
+  client.getDC = async (requestedDcId, downloadDC = false) => {
+    return originalGetDC(requestedDcId, downloadDC, true)
+  }
 
   try {
     await withTimeout(client.connect(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')

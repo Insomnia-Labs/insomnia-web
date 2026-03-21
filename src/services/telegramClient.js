@@ -8,6 +8,7 @@ const API_BASE = (import.meta.env.VITE_TELEGRAM_API_BASE_URL || '').replace(/\/$
 const API_PREFIX = `${API_BASE}/api/tg`
 
 const REQUEST_TIMEOUT_MS = 30_000
+const AUTH_REQUEST_TIMEOUT_MS = 70_000
 const MESSAGE_POLL_INTERVAL_MS = 2_500
 const PRESENCE_POLL_INTERVAL_MS = 12_000
 
@@ -311,6 +312,7 @@ export async function sendCode(phoneNumber) {
   return apiRequest('/send-code', {
     method: 'POST',
     body: { phoneNumber },
+    timeoutMs: AUTH_REQUEST_TIMEOUT_MS,
   })
 }
 
@@ -318,6 +320,7 @@ export async function signIn(phoneNumber, phoneCode) {
   return apiRequest('/sign-in', {
     method: 'POST',
     body: { phoneNumber, phoneCode },
+    timeoutMs: AUTH_REQUEST_TIMEOUT_MS,
   })
 }
 
@@ -325,6 +328,7 @@ export async function signInWith2FA(password) {
   return apiRequest('/sign-in-2fa', {
     method: 'POST',
     body: { password },
+    timeoutMs: AUTH_REQUEST_TIMEOUT_MS,
   })
 }
 

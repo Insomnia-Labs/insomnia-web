@@ -149,7 +149,7 @@ export default function VoidLogin() {
             const msg = err?.message ?? ''
             if (msg.includes('TELEGRAM_CONFIG_MISSING')) {
                 setError('APP CONFIG ERROR: TELEGRAM API KEYS MISSING')
-            } else if (msg.includes('TELEGRAM_CONNECT_TIMEOUT') || msg.includes('TELEGRAM_SEND_CODE_TIMEOUT')) {
+            } else if (msg.includes('TELEGRAM_CONNECT_TIMEOUT') || msg.includes('TELEGRAM_SEND_CODE_TIMEOUT') || msg.includes('REQUEST_TIMEOUT')) {
                 setError('NETWORK TIMEOUT — CHECK INTERNET / VPN / FIREWALL')
             } else if (msg.includes('PHONE_NUMBER_INVALID')) {
                 setError('INVALID PHONE NUMBER FORMAT')
@@ -187,7 +187,7 @@ export default function VoidLogin() {
                 setError('')
                 setStage('password')
                 return
-            } else if (msg.includes('TELEGRAM_CONNECT_TIMEOUT') || msg.includes('TELEGRAM_SIGN_IN_TIMEOUT')) {
+            } else if (msg.includes('TELEGRAM_CONNECT_TIMEOUT') || msg.includes('TELEGRAM_SIGN_IN_TIMEOUT') || msg.includes('REQUEST_TIMEOUT')) {
                 setError('NETWORK TIMEOUT — CHECK INTERNET / VPN / FIREWALL')
             } else if (msg.includes('PHONE_CODE_INVALID')) {
                 setError('INVALID CODE — TRY AGAIN')
@@ -668,4 +668,3 @@ function ErrorLine({ text }) {
         </div>
     )
 }
-

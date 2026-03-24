@@ -40,6 +40,171 @@ function toText(value, fallback = '') {
   return fallback
 }
 
+function toPositiveInt(value) {
+  const parsed = toInt(value, 0)
+  if (!Number.isFinite(parsed) || parsed <= 0) return 0
+  return parsed
+}
+
+const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'heic', 'heif', 'avif'])
+const VIDEO_EXTENSIONS = new Set(['mp4', 'mov', 'mkv', 'webm', 'avi', 'm4v'])
+const PREVIEW_ETAG_VERSION = 'v7'
+const MIN_ACCEPTABLE_PHOTO_PREVIEW_BYTES = 24 * 1024
+
+function getFileExtension(value) {
+  const text = toText(value).toLowerCase()
+  if (!text) return ''
+  const clean = text.split('?')[0].split('#')[0]
+  const idx = clean.lastIndexOf('.')
+  if (idx <= 0 || idx >= clean.length - 1) return ''
+  return clean.slice(idx + 1)
+}
+
+function inferImageMimeByExtension(ext) {
+  if (!ext) return ''
+  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg'
+  if (ext === 'png') return 'image/png'
+  if (ext === 'webp') return 'image/webp'
+  if (ext === 'gif') return 'image/gif'
+  if (ext === 'bmp') return 'image/bmp'
+  if (ext === 'heic') return 'image/heic'
+  if (ext === 'heif') return 'image/heif'
+  if (ext === 'avif') return 'image/avif'
+  return ''
+}
+
+function inferVideoMimeByExtension(ext) {
+  if (!ext) return ''
+  if (ext === 'webm') return 'video/webm'
+  if (ext === 'mkv') return 'video/x-matroska'
+  if (ext === 'mov') return 'video/quicktime'
+  if (ext === 'avi') return 'video/x-msvideo'
+  if (ext === 'mp4' || ext === 'm4v') return 'video/mp4'
+  return ''
+}
+
+function detectMediaContentType(bytes, fallback = '') {
+  if (!bytes || bytes.length < 12) return fallback
+
+  const b0 = bytes[0]
+  const b1 = bytes[1]
+  const b2 = bytes[2]
+  const b3 = bytes[3]
+
+  // JPEG
+  if (b0 === 0xff && b1 === 0xd8 && b2 === 0xff) return 'image/jpeg'
+  // PNG
+  if (
+    b0 === 0x89 && b1 === 0x50 && b2 === 0x4e && b3 === 0x47
+    && bytes[4] === 0x0d && bytes[5] === 0x0a && bytes[6] === 0x1a && bytes[7] === 0x0a
+  ) {
+    return 'image/png'
+  }
+  // GIF
+  if (
+    b0 === 0x47 && b1 === 0x49 && b2 === 0x46
+    && (bytes[3] === 0x38 && (bytes[4] === 0x37 || bytes[4] === 0x39) && bytes[5] === 0x61)
+  ) {
+    return 'image/gif'
+  }
+  // WEBP
+  if (
+    b0 === 0x52 && b1 === 0x49 && b2 === 0x46 && b3 === 0x46
+    && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
+  ) {
+    return 'image/webp'
+  }
+  // BMP
+  if (b0 === 0x42 && b1 === 0x4d) return 'image/bmp'
+  // MP4-ish (ftyp at offset 4)
+  if (bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
+    return 'video/mp4'
+  }
+
+  return fallback
+}
+
+function concatBinaryChunks(chunks) {
+  const safeChunks = Array.isArray(chunks)
+    ? chunks.filter(chunk => chunk && chunk.length)
+    : []
+  if (safeChunks.length === 0) return null
+
+  let total = 0
+  safeChunks.forEach(chunk => {
+    total += chunk.length
+  })
+  if (total <= 0) return null
+
+  const merged = new Uint8Array(total)
+  let offset = 0
+  safeChunks.forEach(chunk => {
+    merged.set(chunk, offset)
+    offset += chunk.length
+  })
+  return merged
+}
+
+async function downloadDocumentHeadSample(client, document, maxBytes = 320 * 1024) {
+  if (!document?.id || !document?.accessHash || !document?.fileReference) return null
+  const dcId = toInt(document?.dcId, 0)
+  const requestSize = 128 * 1024
+  const maxChunks = Math.max(1, Math.ceil(maxBytes / requestSize))
+
+  const location = new Api.InputDocumentFileLocation({
+    id: document.id,
+    accessHash: document.accessHash,
+    fileReference: document.fileReference,
+    thumbSize: '',
+  })
+
+  const chunks = []
+  let total = 0
+
+  for await (const chunk of client.iterDownload({
+    file: location,
+    dcId: dcId > 0 ? dcId : undefined,
+    requestSize,
+    chunkSize: requestSize,
+    limit: maxChunks,
+  })) {
+    if (!chunk || !chunk.length) break
+    const remaining = maxBytes - total
+    if (remaining <= 0) break
+
+    const normalized = chunk.length > remaining ? chunk.subarray(0, remaining) : chunk
+    chunks.push(normalized)
+    total += normalized.length
+
+    if (total >= maxBytes) break
+  }
+
+  return concatBinaryChunks(chunks)
+}
+
+function buildThumbAttemptIndexes(totalCount) {
+  const count = Math.max(0, Number(totalCount) || 0)
+  if (count <= 0) return []
+
+  const indexes = [count - 1]
+  if (count > 1) indexes.push(count - 2)
+  if (count > 2) indexes.push(0)
+  return Array.from(new Set(indexes))
+}
+
+function withPromiseTimeout(promise, timeoutMs, code = 'MEDIA_PREVIEW_FETCH_TIMEOUT') {
+  let timeoutId = 0
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new ApiError(code, 504, 'Media preview request timed out'))
+    }, timeoutMs)
+  })
+
+  return Promise.race([promise, timeout]).finally(() => {
+    clearTimeout(timeoutId)
+  })
+}
+
 async function okWithState(data, state, env, init = {}) {
   const headers = new Headers(init.headers || {})
   headers.set('set-cookie', await buildSessionCookie(state, env))
@@ -419,6 +584,337 @@ async function handleGetProfilePhoto({ request, env, state }) {
   return new Response(result, { status: 200, headers })
 }
 
+async function handleGetMediaPreview({ request, env, state }) {
+  const url = new URL(request.url)
+  const chatId = toText(url.searchParams.get('chatId'))
+  const messageId = toPositiveInt(url.searchParams.get('messageId') || url.searchParams.get('id'))
+  const mode = toText(url.searchParams.get('mode') || url.searchParams.get('quality') || 'fast').toLowerCase()
+  const isUltraFastMode = mode === 'ultrafast' || mode === 'quick'
+  const isFastMode = isUltraFastMode || (mode !== 'best' && mode !== 'full' && mode !== 'high')
+  const cacheEtag = `W/"tg-preview-${PREVIEW_ETAG_VERSION}-${mode || 'fast'}-${chatId || 'unknown'}-${messageId || 0}"`
+
+  if (!chatId) throw new ApiError('CHAT_ID_REQUIRED', 400, 'chatId is required')
+  if (!messageId) throw new ApiError('MESSAGE_ID_REQUIRED', 400, 'messageId is required')
+
+  const incomingEtag = request.headers.get('if-none-match')
+  if (incomingEtag && incomingEtag === cacheEtag) {
+    return new Response(null, {
+      status: 304,
+      headers: {
+        etag: cacheEtag,
+        'cache-control': 'private, max-age=86400, immutable',
+      },
+    })
+  }
+
+  const { result, nextSession } = await runWithTelegramClient(env, state.session, async ({ client }) => {
+    const peer = await resolvePeerEntity(client, chatId, 'getMediaPreview')
+
+    let targetMessage = null
+
+    const resolveByIdCandidates = async () => {
+      const attempts = isFastMode
+        ? [{ ids: [messageId] }]
+        : [
+          { ids: [messageId] },
+          { ids: messageId },
+        ]
+
+      for (const options of attempts) {
+        try {
+          const result = await client.getMessages(peer, options)
+          if (Array.isArray(result)) {
+            const matched = result.find(item => toPositiveInt(item?.id) === messageId)
+            if (matched) return matched
+            if (result[0]) return result[0]
+          } else if (result?.id) {
+            return result
+          }
+        } catch (err) {
+          console.warn('[TG API] getMediaPreview getMessages(ids) failed:', err?.message || err)
+        }
+      }
+
+      return null
+    }
+
+    targetMessage = await resolveByIdCandidates()
+
+    if (!targetMessage && !isFastMode) {
+      // Fallback scan: recent history can still contain the message if ids lookup fails in a specific peer type.
+      const recent = await client.getMessages(peer, { limit: 120 })
+      if (Array.isArray(recent)) {
+        targetMessage = recent.find(item => toPositiveInt(item?.id) === messageId) || null
+      }
+    }
+
+    if (!targetMessage) {
+      throw new ApiError('MEDIA_PREVIEW_NOT_FOUND', 404, 'Message not found for preview')
+    }
+
+    const media = targetMessage?.media
+    const document = media?.document || null
+    const documentMime = toText(media?.document?.mimeType).toLowerCase()
+    const documentAttributes = Array.isArray(media?.document?.attributes) ? media.document.attributes : []
+    const documentThumbsRaw = Array.isArray(media?.document?.thumbs) ? media.document.thumbs : []
+    const documentThumbs = documentThumbsRaw.filter(item => item?.className !== 'PhotoPathSize')
+    const documentThumbTypes = documentThumbs
+      .map((item, index) => ({
+        type: toText(item?.type),
+        size: toInt(item?.size, 0),
+        index,
+      }))
+      .filter(item => item.type)
+      .sort((a, b) => {
+        if (a.size !== b.size) return b.size - a.size
+        return a.index - b.index
+      })
+    const documentVideoThumbsRaw = Array.isArray(media?.document?.videoThumbs) ? media.document.videoThumbs : []
+    const documentVideoThumbs = documentVideoThumbsRaw.filter(item => item?.className === 'VideoSize' && toText(item?.type))
+    const photoSizes = Array.isArray(media?.photo?.sizes) ? media.photo.sizes : []
+    const photoVideoSizes = Array.isArray(media?.photo?.videoSizes) ? media.photo.videoSizes : []
+    const photoThumbs = [...photoSizes, ...photoVideoSizes].filter(item => item?.className !== 'PhotoPathSize')
+    const filenameAttr = documentAttributes.find(attr => attr?.className === 'DocumentAttributeFilename')
+    const fileExtension = getFileExtension(filenameAttr?.fileName)
+
+    const isPhoto = Boolean(media?.photo)
+    const isImageDocument = documentMime.startsWith('image/')
+      || documentAttributes.some(attr => attr?.className === 'DocumentAttributeImageSize')
+      || IMAGE_EXTENSIONS.has(fileExtension)
+    const isVideoDocument = documentMime.startsWith('video/')
+      || documentAttributes.some(attr => attr?.className === 'DocumentAttributeVideo')
+      || VIDEO_EXTENSIONS.has(fileExtension)
+    const availableThumbCount = isPhoto ? photoThumbs.length : documentThumbs.length
+    const thumbIndexes = buildThumbAttemptIndexes(availableThumbCount)
+
+    if (!isPhoto && !isImageDocument && !isVideoDocument) {
+      console.info('[TG API] getMediaPreview unsupported media type', {
+        chatId,
+        messageId,
+        mime: documentMime,
+        extension: fileExtension,
+        hasPhoto: Boolean(media?.photo),
+        className: media?.className || '',
+      })
+      throw new ApiError('MEDIA_PREVIEW_UNSUPPORTED', 415, 'Preview is supported only for image/video messages')
+    }
+
+    const isPhotoLike = isPhoto || isImageDocument
+
+    let bytes = null
+    let bestEffortPhotoThumb = null
+    let forcedContentType = ''
+    let previewSource = ''
+
+    const attempts = []
+
+    const primaryThumbIndexes = isPhotoLike
+      ? thumbIndexes.slice(0, isFastMode ? 1 : 2)
+      : []
+    primaryThumbIndexes.forEach((thumbIndex, idx) => {
+      let timeoutMs = 1_400
+      if (isUltraFastMode) {
+        timeoutMs = 900
+      } else if (!isFastMode) {
+        timeoutMs = idx === 0 ? 3_200 : 2_400
+      }
+
+      attempts.push({
+        workers: 1,
+        thumb: thumbIndex,
+        timeoutMs,
+        source: 'thumb',
+      })
+    })
+
+    if (isVideoDocument && document && documentThumbTypes.length > 0) {
+      const selectedDocumentThumbs = documentThumbTypes.slice(0, isUltraFastMode ? 1 : (isFastMode ? 2 : 4))
+      selectedDocumentThumbs.forEach((thumbMeta, idx) => {
+        let timeoutMs = 1_300
+        if (isUltraFastMode) {
+          timeoutMs = 900
+        } else if (!isFastMode) {
+          timeoutMs = idx === 0 ? 2_400 : 1_800
+        } else if (idx > 0) {
+          timeoutMs = 1_000
+        }
+
+        attempts.push({
+          source: 'doc-thumb-file',
+          thumbType: thumbMeta.type,
+          timeoutMs,
+        })
+      })
+    }
+
+    if (isVideoDocument && documentVideoThumbs.length > 0) {
+      const sortedVideoThumbs = [...documentVideoThumbs].sort((a, b) => (Number(b?.size) || 0) - (Number(a?.size) || 0))
+      const selectedVideoThumbs = sortedVideoThumbs.slice(0, isUltraFastMode ? 1 : (isFastMode ? 1 : 2))
+      selectedVideoThumbs.forEach((videoThumb, idx) => {
+        let timeoutMs = 1_600
+        if (isUltraFastMode) {
+          timeoutMs = 1_000
+        } else if (!isFastMode) {
+          timeoutMs = idx === 0 ? 2_600 : 2_000
+        }
+
+        attempts.push({
+          source: 'video-thumb-file',
+          thumbType: toText(videoThumb?.type),
+          timeoutMs,
+        })
+      })
+    }
+
+    if (isPhotoLike && !isFastMode) {
+      // For photo/image messages, use full image as a late fallback to avoid very blurry previews.
+      attempts.push({ workers: 1, timeoutMs: 4_200, source: 'full' })
+    } else if (attempts.length === 0) {
+      if (!isVideoDocument || !document) {
+        throw new ApiError('MEDIA_PREVIEW_UNSUPPORTED', 415, 'Video preview is unavailable for this format')
+      }
+    }
+
+    for (const options of attempts) {
+      try {
+        const { timeoutMs = 1_800, source = 'thumb', ...downloadOptions } = options
+        let downloaded = null
+
+        if (source === 'video-thumb-file' || source === 'doc-thumb-file') {
+          const thumbType = toText(options?.thumbType)
+          if (!document?.id || !document?.accessHash || !document?.fileReference || !thumbType) {
+            continue
+          }
+
+          const dcId = toInt(document?.dcId, 0)
+          const inputLocation = new Api.InputDocumentFileLocation({
+            id: document.id,
+            accessHash: document.accessHash,
+            fileReference: document.fileReference,
+            thumbSize: thumbType,
+          })
+
+          downloaded = await withPromiseTimeout(
+            client.downloadFile(inputLocation, { dcId: dcId > 0 ? dcId : undefined }),
+            timeoutMs
+          )
+        } else {
+          downloaded = await withPromiseTimeout(
+            client.downloadMedia(targetMessage, downloadOptions),
+            timeoutMs
+          )
+        }
+
+        if (typeof downloaded === 'string') {
+          continue
+        }
+
+        if (downloaded && downloaded.length) {
+          if (isPhotoLike && source === 'thumb' && downloaded.length < MIN_ACCEPTABLE_PHOTO_PREVIEW_BYTES) {
+            if (!bestEffortPhotoThumb || downloaded.length > bestEffortPhotoThumb.length) {
+              bestEffortPhotoThumb = downloaded
+            }
+            continue
+          }
+
+          bytes = downloaded
+          previewSource = source
+          break
+        }
+      } catch (err) {
+        const code = String(err?.errorMessage || err?.code || err?.message || '')
+        const isExpectedTransient = code.includes('MEDIA_INVALID')
+          || code.includes('FILE_REFERENCE_')
+          || code.includes('MEDIA_PREVIEW_FETCH_TIMEOUT')
+          || code.includes('TIMEOUT')
+        if (isExpectedTransient) {
+          continue
+        }
+        console.warn('[TG API] getMediaPreview download attempt failed:', {
+          chatId,
+          messageId,
+          code,
+          options,
+          message: err?.message || String(err || ''),
+        })
+      }
+    }
+
+    if (!bytes && bestEffortPhotoThumb) {
+      bytes = bestEffortPhotoThumb
+      previewSource = 'best-effort-photo-thumb'
+    }
+
+    if (!bytes && isVideoDocument && document && !isUltraFastMode) {
+      try {
+        const sampleMaxBytes = isFastMode ? 320 * 1024 : 768 * 1024
+        const sampled = await withPromiseTimeout(
+          downloadDocumentHeadSample(client, document, sampleMaxBytes),
+          isFastMode ? 2_600 : 7_000
+        )
+        if (sampled && sampled.length >= 64 * 1024) {
+          bytes = sampled
+          forcedContentType = documentMime || inferVideoMimeByExtension(fileExtension) || 'video/mp4'
+          previewSource = 'video-head-sample'
+        }
+      } catch (err) {
+        console.warn('[TG API] getMediaPreview video sample fallback failed:', {
+          chatId,
+          messageId,
+          error: String(err?.message || err || ''),
+        })
+      }
+    }
+
+    if (!bytes || !bytes.length) {
+      console.warn('[TG API] getMediaPreview no bytes after attempts', {
+        chatId,
+        messageId,
+        mime: documentMime,
+        extension: fileExtension,
+        availableThumbCount,
+        documentThumbTypes: documentThumbTypes.map(item => item.type),
+        documentVideoThumbTypes: documentVideoThumbs.map(item => toText(item?.type)),
+      })
+      throw new ApiError('MEDIA_PREVIEW_EMPTY', 404, 'Preview bytes are empty')
+    }
+
+    let contentType = detectMediaContentType(bytes, '')
+    if (!contentType) {
+      if (forcedContentType) {
+        contentType = forcedContentType
+      } else if (isImageDocument && documentMime) {
+        contentType = documentMime
+      } else if (isImageDocument && fileExtension) {
+        contentType = inferImageMimeByExtension(fileExtension) || 'image/jpeg'
+      } else if (isVideoDocument) {
+        contentType = documentMime || inferVideoMimeByExtension(fileExtension) || 'video/mp4'
+      } else {
+        contentType = 'image/jpeg'
+      }
+    }
+
+    return { bytes, contentType, source: previewSource || 'unknown' }
+  })
+
+  const nextState = {
+    ...state,
+    session: nextSession,
+    updatedAt: Date.now(),
+  }
+
+  const headers = new Headers({
+    'content-type': result.contentType || 'image/jpeg',
+    'cache-control': 'private, max-age=86400, immutable',
+    etag: cacheEtag,
+    'set-cookie': await buildSessionCookie(nextState, env),
+  })
+  if (result?.source) {
+    headers.set('x-tg-preview-source', result.source)
+  }
+  return new Response(result.bytes, { status: 200, headers })
+}
+
 function handleLogout() {
   return json(
     { ok: true, data: { cleared: true } },
@@ -449,6 +945,7 @@ export async function onRequest(context) {
     if (method === 'POST' && action === 'send-message') return await handleSendMessage({ request, env, state })
     if (method === 'POST' && action === 'send-file') return await handleSendFile({ request, env, state })
     if (method === 'GET' && action === 'profile-photo') return await handleGetProfilePhoto({ request, env, state })
+    if (method === 'GET' && action === 'media-preview') return await handleGetMediaPreview({ request, env, state })
     if (method === 'POST' && action === 'logout') return handleLogout()
 
     return routeNotFoundResponse()

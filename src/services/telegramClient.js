@@ -9,10 +9,17 @@ const API_PREFIX = `${API_BASE}/api/tg`
 
 const REQUEST_TIMEOUT_MS = 30_000
 const AUTH_REQUEST_TIMEOUT_MS = 70_000
+const MEDIA_PREVIEW_REQUEST_TIMEOUT_MS = 8_000
+const MEDIA_PREVIEW_FAST_TIMEOUT_MS = 4_500
+const MEDIA_PREVIEW_ULTRAFAST_TIMEOUT_MS = 2_400
+const MEDIA_PREVIEW_VIDEO_FRAME_FAST_TIMEOUT_MS = 1_800
+const MEDIA_PREVIEW_VIDEO_FRAME_ULTRAFAST_TIMEOUT_MS = 1_100
+const MEDIA_PREVIEW_VIDEO_FRAME_TIMEOUT_MS = 2_800
 const MESSAGE_POLL_INTERVAL_MS = 2_500
 const PRESENCE_POLL_INTERVAL_MS = 12_000
 
 const avatarCache = new Map()
+const mediaPreviewCache = new Map()
 const messagePollers = new Map()
 const presenceSubscribers = new Set()
 
@@ -99,6 +106,111 @@ async function readTextSafely(response, maxLength = 700) {
   } catch {
     return ''
   }
+}
+
+async function extractStillFrameFromVideoBlob(blob, options = {}) {
+  if (!blob || typeof blob.size !== 'number' || blob.size <= 0) return null
+  if (typeof window === 'undefined' || typeof document === 'undefined') return null
+  if (typeof window.HTMLVideoElement === 'undefined') return null
+
+  const timeoutMs = Number(options.timeoutMs) > 0
+    ? Number(options.timeoutMs)
+    : MEDIA_PREVIEW_VIDEO_FRAME_TIMEOUT_MS
+  const targetMaxEdge = Number(options.maxEdge) > 0 ? Number(options.maxEdge) : 320
+  const jpegQuality = Number.isFinite(Number(options.quality))
+    ? Math.max(0.45, Math.min(0.95, Number(options.quality)))
+    : 0.72
+
+  return await new Promise(resolve => {
+    const video = document.createElement('video')
+    const sourceUrl = URL.createObjectURL(blob)
+    let settled = false
+    let timeoutId = 0
+
+    const finish = (result = null) => {
+      if (settled) return
+      settled = true
+      if (timeoutId) window.clearTimeout(timeoutId)
+      try {
+        video.pause()
+      } catch {
+        // noop
+      }
+      try {
+        video.removeAttribute('src')
+      } catch {
+        // noop
+      }
+      try {
+        video.load()
+      } catch {
+        // noop
+      }
+      try {
+        URL.revokeObjectURL(sourceUrl)
+      } catch {
+        // noop
+      }
+      resolve(result)
+    }
+
+    const drawFrame = () => {
+      try {
+        const width = Number(video.videoWidth) || 0
+        const height = Number(video.videoHeight) || 0
+        if (width <= 0 || height <= 0) {
+          finish(null)
+          return
+        }
+
+        const maxEdge = Math.max(width, height)
+        const scale = maxEdge > targetMaxEdge ? targetMaxEdge / maxEdge : 1
+        const outputWidth = Math.max(1, Math.round(width * scale))
+        const outputHeight = Math.max(1, Math.round(height * scale))
+        const canvas = document.createElement('canvas')
+        canvas.width = outputWidth
+        canvas.height = outputHeight
+
+        const ctx = canvas.getContext('2d', { alpha: false })
+        if (!ctx) {
+          finish(null)
+          return
+        }
+
+        ctx.drawImage(video, 0, 0, outputWidth, outputHeight)
+        canvas.toBlob(nextBlob => {
+          if (!nextBlob || nextBlob.size <= 0) {
+            finish(null)
+            return
+          }
+          try {
+            finish(URL.createObjectURL(nextBlob))
+          } catch {
+            finish(null)
+          }
+        }, 'image/jpeg', jpegQuality)
+      } catch {
+        finish(null)
+      }
+    }
+
+    timeoutId = window.setTimeout(() => finish(null), timeoutMs)
+
+    video.muted = true
+    video.playsInline = true
+    video.preload = 'metadata'
+    video.crossOrigin = 'anonymous'
+
+    video.addEventListener('loadeddata', () => {
+      drawFrame()
+    }, { once: true })
+    video.addEventListener('error', () => {
+      finish(null)
+    }, { once: true })
+
+    video.src = sourceUrl
+    video.load()
+  })
 }
 
 async function apiRequest(path, options = {}) {
@@ -216,6 +328,26 @@ function resetCaches() {
     }
   }
   avatarCache.clear()
+
+  for (const cached of mediaPreviewCache.values()) {
+    if (typeof cached === 'string') {
+      try {
+        URL.revokeObjectURL(cached)
+      } catch {
+        // noop
+      }
+      continue
+    }
+
+    if (cached && typeof cached === 'object' && typeof cached.url === 'string') {
+      try {
+        URL.revokeObjectURL(cached.url)
+      } catch {
+        // noop
+      }
+    }
+  }
+  mediaPreviewCache.clear()
 }
 
 function getHighestMessageId(messages) {
@@ -476,9 +608,8 @@ export async function getProfilePhoto(entity) {
   const key = entity?.id?.toString?.() || entity?.toString?.() || ''
   if (!key) return null
 
-  const cached = avatarCache.get(key)
-  if (cached) {
-    return await cached
+  if (avatarCache.has(key)) {
+    return await avatarCache.get(key)
   }
 
   const pending = (async () => {
@@ -507,6 +638,151 @@ export async function getProfilePhoto(entity) {
   const resolved = await pending
   avatarCache.set(key, resolved)
   return resolved
+}
+
+function buildMediaPreviewCacheKey(chatId, messageId, mode = 'fast') {
+  const chat = String(chatId || '').trim()
+  const msg = String(messageId || '').trim()
+  const quality = String(mode || 'fast').trim().toLowerCase()
+  if (!chat || !msg) return ''
+  return `${chat}:${msg}:${quality || 'fast'}`
+}
+
+export async function getMessageMediaPreview(chatId, messageId, options = {}) {
+  const mode = String(options?.mode || 'fast').trim().toLowerCase() || 'fast'
+  const cacheKey = buildMediaPreviewCacheKey(chatId, messageId, mode)
+  if (!cacheKey) {
+    console.warn('[TG API] media preview skipped: invalid chatId/messageId', { chatId, messageId })
+    return null
+  }
+
+  if (mediaPreviewCache.has(cacheKey)) {
+    return await mediaPreviewCache.get(cacheKey)
+  }
+
+  const pending = (async () => {
+    try {
+      const requestTimeoutMs = mode === 'ultrafast'
+        ? MEDIA_PREVIEW_ULTRAFAST_TIMEOUT_MS
+        : (mode === 'fast' ? MEDIA_PREVIEW_FAST_TIMEOUT_MS : MEDIA_PREVIEW_REQUEST_TIMEOUT_MS)
+
+      const response = await fetchWithTimeout(
+        buildApiUrl('/media-preview', { chatId, messageId, mode }),
+        { method: 'GET' },
+        requestTimeoutMs
+      )
+
+      if (!response.ok) {
+        const payload = await readJsonSafely(response)
+        const fallbackText = payload ? '' : await readTextSafely(response, 260)
+        const code = payload?.error?.code
+          || extractErrorCodeFromText(fallbackText)
+          || `HTTP_${response.status}`
+        const message = payload?.error?.message
+          || fallbackText
+          || response.statusText
+          || 'Failed to fetch media preview'
+        const err = createError(code, message, response.status, payload?.error || null)
+
+        // 404/415 are expected for unsupported messages (files without thumbnails, links, etc.).
+        if (response.status === 404 || response.status === 415) {
+          console.info('[TG API] media preview unavailable:', {
+            code: err.code,
+            status: err.status,
+            chatId: String(chatId || ''),
+            messageId: String(messageId || ''),
+          })
+          return null
+        }
+
+        console.error('[TG API] media preview request failed:', {
+          code: err.code,
+          status: err.status,
+          message: err.message,
+          chatId: String(chatId || ''),
+          messageId: String(messageId || ''),
+        })
+        throw err
+      }
+
+      const rawContentType = response.headers.get('content-type') || ''
+      const contentType = rawContentType.split(';')[0].trim().toLowerCase()
+      const previewSource = response.headers.get('x-tg-preview-source') || ''
+      const isRenderableMedia = contentType.startsWith('image/') || contentType.startsWith('video/')
+      if (!isRenderableMedia) {
+        throw createError('MEDIA_PREVIEW_NON_RENDERABLE_RESPONSE', `Expected image/* or video/* but got ${rawContentType || 'empty content-type'}`, 502, {
+          contentType,
+          chatId: String(chatId || ''),
+          messageId: String(messageId || ''),
+        })
+      }
+
+      const blob = await response.blob()
+      if (!blob || blob.size === 0) {
+        throw createError('MEDIA_PREVIEW_EMPTY_BLOB', 'Media preview response is empty', 502, {
+          chatId: String(chatId || ''),
+          messageId: String(messageId || ''),
+        })
+      }
+
+      if (contentType.startsWith('video/')) {
+        const stillFrameUrl = await extractStillFrameFromVideoBlob(blob, {
+          timeoutMs: mode === 'ultrafast'
+            ? MEDIA_PREVIEW_VIDEO_FRAME_ULTRAFAST_TIMEOUT_MS
+            : (mode === 'fast' ? MEDIA_PREVIEW_VIDEO_FRAME_FAST_TIMEOUT_MS : MEDIA_PREVIEW_VIDEO_FRAME_TIMEOUT_MS),
+          maxEdge: mode === 'ultrafast' ? 220 : (mode === 'fast' ? 260 : 340),
+          quality: mode === 'ultrafast' ? 0.58 : (mode === 'fast' ? 0.66 : 0.74),
+        })
+
+        if (stillFrameUrl) {
+          return {
+            url: stillFrameUrl,
+            mimeType: 'image/jpeg',
+          }
+        }
+
+        console.info('[TG API] media preview video frame extraction unavailable, preview skipped', {
+          chatId: String(chatId || ''),
+          messageId: String(messageId || ''),
+          mimeType: contentType,
+          previewSource,
+          size: blob.size,
+        })
+
+        return null
+      }
+
+      return {
+        url: URL.createObjectURL(blob),
+        mimeType: contentType || 'application/octet-stream',
+      }
+    } catch (err) {
+      const wrapped = err?.code ? err : createError('MEDIA_PREVIEW_FETCH_FAILED', String(err?.message || err || 'Failed to fetch media preview'), 500)
+      console.warn('[TG API] media preview exception:', {
+        code: wrapped.code,
+        status: wrapped.status,
+        message: wrapped.message,
+        chatId: String(chatId || ''),
+        messageId: String(messageId || ''),
+      })
+      throw wrapped
+    }
+  })()
+
+  mediaPreviewCache.set(cacheKey, pending)
+  try {
+    const resolved = await pending
+    if (resolved) {
+      mediaPreviewCache.set(cacheKey, resolved)
+    } else {
+      // Do not freeze missing previews forever; allow future retries.
+      mediaPreviewCache.delete(cacheKey)
+    }
+    return resolved
+  } catch (err) {
+    mediaPreviewCache.delete(cacheKey)
+    throw err
+  }
 }
 
 export async function getChatFolders() {

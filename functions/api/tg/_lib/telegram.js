@@ -24,11 +24,18 @@ const KNOWN_STATUS_CODES = new Map([
   ['PASSWORD_HASH_INVALID', 401],
   ['API_ID_INVALID', 500],
   ['API_HASH_INVALID', 500],
+  ['AUTH_BYTES_INVALID', 401],
   ['AUTH_KEY_UNREGISTERED', 401],
   ['TWO_FA_SESSION_EXPIRED', 401],
   ['CALL_SEND_CODE_FIRST', 400],
   ['CHAT_ID_REQUIRED', 400],
+  ['MESSAGE_ID_REQUIRED', 400],
   ['MESSAGE_REQUIRED', 400],
+  ['MEDIA_PREVIEW_NOT_FOUND', 404],
+  ['MEDIA_PREVIEW_UNSUPPORTED', 415],
+  ['MEDIA_PREVIEW_EMPTY', 404],
+  ['MEDIA_PREVIEW_FETCH_FAILED', 500],
+  ['MEDIA_PREVIEW_FETCH_TIMEOUT', 504],
   ['NO_FILE_PROVIDED', 400],
   ['INVALID_REQUEST', 400],
 ])
@@ -202,8 +209,14 @@ export async function runWithTelegramClient(env, sessionString, fn) {
     // Explicitly use websocket transport to avoid runtime incompatibilities in wrangler 3.x.
     connection: ConnectionTCPObfuscated,
     networkSocket: PromisedWebSockets,
-    connectionRetries: 5,
+    connectionRetries: 2,
+    requestRetries: 1,
+    downloadRetries: 1,
+    autoReconnect: false,
+    retryDelay: 250,
+    maxConcurrentDownloads: 1,
     useWSS: true,
+    receiveUpdates: false,
   })
   client.setLogLevel('error')
 
@@ -214,11 +227,6 @@ export async function runWithTelegramClient(env, sessionString, fn) {
 
   try {
     await withTimeout(client.connect(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')
-    try {
-      await client.invoke(new Api.account.UpdateStatus({ offline: true }))
-    } catch {
-      // can fail for unauthorized state; safe to ignore
-    }
 
     const result = await fn({ client, apiId, apiHash })
     const nextSession = client.session.save()

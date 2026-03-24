@@ -308,3 +308,36 @@
         opacity: 0.35;
     }
 }
+
+@media (hover: none) and (pointer: coarse) {
+    .mobile-disk-root,
+    .mobile-disk-root * {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .mobile-disk-root .mobile-file-row-hit,
+    .mobile-disk-root .mobile-file-row-actions {
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        user-select: none !important;
+    }
+
+    .mobile-disk-root button,
+    .mobile-disk-root [role="button"],
+    .mobile-disk-root a {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    .mobile-disk-root button:focus,
+    .mobile-disk-root button:focus-visible,
+    .mobile-disk-root [role="button"]:focus,
+    .mobile-disk-root [role="button"]:focus-visible,
+    .mobile-disk-root a:focus,
+    .mobile-disk-root a:focus-visible {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+}

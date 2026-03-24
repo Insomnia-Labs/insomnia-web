@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useState, useRef, useMemo } from 'react'
 import { useStore } from '../../store/useStore'
-import { getChatHistory, getDialogs, getMe, getProfilePhoto, getChatFolders, sendMessage, sendFileToChat, subscribeToMessages, subscribeToPresence, subscribeToTyping } from '../../services/telegramClient'
+import { getChatHistory, getDialogs, getMe, getProfilePhoto, getMessageMediaPreview, getChatFolders, sendMessage, sendFileToChat, subscribeToMessages, subscribeToPresence, subscribeToTyping } from '../../services/telegramClient'
 import { motion, AnimatePresence } from 'framer-motion'
 import './terminal-mode.css'
 
@@ -8,6 +8,11 @@ const HISTORY_BATCH_SIZE = 100
 const HISTORY_TOP_THRESHOLD = 48
 const STICK_TO_BOTTOM_THRESHOLD = 120
 const EXPORT_BATCH_DELAY_MS = 140
+const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'heic', 'heif', 'avif'])
+const VIDEO_EXTENSIONS = new Set(['mp4', 'mov', 'mkv', 'webm', 'avi', 'm4v'])
+const MOBILE_PREVIEW_BATCH_LIMIT = 12
+const MOBILE_PREVIEW_MAX_PARALLEL = 4
+const MOBILE_PREVIEW_RETRY_SCHEDULE_MS = [600, 1_800, 4_000]
 
 export default function Dashboard() {
     const { selectedChatId, setPostLoginView, setSelectedChatId } = useStore()
@@ -39,6 +44,8 @@ export default function Dashboard() {
     const [mobileUploadNotice, setMobileUploadNotice] = useState(null)
     const [mobileUploadDetailsOpen, setMobileUploadDetailsOpen] = useState(false)
     const [mobileUploadCopyState, setMobileUploadCopyState] = useState('idle')
+    const [mobilePreviewUrls, setMobilePreviewUrls] = useState({})
+    const [mobilePreviewRetryNonce, setMobilePreviewRetryNonce] = useState(0)
     const chatMenuRef = useRef(null)
     const exportMenuRef = useRef(null)
     const chatContainerRef = useRef(null)
@@ -54,6 +61,11 @@ export default function Dashboard() {
     const mobileUploadDisplayedProgressRef = useRef(0)
     const mobileUploadProgressTargetRef = useRef(0)
     const mobileUploadProgressFrameRef = useRef(0)
+    const mobilePreviewInFlightRef = useRef(new Set())
+    const mobilePreviewRetryAtRef = useRef(new Map())
+    const mobilePreviewAttemptCountRef = useRef(new Map())
+    const mobilePreviewUnavailableRef = useRef(new Set())
+    const mobilePreviewRetryTimerRef = useRef(0)
 
     useEffect(() => {
         // Keep current view persisted so accidental reload/tab discard returns here.
@@ -63,6 +75,13 @@ export default function Dashboard() {
     const getMessageIdKey = (message) => {
         if (message?.id === undefined || message?.id === null) return ''
         return message.id.toString()
+    }
+
+    const buildMobilePreviewKey = (chatId, messageId) => {
+        const chat = String(chatId || '').trim()
+        const message = String(messageId || '').trim()
+        if (!chat || !message) return ''
+        return `${chat}:${message}`
     }
 
     const isNearBottom = (el) => {
@@ -118,6 +137,32 @@ export default function Dashboard() {
         mobileUploadDisplayedProgressRef.current = 0
         mobileUploadProgressTargetRef.current = 0
         setMobileUploadProgress(0)
+    }
+
+    const clearMobilePreviewRetryTimer = () => {
+        if (mobilePreviewRetryTimerRef.current) {
+            window.clearTimeout(mobilePreviewRetryTimerRef.current)
+            mobilePreviewRetryTimerRef.current = 0
+        }
+    }
+
+    const scheduleNextMobilePreviewRetry = () => {
+        clearMobilePreviewRetryTimer()
+
+        let nextRetryAt = Infinity
+        for (const value of mobilePreviewRetryAtRef.current.values()) {
+            if (typeof value === 'number' && Number.isFinite(value) && value > 0 && value < nextRetryAt) {
+                nextRetryAt = value
+            }
+        }
+
+        if (!Number.isFinite(nextRetryAt) || nextRetryAt === Infinity) return
+
+        const delayMs = Math.max(0, nextRetryAt - Date.now())
+        mobilePreviewRetryTimerRef.current = window.setTimeout(() => {
+            mobilePreviewRetryTimerRef.current = 0
+            setMobilePreviewRetryNonce(prev => prev + 1)
+        }, delayMs + 30)
     }
 
     const formatTimeWithSeconds = (value) => {
@@ -457,20 +502,49 @@ export default function Dashboard() {
                 if (!Array.isArray(fetchedDialogs)) fetchedDialogs = []
                 if (mounted) {
                     setDialogs(fetchedDialogs)
-                    // Load avatars in background
-                    fetchedDialogs.forEach(async (chat) => {
-                        const entity = chat.entity
-                        if (!entity) return
-                        const idStr = entity.id?.toString()
-                        if (!idStr) return
-                        if (avatarUrls[idStr]) return // already cached
-                        try {
-                            const url = await getProfilePhoto(entity)
-                            if (mounted && url) {
-                                setAvatarUrls(prev => ({ ...prev, [idStr]: url }))
+
+                    if (activeSection === 'chats') {
+                        // Limit parallel avatar requests to avoid API storms and session races.
+                        const pending = fetchedDialogs
+                            .map(chat => chat?.entity)
+                            .filter(Boolean)
+                            .map(entity => ({
+                                entity,
+                                id: entity.id?.toString?.() || '',
+                            }))
+                            .filter(item => item.id && !avatarUrls[item.id])
+
+                        const MAX_PARALLEL = 3
+                        let index = 0
+
+                        const worker = async () => {
+                            while (mounted && index < pending.length) {
+                                const currentIndex = index
+                                index += 1
+                                const item = pending[currentIndex]
+                                if (!item?.id || !item?.entity) continue
+
+                                try {
+                                    const url = await getProfilePhoto(item.entity)
+                                    if (mounted && url) {
+                                        setAvatarUrls(prev => {
+                                            if (prev[item.id]) return prev
+                                            return { ...prev, [item.id]: url }
+                                        })
+                                    }
+                                } catch {
+                                    // keep list rendering resilient
+                                }
                             }
-                        } catch { /* ignore */ }
-                    })
+                        }
+
+                        await Promise.all(
+                            Array.from(
+                                { length: Math.min(MAX_PARALLEL, pending.length) },
+                                () => worker()
+                            )
+                        )
+                    }
                 }
             } catch (err) {
                 console.error('Failed to fetch dialogs:', err)
@@ -478,7 +552,7 @@ export default function Dashboard() {
         }
         fetchChats()
         return () => { mounted = false }
-    }, [chatFolder])
+    }, [chatFolder, activeSection])
 
     // Subscribe to realtime presence updates
     useEffect(() => {
@@ -749,42 +823,51 @@ export default function Dashboard() {
         }
         fetchHistory()
 
-        // Setup real-time listener for incoming messages
+        return () => {
+            mounted = false
+            exportCancelRef.current = true
+        }
+    }, [selectedChatId])
+
+    useEffect(() => {
+        if (!selectedChatId || activeSection !== 'chats') return
+
+        let mounted = true
         let unsubscribe = null
+
         subscribeToMessages(selectedChatId, (newMessage) => {
-            if (mounted) {
-                const el = chatContainerRef.current
-                if (!el || isNearBottom(el)) {
-                    shouldScrollToBottomRef.current = true
-                }
+            if (!mounted) return
 
-                const newMessageId = getMessageIdKey(newMessage)
-                setMessages(prev => {
-                    // Avoid duplicating already received updates
-                    if (newMessageId && prev.some(m => getMessageIdKey(m) === newMessageId)) return prev
-
-                    let next = prev
-                    if (newMessage.out) {
-                        // find a pending message with the same text to remove it
-                        const pendingIdx = prev.findIndex(m => m.isPending && m.message === newMessage.message)
-                        if (pendingIdx !== -1) {
-                            next = [...prev]
-                            next.splice(pendingIdx, 1)
-                        }
-                    }
-                    return [newMessage, ...next]
-                })
+            const el = chatContainerRef.current
+            if (!el || isNearBottom(el)) {
+                shouldScrollToBottomRef.current = true
             }
+
+            const newMessageId = getMessageIdKey(newMessage)
+            setMessages(prev => {
+                // Avoid duplicating already received updates.
+                if (newMessageId && prev.some(m => getMessageIdKey(m) === newMessageId)) return prev
+
+                let next = prev
+                if (newMessage.out) {
+                    // Find a pending message with the same text to remove it.
+                    const pendingIdx = prev.findIndex(m => m.isPending && m.message === newMessage.message)
+                    if (pendingIdx !== -1) {
+                        next = [...prev]
+                        next.splice(pendingIdx, 1)
+                    }
+                }
+                return [newMessage, ...next]
+            })
         }).then(unsub => {
             unsubscribe = unsub
         })
 
         return () => {
             mounted = false
-            exportCancelRef.current = true
             if (unsubscribe) unsubscribe()
         }
-    }, [selectedChatId])
+    }, [selectedChatId, activeSection])
 
     const handleBack = () => {
         setPostLoginView('chats')
@@ -914,6 +997,43 @@ export default function Dashboard() {
         return `${value.toFixed(2)} ${units[idx]}`
     }
 
+    const formatRuPlural = (value, one, few, many) => {
+        const abs = Math.abs(Number(value) || 0)
+        const mod100 = abs % 100
+        const mod10 = abs % 10
+        if (mod100 >= 11 && mod100 <= 14) return many
+        if (mod10 === 1) return one
+        if (mod10 >= 2 && mod10 <= 4) return few
+        return many
+    }
+
+    const formatRelativeModifiedAt = (dateValue) => {
+        const date = dateValue instanceof Date ? dateValue : new Date(dateValue)
+        if (!Number.isFinite(date.getTime())) return 'изменено недавно'
+
+        const diffMs = Date.now() - date.getTime()
+        if (!Number.isFinite(diffMs)) return 'изменено недавно'
+        if (diffMs < 0) return `изменено ${date.toLocaleDateString('ru-RU')}`
+
+        const minutes = Math.floor(diffMs / 60_000)
+        if (minutes <= 0) return 'изменено только что'
+        if (minutes < 60) {
+            return `изменено ${minutes} ${formatRuPlural(minutes, 'минуту', 'минуты', 'минут')} назад`
+        }
+
+        const hours = Math.floor(minutes / 60)
+        if (hours < 24) {
+            return `изменено ${hours} ${formatRuPlural(hours, 'час', 'часа', 'часов')} назад`
+        }
+
+        const days = Math.floor(hours / 24)
+        if (days < 31) {
+            return `изменено ${days} ${formatRuPlural(days, 'день', 'дня', 'дней')} назад`
+        }
+
+        return `изменено ${date.toLocaleDateString('ru-RU')}`
+    }
+
     const getMobileUploadErrorPresentation = (err) => {
         const code = String(err?.code || '').toUpperCase()
         const message = String(err?.message || '').toUpperCase()
@@ -998,22 +1118,71 @@ export default function Dashboard() {
         setMobileUploadCopyState(copied ? 'copied' : 'failed')
     }
 
+    const getFileExtensionFromName = (value) => {
+        const name = typeof value === 'string' ? value.trim().toLowerCase() : ''
+        if (!name) return ''
+        const clean = name.split('?')[0].split('#')[0]
+        const idx = clean.lastIndexOf('.')
+        if (idx <= 0 || idx === clean.length - 1) return ''
+        return clean.slice(idx + 1)
+    }
+
+    const classifyDocumentPreviewType = (document) => {
+        const mime = (document?.mimeType || '').toLowerCase()
+        const attributes = Array.isArray(document?.attributes) ? document.attributes : []
+        const filenameAttr = attributes.find(attr => attr?.className === 'DocumentAttributeFilename')
+        const fileExtension = getFileExtensionFromName(filenameAttr?.fileName || '')
+        const isSticker = attributes.some(attr => attr?.className === 'DocumentAttributeSticker')
+
+        const hasImageAttribute = attributes.some(attr => attr?.className === 'DocumentAttributeImageSize')
+        const hasVideoAttribute = attributes.some(attr => attr?.className === 'DocumentAttributeVideo')
+
+        const isImage = !isSticker && (
+            mime.startsWith('image/')
+            || hasImageAttribute
+            || IMAGE_EXTENSIONS.has(fileExtension)
+        )
+
+        const isVideo = hasVideoAttribute
+            || mime.startsWith('video/')
+            || VIDEO_EXTENSIONS.has(fileExtension)
+
+        return {
+            mime,
+            attributes,
+            filename: filenameAttr?.fileName || '',
+            extension: fileExtension,
+            isSticker,
+            isImage,
+            isVideo,
+        }
+    }
+
     const getFilteredFileMessages = (tab = activeTab) => {
         return messages.filter(msg => {
             if (!msg?.media) return false
 
             if (tab === 'all') return true
 
-            if (tab === 'photo') return !!msg.media.photo
+            if (tab === 'photo') {
+                if (msg.media.photo) return true
+                if (msg.media.document) {
+                    const classified = classifyDocumentPreviewType(msg.media.document)
+                    return classified.isImage
+                }
+                return false
+            }
 
             if (msg.media.document) {
-                const attributes = msg.media.document.attributes || []
+                const classified = classifyDocumentPreviewType(msg.media.document)
                 if (tab === 'video') {
-                    return attributes.some(a => a.className === 'DocumentAttributeVideo') || msg.media.document.mimeType?.startsWith('video/')
+                    return classified.isVideo
                 }
                 if (tab === 'archive') {
-                    const mime = (msg.media.document.mimeType || '').toLowerCase()
+                    const mime = classified.mime
+                    const ext = classified.extension
                     return mime.includes('zip') || mime.includes('rar') || mime.includes('tar') || mime.includes('7z') || mime.includes('archive')
+                        || ext === 'zip' || ext === 'rar' || ext === '7z' || ext === 'tar'
                 }
             }
 
@@ -1024,6 +1193,8 @@ export default function Dashboard() {
     const getFilePreviewData = (msg) => {
         const media = msg?.media || {}
         const dateObj = msg?.date ? new Date(msg.date * 1000) : new Date()
+        const messageId = msg?.id?.toString?.() || ''
+        const chatId = msg?.chatId?.toString?.() || selectedChatId?.toString?.() || ''
         const timeLabel = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         const dateLabel = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
         const captionText = typeof msg?.message === 'string' ? msg.message.trim() : ''
@@ -1033,15 +1204,19 @@ export default function Dashboard() {
         let fileSize = ''
         let fileUrl = ''
         let extLabel = 'FILE'
+        let fileExtension = ''
 
         if (media.document) {
-            const attributes = media.document.attributes || []
+            const classified = classifyDocumentPreviewType(media.document)
+            const attributes = classified.attributes
             const filenameAttr = attributes.find(attr => attr.className === 'DocumentAttributeFilename')
-            const mime = (media.document.mimeType || '').toLowerCase()
-            const isVideo = attributes.some(a => a.className === 'DocumentAttributeVideo') || mime.startsWith('video/')
+            const mime = classified.mime
+            const isVideo = classified.isVideo
             const isAudio = attributes.some(a => a.className === 'DocumentAttributeAudio') || mime.startsWith('audio/')
             const isArchive = mime.includes('zip') || mime.includes('rar') || mime.includes('tar') || mime.includes('7z') || mime.includes('archive')
-            const isSticker = attributes.some(a => a.className === 'DocumentAttributeSticker')
+                || ['zip', 'rar', '7z', 'tar'].includes(classified.extension)
+            const isSticker = classified.isSticker
+            const isImage = classified.isImage
 
             const mimeToExt = () => {
                 if (mime.includes('quicktime')) return 'mov'
@@ -1092,6 +1267,10 @@ export default function Dashboard() {
             const extMatch = fileName.match(/\.([a-z0-9]{1,7})$/i)
             if (extMatch?.[1]) {
                 extLabel = extMatch[1].toUpperCase()
+                fileExtension = extMatch[1].toLowerCase()
+            } else if (classified.extension) {
+                extLabel = classified.extension.toUpperCase()
+                fileExtension = classified.extension.toLowerCase()
             }
 
             if (isVideo) {
@@ -1103,11 +1282,15 @@ export default function Dashboard() {
             } else if (isArchive) {
                 type = 'archive'
                 if (!extMatch) extLabel = 'ZIP'
+            } else if (isImage) {
+                type = 'photo'
+                if (!extMatch) extLabel = 'JPG'
             }
         } else if (media.photo) {
             type = 'photo'
             fileName = 'Фотография'
             extLabel = 'JPG'
+            fileExtension = 'jpg'
         } else if (media.webpage) {
             type = 'link'
             fileUrl = media.webpage.url || media.webpage.displayUrl || ''
@@ -1124,8 +1307,20 @@ export default function Dashboard() {
         if (fileSize) subtitleParts.push(fileSize)
         subtitleParts.push(dateLabel)
 
+        let typeLabel = 'Файл'
+        if (type === 'photo') typeLabel = 'Изображение'
+        if (type === 'video') typeLabel = 'Видео'
+        if (type === 'audio') typeLabel = 'Аудио'
+        if (type === 'archive') typeLabel = 'Архив'
+        if (type === 'link') typeLabel = 'Ссылка'
+
+        const modifiedLabel = formatRelativeModifiedAt(dateObj)
+        const metaPrimary = fileSize || typeLabel
+        const mobileMetaLine = metaPrimary ? `${metaPrimary}, ${modifiedLabel}` : modifiedLabel
+        const canPreview = (type === 'photo' || type === 'video') && Boolean(chatId) && Boolean(messageId)
+
         return {
-            id: msg?.id?.toString?.() || Math.random().toString(),
+            id: messageId || Math.random().toString(),
             type,
             title: fileName,
             sizeLabel: fileSize,
@@ -1133,7 +1328,14 @@ export default function Dashboard() {
             dateLabel,
             subtitle: subtitleParts.join(' • '),
             extLabel,
-            fileUrl
+            fileUrl,
+            typeLabel,
+            modifiedLabel,
+            mobileMetaLine,
+            messageId,
+            chatId,
+            canPreview,
+            fileExtension,
         }
     }
 
@@ -1474,12 +1676,12 @@ export default function Dashboard() {
         : "inline-flex items-center px-1.5 py-0.5 rounded border border-[#4c6491] text-[10px] text-[#9ec4ff] bg-[#121f36] font-mono"
 
     const getMobileFileTone = (type) => {
-        if (type === 'photo') return 'bg-[#1d3b59] border-[#2e5e8f] text-[#95d2ff]'
-        if (type === 'video') return 'bg-[#32234f] border-[#4f3a78] text-[#c7b5ff]'
-        if (type === 'archive') return 'bg-[#3d2e18] border-[#634a25] text-[#ffd896]'
-        if (type === 'audio') return 'bg-[#143834] border-[#22645d] text-[#88f0de]'
-        if (type === 'link') return 'bg-[#1f2a45] border-[#334775] text-[#9fc0ff]'
-        return 'bg-[#23242b] border-[#3b3d4b] text-[#c7c8d1]'
+        if (type === 'photo') return 'border-[#4d5d76] bg-gradient-to-br from-[#374760] to-[#1e2838] text-[#dfe9ff]'
+        if (type === 'video') return 'border-[#60517b] bg-gradient-to-br from-[#4a3c66] to-[#252136] text-[#e7dcff]'
+        if (type === 'archive') return 'border-[#776141] bg-gradient-to-br from-[#5a4a2f] to-[#2d2518] text-[#ffe6bf]'
+        if (type === 'audio') return 'border-[#3e6c69] bg-gradient-to-br from-[#2b5654] to-[#183231] text-[#cef9f1]'
+        if (type === 'link') return 'border-[#4a638f] bg-gradient-to-br from-[#33486d] to-[#1b273d] text-[#d5e5ff]'
+        return 'border-[#4a4d5e] bg-gradient-to-br from-[#353844] to-[#1c1f27] text-[#e0e2ea]'
     }
 
     const renderMobileFileIcon = (type) => {
@@ -1516,37 +1718,325 @@ export default function Dashboard() {
             })
     }, [messages, activeTab, mobileSearchQuery])
 
-    const mobileVisibleRowItems = useMemo(() => {
-        return mobileVisibleRows.map(({ preview }) => (
-            <button
-                key={preview.id}
-                onClick={() => {
-                    if (preview.fileUrl) {
-                        window.open(preview.fileUrl, '_blank', 'noopener,noreferrer')
+    useEffect(() => {
+        clearMobilePreviewRetryTimer()
+        mobilePreviewInFlightRef.current.clear()
+        mobilePreviewRetryAtRef.current.clear()
+        mobilePreviewAttemptCountRef.current.clear()
+        mobilePreviewUnavailableRef.current.clear()
+        setMobilePreviewUrls({})
+    }, [selectedChatId])
+
+    useEffect(() => {
+        return () => {
+            clearMobilePreviewRetryTimer()
+        }
+    }, [])
+
+    useEffect(() => {
+        let cancelled = false
+        if (activeSection !== 'main') {
+            clearMobilePreviewRetryTimer()
+            return () => { cancelled = true }
+        }
+
+        const candidates = mobileVisibleRows
+            .map(({ preview }) => preview)
+            .filter(preview => preview?.canPreview && preview?.chatId && preview?.messageId)
+            .slice(0, MOBILE_PREVIEW_BATCH_LIMIT)
+
+        if (candidates.length === 0) {
+            const totalRows = mobileVisibleRows.length
+            const previewRows = mobileVisibleRows
+                .map(item => item?.preview)
+                .filter(Boolean)
+                .filter(preview => preview?.type === 'photo' || preview?.type === 'video')
+            if (totalRows > 0 && previewRows.length > 0) {
+                console.info('[MobilePreview] no candidate rows after validation', {
+                    totalRows,
+                    previewRows: previewRows.length,
+                    selectedChatId: selectedChatId || '',
+                    sample: previewRows.slice(0, 4).map(item => ({
+                        messageId: item?.messageId || '',
+                        chatId: item?.chatId || '',
+                        type: item?.type || '',
+                        canPreview: Boolean(item?.canPreview),
+                        title: item?.title || '',
+                    })),
+                })
+            }
+            return () => { cancelled = true }
+        }
+
+        const queue = candidates.filter(preview => {
+            const key = buildMobilePreviewKey(preview.chatId, preview.messageId)
+            if (!key) return false
+            if (mobilePreviewUrls[key]) return false
+            if (mobilePreviewInFlightRef.current.has(key)) return false
+            if (mobilePreviewUnavailableRef.current.has(key)) return false
+            const retryAt = mobilePreviewRetryAtRef.current.get(key)
+            if (typeof retryAt === 'number') {
+                if (Date.now() < retryAt) return false
+                mobilePreviewRetryAtRef.current.delete(key)
+            }
+            return true
+        })
+
+        if (queue.length === 0) {
+            scheduleNextMobilePreviewRetry()
+            return () => { cancelled = true }
+        }
+
+        const MAX_PARALLEL = MOBILE_PREVIEW_MAX_PARALLEL
+        let index = 0
+
+        const worker = async () => {
+            while (!cancelled && index < queue.length) {
+                const currentIndex = index
+                index += 1
+                const preview = queue[currentIndex]
+                const key = buildMobilePreviewKey(preview?.chatId, preview?.messageId)
+                if (!key) continue
+
+                mobilePreviewInFlightRef.current.add(key)
+                try {
+                    const previousAttempts = mobilePreviewAttemptCountRef.current.get(key) || 0
+                    const previewMode = previousAttempts === 0 ? 'ultrafast' : 'fast'
+                    const previewAsset = await getMessageMediaPreview(preview.chatId, preview.messageId, {
+                        mode: previewMode,
+                    })
+                    if (cancelled) continue
+
+                    if (previewAsset?.url) {
+                        mobilePreviewRetryAtRef.current.delete(key)
+                        mobilePreviewAttemptCountRef.current.delete(key)
+                        mobilePreviewUnavailableRef.current.delete(key)
+                        scheduleNextMobilePreviewRetry()
+                        setMobilePreviewUrls(prev => {
+                            if (prev[key]) return prev
+                            return { ...prev, [key]: previewAsset }
+                        })
+                    } else {
+                        if (previewMode === 'ultrafast') {
+                            mobilePreviewAttemptCountRef.current.set(key, 1)
+                            mobilePreviewRetryAtRef.current.set(key, Date.now() + 250)
+                            scheduleNextMobilePreviewRetry()
+                            console.info('[MobilePreview] ultrafast miss, queued fast retry', {
+                                chatId: preview.chatId,
+                                messageId: preview.messageId,
+                                type: preview.type,
+                            })
+                        } else {
+                            // 404/415 are returned as null by client helper -> permanent "no preview" for this media.
+                            mobilePreviewUnavailableRef.current.add(key)
+                            mobilePreviewRetryAtRef.current.delete(key)
+                            mobilePreviewAttemptCountRef.current.delete(key)
+                            scheduleNextMobilePreviewRetry()
+                            console.info('[MobilePreview] preview not available', {
+                                chatId: preview.chatId,
+                                messageId: preview.messageId,
+                                type: preview.type,
+                            })
+                        }
                     }
-                }}
-                className="w-full rounded-2xl px-3 py-2.5 text-left hover:bg-white/[0.03] active:bg-white/[0.06] transition-colors"
-            >
-                <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-full border flex items-center justify-center shrink-0 ${getMobileFileTone(preview.type)}`}>
-                        {renderMobileFileIcon(preview.type)}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                        <div className="flex items-start gap-2">
-                            <span className="truncate text-[20px] leading-[1.1] font-semibold text-white">{preview.title}</span>
-                            <span className="ml-auto shrink-0 text-[13px] text-[#798195]">{preview.timeLabel}</span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                            <span className="truncate text-[14px] text-[#8c93a3]">{preview.subtitle}</span>
-                            <span className="shrink-0 inline-flex items-center h-5 px-2 rounded-full border border-white/10 bg-[#1d212b] text-[10px] font-semibold text-[#bdc8df] tracking-[0.08em]">
-                                {preview.extLabel}
-                            </span>
-                        </div>
+                } catch (err) {
+                    const previousAttempts = mobilePreviewAttemptCountRef.current.get(key) || 0
+                    const nextAttempts = previousAttempts + 1
+                    mobilePreviewAttemptCountRef.current.set(key, nextAttempts)
+
+                    const retryIndex = Math.min(nextAttempts - 1, MOBILE_PREVIEW_RETRY_SCHEDULE_MS.length - 1)
+                    const retryDelay = MOBILE_PREVIEW_RETRY_SCHEDULE_MS[retryIndex]
+                    const exhausted = nextAttempts > MOBILE_PREVIEW_RETRY_SCHEDULE_MS.length
+
+                    if (exhausted) {
+                        mobilePreviewUnavailableRef.current.add(key)
+                        mobilePreviewRetryAtRef.current.delete(key)
+                    } else {
+                        mobilePreviewRetryAtRef.current.set(key, Date.now() + retryDelay)
+                    }
+                    scheduleNextMobilePreviewRetry()
+
+                    console.warn('[MobilePreview] failed to load preview', {
+                        code: err?.code,
+                        status: err?.status,
+                        message: err?.message,
+                        attempts: nextAttempts,
+                        exhausted,
+                        chatId: preview?.chatId,
+                        messageId: preview?.messageId,
+                        type: preview?.type,
+                    })
+                } finally {
+                    mobilePreviewInFlightRef.current.delete(key)
+                }
+            }
+        }
+
+        void Promise.all(
+            Array.from(
+                { length: Math.min(MAX_PARALLEL, queue.length) },
+                () => worker()
+            )
+        )
+
+        return () => {
+            cancelled = true
+        }
+    }, [mobileVisibleRows, mobilePreviewUrls, activeSection, selectedChatId, mobilePreviewRetryNonce])
+
+    const mobileVisibleRowItems = useMemo(() => {
+        return mobileVisibleRows.map(({ preview }) => {
+            const previewKey = buildMobilePreviewKey(preview.chatId, preview.messageId)
+            const previewAsset = previewKey ? mobilePreviewUrls[previewKey] : null
+            const previewSrc = previewAsset?.url || ''
+            const previewMime = (previewAsset?.mimeType || '').toLowerCase()
+            const isVideoPreview = previewSrc && previewMime.startsWith('video/')
+            const markPreviewUnavailable = () => {
+                if (!previewKey) return
+                mobilePreviewUnavailableRef.current.add(previewKey)
+                setMobilePreviewUrls(prev => {
+                    if (!prev[previewKey]) return prev
+                    const next = { ...prev }
+                    delete next[previewKey]
+                    return next
+                })
+            }
+
+            return (
+                <div key={preview.id} className="w-full px-2 py-1">
+                    <div className="flex items-center gap-2 rounded-[20px] border border-white/[0.07] bg-[#12151c] px-2.5 py-2">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (preview.fileUrl) {
+                                    window.open(preview.fileUrl, '_blank', 'noopener,noreferrer')
+                                }
+                            }}
+                            onFocus={(e) => {
+                                e.currentTarget.blur()
+                            }}
+                            className={`mobile-file-row-hit m-0 flex min-w-0 flex-1 appearance-none items-center gap-3 border-0 bg-transparent p-0 text-left outline-none transition-opacity focus:outline-none focus-visible:outline-none ${preview.fileUrl ? 'cursor-pointer' : 'cursor-default'}`}
+                            style={{
+                                WebkitTapHighlightColor: 'transparent',
+                                WebkitTouchCallout: 'none',
+                                outline: 'none',
+                                boxShadow: 'none',
+                            }}
+                            title={preview.fileUrl ? 'Открыть ссылку' : preview.title}
+                        >
+                            <div className={`relative h-[60px] w-[60px] shrink-0 overflow-hidden rounded-[16px] border ${getMobileFileTone(preview.type)}`}>
+                                {previewSrc ? (
+                                    isVideoPreview ? (
+                                        <video
+                                            src={previewSrc}
+                                            muted
+                                            playsInline
+                                            preload="metadata"
+                                            className="h-full w-full object-cover"
+                                            onLoadedMetadata={(e) => {
+                                                try {
+                                                    const video = e.currentTarget
+                                                    video.pause()
+                                                    video.currentTime = 0
+                                                } catch {
+                                                    // noop
+                                                }
+                                            }}
+                                            onCanPlay={(e) => {
+                                                try {
+                                                    e.currentTarget.pause()
+                                                } catch {
+                                                    // noop
+                                                }
+                                            }}
+                                            onPlay={(e) => {
+                                                try {
+                                                    e.currentTarget.pause()
+                                                } catch {
+                                                    // noop
+                                                }
+                                            }}
+                                            onError={() => {
+                                                console.warn('[MobilePreview] video decode failed', {
+                                                    chatId: preview.chatId,
+                                                    messageId: preview.messageId,
+                                                    type: preview.type,
+                                                    mimeType: previewMime,
+                                                })
+                                                markPreviewUnavailable()
+                                            }}
+                                        />
+                                    ) : (
+                                        <img
+                                            src={previewSrc}
+                                            alt={preview.title}
+                                            loading="lazy"
+                                            className="h-full w-full object-cover"
+                                            onError={() => {
+                                                console.warn('[MobilePreview] image decode failed', {
+                                                    chatId: preview.chatId,
+                                                    messageId: preview.messageId,
+                                                    type: preview.type,
+                                                    mimeType: previewMime,
+                                                })
+                                                markPreviewUnavailable()
+                                            }}
+                                        />
+                                    )
+                                ) : (
+                                    <div className="absolute left-2 top-2 opacity-90">
+                                        {renderMobileFileIcon(preview.type)}
+                                    </div>
+                                )}
+                                <span className="absolute right-1.5 bottom-1.5 rounded-[7px] border border-black/20 bg-black/30 px-1.5 py-[1px] text-[9px] font-semibold uppercase tracking-[0.05em] text-white/90">
+                                    {preview.extLabel}
+                                </span>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <p
+                                    className="text-[16px] leading-[1.22] font-medium text-[#e9edf8]"
+                                    style={{
+                                        display: '-webkit-box',
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: 'vertical',
+                                        overflow: 'hidden',
+                                    }}
+                                    title={preview.title}
+                                >
+                                    {preview.title}
+                                </p>
+                                <p className="mt-1 truncate text-[13px] leading-[1.25] text-[#97a2b8]">
+                                    {preview.mobileMetaLine}
+                                </p>
+                            </div>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={(e) => e.stopPropagation()}
+                            onFocus={(e) => {
+                                e.currentTarget.blur()
+                            }}
+                            className="mobile-file-row-actions m-0 shrink-0 appearance-none rounded-full border-0 bg-transparent p-2 text-[#8b95aa] transition-colors hover:bg-white/[0.06] hover:text-white"
+                            style={{
+                                WebkitTapHighlightColor: 'transparent',
+                                WebkitTouchCallout: 'none',
+                                outline: 'none',
+                                boxShadow: 'none',
+                            }}
+                            title="Действия с файлом"
+                            aria-label="Действия с файлом"
+                        >
+                            <svg viewBox="0 0 24 24" fill="currentColor" className="h-[20px] w-[20px]">
+                                <circle cx="12" cy="5" r="1.9"></circle>
+                                <circle cx="12" cy="12" r="1.9"></circle>
+                                <circle cx="12" cy="19" r="1.9"></circle>
+                            </svg>
+                        </button>
                     </div>
                 </div>
-            </button>
-        ))
-    }, [mobileVisibleRows])
+            )
+        })
+    }, [mobileVisibleRows, mobilePreviewUrls])
 
     const renderMobileDiskView = () => {
         const visibleRows = mobileVisibleRows
@@ -1561,7 +2051,10 @@ export default function Dashboard() {
         }
 
         return (
-            <div className="md:hidden relative flex h-full w-full flex-col overflow-hidden bg-[#0b0c10] text-white">
+            <div
+                className="mobile-disk-root md:hidden relative flex h-full w-full flex-col overflow-hidden bg-[#0b0c10] text-white"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
                 <AnimatePresence>
                     {mobileUploadNotice && (
                         <motion.div

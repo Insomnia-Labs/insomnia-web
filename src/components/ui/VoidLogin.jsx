@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useStore } from '../../store/useStore'
 import { sendCode, signIn, signInWith2FA, isAuthorized, clearSession } from '../../services/telegramClient'
+import { getAuthMe, getGoogleLoginStartUrl } from '../../services/authClient'
 
 /* ─────────────────────────────────────────────────────────────
    Tiny helpers
@@ -120,6 +121,9 @@ function resolveSendCodeError(err) {
     if (code === 'TELEGRAM_CONFIG_MISSING' || code === 'SESSION_SECRET_MISSING') {
         return withDiagnosticCode('SERVER CONFIG ERROR: TELEGRAM KEYS ARE MISSING', code)
     }
+    if (code === 'SUPABASE_CONFIG_MISSING' || code === 'SUPABASE_REQUEST_FAILED') {
+        return withDiagnosticCode('SERVER CONFIG ERROR: AUTH STORAGE IS MISCONFIGURED', code)
+    }
     if (code === 'API_ID_INVALID' || code === 'API_HASH_INVALID') {
         return withDiagnosticCode('INVALID TELEGRAM API CREDENTIALS', code)
     }
@@ -220,7 +224,7 @@ function resolve2FAError(err) {
 export default function VoidLogin() {
     const { showVoidLogin, setShowVoidLogin, setSection } = useStore()
 
-    /* stages: 'boot' | 'check' | 'phone' | 'sending' | 'code' | 'verifying' | 'password' | 'verifying2fa' | 'success' | 'error' */
+    /* stages: 'check-auth' | 'appauth' | 'check' | 'boot' | 'phone' | 'sending' | 'code' | 'verifying' | 'password' | 'verifying2fa' | 'success' */
     const [stage, setStage] = useState('boot')
     const [phone, setPhone] = useState('')
     const [code, setCode] = useState('')
@@ -259,8 +263,22 @@ export default function VoidLogin() {
         setTwofa('')
         setError('')
         setClosing(false)
-        setStage('check')
+        setStage('check-auth')
     }, [showVoidLogin])
+
+    /* Check Google auth session first */
+    useEffect(() => {
+        if (stage !== 'check-auth') return
+        getAuthMe()
+            .then(payload => {
+                if (payload?.authenticated) {
+                    setStage('check')
+                } else {
+                    setStage('appauth')
+                }
+            })
+            .catch(() => setStage('appauth'))
+    }, [stage])
 
     /* Check if already authorized */
     useEffect(() => {
@@ -314,6 +332,11 @@ export default function VoidLogin() {
         setTimeout(() => setShowVoidLogin(false), 600)
     }
 
+    const handleGoogleLogin = () => {
+        const nextUrl = getGoogleLoginStartUrl()
+        window.location.href = nextUrl
+    }
+
     /* ── Step 1: Send code ────────────────────────────────── */
     const handlePhoneSubmit = async (e) => {
         e.preventDefault()
@@ -331,6 +354,12 @@ export default function VoidLogin() {
             await sendCode(cleaned)
             setStage('code')
         } catch (err) {
+            const code = extractAuthErrorCode(err)
+            if (code === 'APP_AUTH_REQUIRED') {
+                setError('')
+                setStage('appauth')
+                return
+            }
             console.error('[VoidLogin] sendCode error:', err)
             setError(resolveSendCodeError(err))
             setStage('phone')
@@ -353,6 +382,12 @@ export default function VoidLogin() {
             await signIn(phone.trim(), code.trim())
             setStage('success')
         } catch (err) {
+            const authCode = extractAuthErrorCode(err)
+            if (authCode === 'APP_AUTH_REQUIRED') {
+                setError('')
+                setStage('appauth')
+                return
+            }
             console.error('[VoidLogin] signIn error:', err)
             const resolved = resolveSignInError(err)
             if (resolved.nextStage === 'password') {
@@ -380,6 +415,12 @@ export default function VoidLogin() {
             await signInWith2FA(twofa)
             setStage('success')
         } catch (err) {
+            const authCode = extractAuthErrorCode(err)
+            if (authCode === 'APP_AUTH_REQUIRED') {
+                setError('')
+                setStage('appauth')
+                return
+            }
             console.error('[VoidLogin] 2FA error:', err)
             const resolved = resolve2FAError(err)
             setError(resolved.text)
@@ -581,20 +622,50 @@ export default function VoidLogin() {
                     </div>
 
                     {/* ── check / boot ───────────────────────────── */}
-                    {(stage === 'check' || stage === 'boot') && (
+                    {(stage === 'check-auth' || stage === 'check' || stage === 'boot') && (
                         <div className="vl-panel" style={{
                             fontFamily: 'Courier New, monospace', fontSize: '.7rem',
                             color: 'rgba(139,92,246,.75)', letterSpacing: '.1em', lineHeight: 1.8,
                             width: '100%',
                         }}>
-                            {stage === 'check'
-                                ? <Typewriter text="> CHECKING EXISTING SESSION..." speed={25} />
-                                : <Typewriter
-                                    text="> NO SESSION FOUND. IDENTITY VERIFICATION REQUIRED. PROVIDE YOUR TELEGRAM NUMBER TO ESTABLISH SECURE CHANNEL."
+                            {stage === 'check-auth' && (
+                                <Typewriter text="> CHECKING IDENTITY PROVIDER SESSION..." speed={25} />
+                            )}
+                            {stage === 'check' && (
+                                <Typewriter text="> CHECKING EXISTING TELEGRAM SESSION..." speed={25} />
+                            )}
+                            {stage === 'boot' && (
+                                <Typewriter
+                                    text="> NO TELEGRAM SESSION FOUND. IDENTITY VERIFICATION REQUIRED. PROVIDE YOUR TELEGRAM NUMBER TO ESTABLISH SECURE CHANNEL."
                                     speed={18}
                                     onDone={() => setTimeout(() => setStage('phone'), 350)}
                                 />
-                            }
+                            )}
+                        </div>
+                    )}
+
+                    {/* ── app auth gate ───────────────────────────── */}
+                    {stage === 'appauth' && (
+                        <div className="vl-panel" style={{
+                            width: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 24,
+                        }}>
+                            <div style={{
+                                fontFamily: 'Courier New, monospace', fontSize: '.62rem',
+                                color: 'rgba(139,92,246,.7)', letterSpacing: '.09em', lineHeight: 1.8,
+                            }}>
+                                &gt; GOOGLE AUTHORIZATION REQUIRED
+                                <br />
+                                <span style={{ fontSize: '.55rem', color: 'rgba(139,92,246,.46)' }}>
+                                    SIGN IN WITH GOOGLE TO LOAD YOUR CLOUD TELEGRAM SESSION FROM SECURE STORAGE
+                                </span>
+                            </div>
+
+                            <button type="button" className="vl-btn" onClick={handleGoogleLogin} id="void-google-login">
+                                CONTINUE WITH GOOGLE
+                            </button>
                         </div>
                     )}
 

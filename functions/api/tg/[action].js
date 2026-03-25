@@ -1,4 +1,5 @@
 import { Api } from 'telegram'
+import { readAuthenticatedUser } from '../_lib/auth.js'
 import { json, readJsonBody, toBoolean, toInt } from './_lib/http.js'
 import {
   ApiError,
@@ -20,6 +21,11 @@ import {
   clearPendingAuth,
   readSessionState,
 } from './_lib/session.js'
+import {
+  clearTelegramSessionForUser,
+  loadTelegramSessionForUser,
+  saveTelegramSessionForUser,
+} from './_lib/storage.js'
 
 function routeNotFoundResponse() {
   return json(
@@ -205,21 +211,36 @@ function withPromiseTimeout(promise, timeoutMs, code = 'MEDIA_PREVIEW_FETCH_TIME
   })
 }
 
+function withLegacySessionCleared(state) {
+  return {
+    ...state,
+    session: '',
+    updatedAt: Date.now(),
+  }
+}
+
+function ensureAuthenticatedUser(user) {
+  if (user?.id) return user
+  throw new ApiError('APP_AUTH_REQUIRED', 401, 'Google authentication required')
+}
+
+async function runWithUserTelegramSession({ env, user, session }, fn) {
+  const safeUser = ensureAuthenticatedUser(user)
+  const { result, nextSession } = await runWithTelegramClient(env, session || '', fn)
+  await saveTelegramSessionForUser(env, safeUser.id, nextSession)
+  return { result, nextSession }
+}
+
 async function okWithState(data, state, env, init = {}) {
   const headers = new Headers(init.headers || {})
-  headers.set('set-cookie', await buildSessionCookie(state, env))
+  headers.set('set-cookie', await buildSessionCookie(withLegacySessionCleared(state), env))
   return json({ ok: true, data }, { ...init, headers })
 }
 
-async function errorWithState(err, state, env) {
+async function errorWithState(err, state, env, user) {
   const mapped = mapApiError(err)
-  const headers = new Headers()
-
-  const nextState = { ...state }
-  if (mapped.tgSession) {
-    nextState.session = mapped.tgSession
-    nextState.updatedAt = Date.now()
-    headers.set('set-cookie', await buildSessionCookie(nextState, env))
+  if (mapped.tgSession && user?.id) {
+    await saveTelegramSessionForUser(env, user.id, mapped.tgSession).catch(() => {})
   }
 
   return json(
@@ -232,35 +253,35 @@ async function errorWithState(err, state, env) {
     },
     {
       status: mapped.status,
-      headers,
     }
   )
 }
 
-async function handleSendCode({ request, env, state }) {
+async function handleSendCode({ request, env, state, user, session }) {
+  const safeUser = ensureAuthenticatedUser(user)
   const body = await readJsonBody(request)
   const phoneNumber = toText(body.phoneNumber || body.phone)
   if (!phoneNumber) throw new ApiError('PHONE_NUMBER_INVALID', 400, 'Phone number is required')
 
-  const { result, nextSession } = await runWithTelegramClient(env, state.session, async ({ client, apiId, apiHash }) =>
+  const { result, nextSession } = await runWithTelegramClient(env, session || '', async ({ client, apiId, apiHash }) =>
     sendCodeWithClient(client, apiId, apiHash, phoneNumber)
   )
+  await saveTelegramSessionForUser(env, safeUser.id, nextSession)
 
   const nextState = {
-    ...state,
-    session: nextSession,
+    ...withLegacySessionCleared(state),
     pendingAuth: {
       phoneNumber,
       phoneCodeHash: result.phoneCodeHash,
       createdAt: Date.now(),
     },
-    updatedAt: Date.now(),
   }
 
   return okWithState({ phoneCodeHash: result.phoneCodeHash }, nextState, env)
 }
 
-async function handleSignIn({ request, env, state }) {
+async function handleSignIn({ request, env, state, user, session }) {
+  const safeUser = ensureAuthenticatedUser(user)
   const body = await readJsonBody(request)
   const phoneNumber = toText(body.phoneNumber || body.phone || state.pendingAuth?.phoneNumber)
   const phoneCode = toText(body.phoneCode || body.code)
@@ -273,19 +294,18 @@ async function handleSignIn({ request, env, state }) {
     throw new ApiError('CALL_SEND_CODE_FIRST', 400, 'Call sendCode first')
   }
 
-  let nextSessionFromSignIn = state.session
+  let nextSessionFromSignIn = session || ''
   try {
-    const { nextSession } = await runWithTelegramClient(env, state.session, async ({ client }) =>
+    const { nextSession } = await runWithTelegramClient(env, session || '', async ({ client }) =>
       signInWithCode(client, phoneNumber, phoneCodeHash, phoneCode)
     )
     nextSessionFromSignIn = nextSession
   } catch (err) {
     const mapped = mapApiError(err)
     if (mapped.code === 'SESSION_PASSWORD_NEEDED') {
+      await saveTelegramSessionForUser(env, safeUser.id, mapped.tgSession || session || '')
       const nextState = {
-        ...clearPendingAuth(state),
-        session: mapped.tgSession || state.session,
-        updatedAt: Date.now(),
+        ...withLegacySessionCleared(clearPendingAuth(state)),
       }
 
       return json(
@@ -306,40 +326,43 @@ async function handleSignIn({ request, env, state }) {
     }
     throw err
   }
+  await saveTelegramSessionForUser(env, safeUser.id, nextSessionFromSignIn)
 
   const nextState = {
-    ...clearPendingAuth(state),
-    session: nextSessionFromSignIn,
-    updatedAt: Date.now(),
+    ...withLegacySessionCleared(clearPendingAuth(state)),
   }
 
   return okWithState({ authorized: true }, nextState, env)
 }
 
-async function handleSignIn2FA({ request, env, state }) {
+async function handleSignIn2FA({ request, env, state, user, session }) {
+  const safeUser = ensureAuthenticatedUser(user)
   const body = await readJsonBody(request)
   const password = toText(body.password)
   if (!password) throw new ApiError('CLOUD_PASSWORD_REQUIRED', 400, 'Cloud password is required')
 
-  const { nextSession } = await runWithTelegramClient(env, state.session, async ({ client, apiId, apiHash }) =>
+  const { nextSession } = await runWithTelegramClient(env, session || '', async ({ client, apiId, apiHash }) =>
     signInWithPassword(client, password, apiId, apiHash)
   )
+  await saveTelegramSessionForUser(env, safeUser.id, nextSession)
 
   const nextState = {
-    ...clearPendingAuth(state),
-    session: nextSession,
-    updatedAt: Date.now(),
+    ...withLegacySessionCleared(clearPendingAuth(state)),
   }
 
   return okWithState({ authorized: true }, nextState, env)
 }
 
-async function handleAuthorized({ env, state }) {
-  if (!state.session) {
-    return okWithState(false, state, env)
+async function handleAuthorized({ env, state, user, session }) {
+  if (!user?.id) {
+    return okWithState(false, withLegacySessionCleared(state), env)
   }
 
-  const { result, nextSession } = await runWithTelegramClient(env, state.session, async ({ client }) => {
+  if (!session) {
+    return okWithState(false, withLegacySessionCleared(state), env)
+  }
+
+  const { result } = await runWithUserTelegramSession({ env, user, session }, async ({ client }) => {
     try {
       return await client.isUserAuthorized()
     } catch {
@@ -347,17 +370,13 @@ async function handleAuthorized({ env, state }) {
     }
   })
 
-  const nextState = {
-    ...state,
-    session: nextSession,
-    updatedAt: Date.now(),
-  }
+  const nextState = withLegacySessionCleared(state)
 
   return okWithState(Boolean(result), nextState, env)
 }
 
-async function handleGetMe({ env, state }) {
-  const { result, nextSession } = await runWithTelegramClient(env, state.session, async ({ client }) => {
+async function handleGetMe({ env, state, user, session }) {
+  const { result } = await runWithUserTelegramSession({ env, user, session }, async ({ client }) => {
     const me = await client.getMe()
     return {
       id: me?.id?.toString?.() || '',
@@ -367,38 +386,30 @@ async function handleGetMe({ env, state }) {
     }
   })
 
-  const nextState = {
-    ...state,
-    session: nextSession,
-    updatedAt: Date.now(),
-  }
+  const nextState = withLegacySessionCleared(state)
 
   return okWithState(result, nextState, env)
 }
 
-async function handleGetDialogs({ request, env, state }) {
+async function handleGetDialogs({ request, env, state, user, session }) {
   const url = new URL(request.url)
   const limit = clamp(toInt(url.searchParams.get('limit'), 20), 1, 1000)
   const folderRaw = url.searchParams.get('folder')
   const folder = folderRaw === null || folderRaw === '' ? undefined : toInt(folderRaw, 0)
 
-  const { result, nextSession } = await runWithTelegramClient(env, state.session, async ({ client }) => {
+  const { result } = await runWithUserTelegramSession({ env, user, session }, async ({ client }) => {
     const options = { limit }
     if (folder !== undefined) options.folder = folder
     const dialogs = await client.getDialogs(options)
     return Array.isArray(dialogs) ? dialogs.map(serializeDialog) : []
   })
 
-  const nextState = {
-    ...state,
-    session: nextSession,
-    updatedAt: Date.now(),
-  }
+  const nextState = withLegacySessionCleared(state)
 
   return okWithState(result, nextState, env)
 }
 
-async function handleGetHistory({ request, env, state }) {
+async function handleGetHistory({ request, env, state, user, session }) {
   const url = new URL(request.url)
   const chatId = toText(url.searchParams.get('chatId'))
   if (!chatId) throw new ApiError('CHAT_ID_REQUIRED', 400, 'chatId is required')
@@ -406,7 +417,7 @@ async function handleGetHistory({ request, env, state }) {
   const limit = clamp(toInt(url.searchParams.get('limit'), 50), 1, 200)
   const offsetId = clamp(toInt(url.searchParams.get('offsetId'), 0), 0, Number.MAX_SAFE_INTEGER)
 
-  const { result, nextSession } = await runWithTelegramClient(env, state.session, async ({ client }) => {
+  const { result } = await runWithUserTelegramSession({ env, user, session }, async ({ client }) => {
     let peerId = chatId
     if (/^-?\d+$/.test(chatId)) {
       try {
@@ -433,17 +444,13 @@ async function handleGetHistory({ request, env, state }) {
     return Array.isArray(messages) ? messages.map(serializeMessage) : []
   })
 
-  const nextState = {
-    ...state,
-    session: nextSession,
-    updatedAt: Date.now(),
-  }
+  const nextState = withLegacySessionCleared(state)
 
   return okWithState(result, nextState, env)
 }
 
-async function handleGetChatFolders({ env, state }) {
-  const { result, nextSession } = await runWithTelegramClient(env, state.session, async ({ client }) => {
+async function handleGetChatFolders({ env, state, user, session }) {
+  const { result } = await runWithUserTelegramSession({ env, user, session }, async ({ client }) => {
     const response = await client.invoke(new Api.messages.GetDialogFilters())
     const filters = Array.isArray(response) ? response : Array.isArray(response?.filters) ? response.filters : []
 
@@ -452,16 +459,12 @@ async function handleGetChatFolders({ env, state }) {
       .map(serializeChatFolder)
   })
 
-  const nextState = {
-    ...state,
-    session: nextSession,
-    updatedAt: Date.now(),
-  }
+  const nextState = withLegacySessionCleared(state)
 
   return okWithState(result, nextState, env)
 }
 
-async function handleSendMessage({ request, env, state }) {
+async function handleSendMessage({ request, env, state, user, session }) {
   const body = await readJsonBody(request)
   const chatId = toText(body.chatId)
   const message = typeof body.message === 'string' ? body.message : ''
@@ -469,7 +472,7 @@ async function handleSendMessage({ request, env, state }) {
   if (!chatId) throw new ApiError('CHAT_ID_REQUIRED', 400, 'chatId is required')
   if (!message.trim()) throw new ApiError('MESSAGE_REQUIRED', 400, 'message is required')
 
-  const { result, nextSession } = await runWithTelegramClient(env, state.session, async ({ client }) => {
+  const { result } = await runWithUserTelegramSession({ env, user, session }, async ({ client }) => {
     const peer = await resolvePeerEntity(client, chatId, 'sendMessage')
     const stealthScheduleTime = Math.floor(Date.now() / 1000) + 12
 
@@ -500,16 +503,12 @@ async function handleSendMessage({ request, env, state }) {
     return { acknowledged: true, className: response?.className || 'Updates' }
   })
 
-  const nextState = {
-    ...state,
-    session: nextSession,
-    updatedAt: Date.now(),
-  }
+  const nextState = withLegacySessionCleared(state)
 
   return okWithState(result, nextState, env)
 }
 
-async function handleSendFile({ request, env, state }) {
+async function handleSendFile({ request, env, state, user, session }) {
   const formData = await request.formData()
   const chatId = toText(formData.get('chatId'))
   const caption = toText(formData.get('caption'))
@@ -525,7 +524,7 @@ async function handleSendFile({ request, env, state }) {
 
   const customFile = await makeUploadCustomFile(file)
 
-  const { result, nextSession } = await runWithTelegramClient(env, state.session, async ({ client }) => {
+  const { result } = await runWithUserTelegramSession({ env, user, session }, async ({ client }) => {
     const peer = await resolvePeerEntity(client, chatId, 'sendFile')
     const message = await client.sendFile(peer, {
       file: customFile,
@@ -546,31 +545,23 @@ async function handleSendFile({ request, env, state }) {
     return serializeMessage(message)
   })
 
-  const nextState = {
-    ...state,
-    session: nextSession,
-    updatedAt: Date.now(),
-  }
+  const nextState = withLegacySessionCleared(state)
 
   return okWithState(result, nextState, env)
 }
 
-async function handleGetProfilePhoto({ request, env, state }) {
+async function handleGetProfilePhoto({ request, env, state, user, session }) {
   const url = new URL(request.url)
   const entityId = toText(url.searchParams.get('entityId') || url.searchParams.get('id'))
   if (!entityId) throw new ApiError('CHAT_ID_REQUIRED', 400, 'entityId is required')
 
-  const { result, nextSession } = await runWithTelegramClient(env, state.session, async ({ client }) => {
+  const { result } = await runWithUserTelegramSession({ env, user, session }, async ({ client }) => {
     const peer = await resolvePeerEntity(client, entityId, 'getProfilePhoto')
     const bytes = await client.downloadProfilePhoto(peer, { isBig: false })
     return bytes && bytes.length ? bytes : null
   })
 
-  const nextState = {
-    ...state,
-    session: nextSession,
-    updatedAt: Date.now(),
-  }
+  const nextState = withLegacySessionCleared(state)
 
   if (!result) {
     return okWithState(null, nextState, env)
@@ -584,7 +575,7 @@ async function handleGetProfilePhoto({ request, env, state }) {
   return new Response(result, { status: 200, headers })
 }
 
-async function handleGetMediaPreview({ request, env, state }) {
+async function handleGetMediaPreview({ request, env, state, user, session }) {
   const url = new URL(request.url)
   const chatId = toText(url.searchParams.get('chatId'))
   const messageId = toPositiveInt(url.searchParams.get('messageId') || url.searchParams.get('id'))
@@ -607,7 +598,7 @@ async function handleGetMediaPreview({ request, env, state }) {
     })
   }
 
-  const { result, nextSession } = await runWithTelegramClient(env, state.session, async ({ client }) => {
+  const { result } = await runWithUserTelegramSession({ env, user, session }, async ({ client }) => {
     const peer = await resolvePeerEntity(client, chatId, 'getMediaPreview')
 
     let targetMessage = null
@@ -897,11 +888,7 @@ async function handleGetMediaPreview({ request, env, state }) {
     return { bytes, contentType, source: previewSource || 'unknown' }
   })
 
-  const nextState = {
-    ...state,
-    session: nextSession,
-    updatedAt: Date.now(),
-  }
+  const nextState = withLegacySessionCleared(state)
 
   const headers = new Headers({
     'content-type': result.contentType || 'image/jpeg',
@@ -915,7 +902,11 @@ async function handleGetMediaPreview({ request, env, state }) {
   return new Response(result.bytes, { status: 200, headers })
 }
 
-function handleLogout() {
+async function handleLogout({ env, user }) {
+  if (user?.id) {
+    await clearTelegramSessionForUser(env, user.id)
+  }
+
   return json(
     { ok: true, data: { cleared: true } },
     {
@@ -932,24 +923,61 @@ export async function onRequest(context) {
   const method = request.method.toUpperCase()
   const action = String(params?.action || '')
   const state = await readSessionState(request, env)
+  let user = null
+  let telegramSession = ''
 
   try {
-    if (method === 'POST' && action === 'send-code') return await handleSendCode({ request, env, state })
-    if (method === 'POST' && action === 'sign-in') return await handleSignIn({ request, env, state })
-    if (method === 'POST' && action === 'sign-in-2fa') return await handleSignIn2FA({ request, env, state })
-    if (method === 'GET' && action === 'authorized') return await handleAuthorized({ env, state })
-    if (method === 'GET' && action === 'me') return await handleGetMe({ env, state })
-    if (method === 'GET' && action === 'dialogs') return await handleGetDialogs({ request, env, state })
-    if (method === 'GET' && action === 'history') return await handleGetHistory({ request, env, state })
-    if (method === 'GET' && action === 'chat-folders') return await handleGetChatFolders({ env, state })
-    if (method === 'POST' && action === 'send-message') return await handleSendMessage({ request, env, state })
-    if (method === 'POST' && action === 'send-file') return await handleSendFile({ request, env, state })
-    if (method === 'GET' && action === 'profile-photo') return await handleGetProfilePhoto({ request, env, state })
-    if (method === 'GET' && action === 'media-preview') return await handleGetMediaPreview({ request, env, state })
-    if (method === 'POST' && action === 'logout') return handleLogout()
+    user = await readAuthenticatedUser(request, env)
+    telegramSession = user?.id ? await loadTelegramSessionForUser(env, user.id) : ''
+
+    if (method === 'GET' && action === 'authorized') {
+      return await handleAuthorized({ env, state, user, session: telegramSession })
+    }
+
+    if (method === 'POST' && action === 'logout') {
+      return await handleLogout({ env, user })
+    }
+
+    if (!user?.id) {
+      throw new ApiError('APP_AUTH_REQUIRED', 401, 'Google authentication required')
+    }
+
+    if (method === 'POST' && action === 'send-code') {
+      return await handleSendCode({ request, env, state, user, session: telegramSession })
+    }
+    if (method === 'POST' && action === 'sign-in') {
+      return await handleSignIn({ request, env, state, user, session: telegramSession })
+    }
+    if (method === 'POST' && action === 'sign-in-2fa') {
+      return await handleSignIn2FA({ request, env, state, user, session: telegramSession })
+    }
+    if (method === 'GET' && action === 'me') {
+      return await handleGetMe({ env, state, user, session: telegramSession })
+    }
+    if (method === 'GET' && action === 'dialogs') {
+      return await handleGetDialogs({ request, env, state, user, session: telegramSession })
+    }
+    if (method === 'GET' && action === 'history') {
+      return await handleGetHistory({ request, env, state, user, session: telegramSession })
+    }
+    if (method === 'GET' && action === 'chat-folders') {
+      return await handleGetChatFolders({ env, state, user, session: telegramSession })
+    }
+    if (method === 'POST' && action === 'send-message') {
+      return await handleSendMessage({ request, env, state, user, session: telegramSession })
+    }
+    if (method === 'POST' && action === 'send-file') {
+      return await handleSendFile({ request, env, state, user, session: telegramSession })
+    }
+    if (method === 'GET' && action === 'profile-photo') {
+      return await handleGetProfilePhoto({ request, env, state, user, session: telegramSession })
+    }
+    if (method === 'GET' && action === 'media-preview') {
+      return await handleGetMediaPreview({ request, env, state, user, session: telegramSession })
+    }
 
     return routeNotFoundResponse()
   } catch (err) {
-    return errorWithState(err, state, env)
+    return errorWithState(err, state, env, user)
   }
 }

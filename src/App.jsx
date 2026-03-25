@@ -19,6 +19,7 @@ function App() {
   const isMobile = useIsMobile()
   const section = useStore((state) => state.section)
   const showVoidLogin = useStore((state) => state.showVoidLogin)
+  const setShowVoidLogin = useStore((state) => state.setShowVoidLogin)
   const showVoid = useStore((state) => state.showVoid)
   const postLoginView = useStore((state) => state.postLoginView)
   const config = isMobile ? PERFORMANCE_CONFIG.mobile : PERFORMANCE_CONFIG.desktop
@@ -38,6 +39,18 @@ function App() {
       document.body.style.overflow = ''
     }
   }, [isMobile, section])
+
+  // Re-open login modal automatically after OAuth redirect.
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    if (url.searchParams.get('openVoidLogin') !== '1') return
+
+    setShowVoidLogin(true)
+    url.searchParams.delete('openVoidLogin')
+    const query = url.searchParams.toString()
+    const nextUrl = `${url.pathname}${query ? `?${query}` : ''}${url.hash || ''}`
+    window.history.replaceState({}, '', nextUrl)
+  }, [setShowVoidLogin])
 
   return (
     <div

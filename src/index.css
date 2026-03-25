@@ -261,6 +261,19 @@ button,
   color: white !important;
 }
 
+@media (hover: none) and (pointer: coarse) {
+  #dashboard-view .file-row,
+  #dashboard-view .mobile-file-row-hit,
+  #dashboard-view .mobile-file-row-actions,
+  #dashboard-view .file-actions {
+    pointer-events: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -webkit-touch-callout: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+}
+
 .scrollable::-webkit-scrollbar {
   width: 6px;
 }

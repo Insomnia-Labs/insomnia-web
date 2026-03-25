@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "dev:pages": "npm run build && npx wrangler pages dev dist",
+    "dev:phone": "npm run dev:pages -- --ip 0.0.0.0 --port 8788 --local-protocol https",
     "deploy:pages": "npm run build && npx wrangler pages deploy dist",
     "lint": "eslint .",
     "preview": "vite preview"

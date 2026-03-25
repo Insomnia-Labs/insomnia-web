@@ -9,6 +9,9 @@ const CONNECT_TIMEOUT_MS = 20_000
 const REQUEST_TIMEOUT_MS = 30_000
 
 const KNOWN_STATUS_CODES = new Map([
+  ['APP_AUTH_REQUIRED', 401],
+  ['SUPABASE_CONFIG_MISSING', 500],
+  ['SUPABASE_REQUEST_FAILED', 500],
   ['TELEGRAM_CONFIG_MISSING', 500],
   ['SESSION_SECRET_MISSING', 500],
   ['TELEGRAM_CONNECT_TIMEOUT', 504],
@@ -77,6 +80,20 @@ function toSafeId(value) {
 function toSafeText(value, fallback = '') {
   if (typeof value === 'string') return value
   return fallback
+}
+
+function readConfigText(value) {
+  const raw = toSafeText(value).trim()
+  if (!raw) return ''
+
+  // Allow accidental quoting in .env/.dev.vars entries.
+  if (
+    (raw.startsWith('"') && raw.endsWith('"'))
+    || (raw.startsWith('\'') && raw.endsWith('\''))
+  ) {
+    return raw.slice(1, -1).trim()
+  }
+  return raw
 }
 
 function getWebDcHost(dcId) {
@@ -172,10 +189,21 @@ export function toApiError(err) {
 }
 
 function getApiConfig(env) {
-  const apiId = Number(env?.TELEGRAM_API_ID)
-  const apiHash = toSafeText(env?.TELEGRAM_API_HASH).trim()
+  const apiIdRaw = readConfigText(env?.TELEGRAM_API_ID) || readConfigText(env?.VITE_TELEGRAM_API_ID)
+  const apiHash = readConfigText(env?.TELEGRAM_API_HASH) || readConfigText(env?.VITE_TELEGRAM_API_HASH)
+  const apiId = Number(apiIdRaw)
+
   if (!Number.isFinite(apiId) || apiId <= 0 || !apiHash) {
-    throw new ApiError('TELEGRAM_CONFIG_MISSING', 500, 'Telegram API credentials are missing')
+    const hasTelegramApiId = Boolean(readConfigText(env?.TELEGRAM_API_ID))
+    const hasTelegramApiHash = Boolean(readConfigText(env?.TELEGRAM_API_HASH))
+    const hasLegacyViteApiId = Boolean(readConfigText(env?.VITE_TELEGRAM_API_ID))
+    const hasLegacyViteApiHash = Boolean(readConfigText(env?.VITE_TELEGRAM_API_HASH))
+
+    throw new ApiError(
+      'TELEGRAM_CONFIG_MISSING',
+      500,
+      `Telegram API credentials are missing (TELEGRAM_API_ID=${hasTelegramApiId}, TELEGRAM_API_HASH=${hasTelegramApiHash}, VITE_TELEGRAM_API_ID=${hasLegacyViteApiId}, VITE_TELEGRAM_API_HASH=${hasLegacyViteApiHash})`
+    )
   }
   return { apiId, apiHash }
 }

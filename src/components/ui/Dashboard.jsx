@@ -1422,10 +1422,10 @@ export default function Dashboard() {
                                 return (
                                     <div
                                         key={msg.id}
-                                        className="file-row w-full flex items-center justify-between px-6 py-4 hover:bg-[#16161e]/80 transition-colors group"
+                                        className="file-row w-full flex items-center justify-between px-6 py-4 bg-transparent select-none pointer-events-none"
                                     >
                                         <div className="flex items-center gap-4 flex-1 min-w-0 pr-4">
-                                            <div className="w-10 h-10 shrink-0 rounded-xl bg-white/5 flex items-center justify-center text-[#787c99] group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-colors">
+                                            <div className="w-10 h-10 shrink-0 rounded-xl bg-white/5 flex items-center justify-center text-[#787c99]">
                                                 <div className="w-5 h-5">{typeIcon}</div>
                                             </div>
                                             <div className="flex flex-col min-w-0 gap-1 overflow-hidden" style={{ flex: '1 1 auto', maxWidth: '300px' }}>
@@ -1440,16 +1440,16 @@ export default function Dashboard() {
                                             </div>
                                             <div className="flex-1 min-w-0 flex items-center shrink">
                                                 {fileUrl && (
-                                                    <a href={fileUrl} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="text-[0.8rem] text-blue-400/70 group-hover:text-blue-400 hover:!underline whitespace-nowrap overflow-hidden text-ellipsis max-w-full block" title={fileUrl}>
+                                                    <span className="text-[0.8rem] text-blue-400/70 whitespace-nowrap overflow-hidden text-ellipsis max-w-full block" title={fileUrl}>
                                                         {fileUrl}
-                                                    </a>
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="file-actions opacity-0 group-hover:opacity-100 transition-opacity shrink-0 flex items-center">
-                                            <button className="p-2 bg-white/5 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors">
+                                        <div className="file-actions shrink-0 flex items-center pointer-events-none">
+                                            <div className="p-2 bg-white/5 rounded-lg text-white/50">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                            </button>
+                                            </div>
                                         </div>
                                     </div>
                                 )
@@ -1905,24 +1905,14 @@ export default function Dashboard() {
             return (
                 <div key={preview.id} className="w-full px-2 py-1">
                     <div className="flex items-center gap-2 rounded-[20px] border border-white/[0.07] bg-[#12151c] px-2.5 py-2">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                if (preview.fileUrl) {
-                                    window.open(preview.fileUrl, '_blank', 'noopener,noreferrer')
-                                }
-                            }}
-                            onFocus={(e) => {
-                                e.currentTarget.blur()
-                            }}
-                            className={`mobile-file-row-hit m-0 flex min-w-0 flex-1 appearance-none items-center gap-3 border-0 bg-transparent p-0 text-left outline-none transition-opacity focus:outline-none focus-visible:outline-none ${preview.fileUrl ? 'cursor-pointer' : 'cursor-default'}`}
+                        <div
+                            className="mobile-file-row-hit m-0 flex min-w-0 flex-1 items-center gap-3 border-0 bg-transparent p-0 text-left outline-none cursor-default pointer-events-none select-none"
                             style={{
                                 WebkitTapHighlightColor: 'transparent',
                                 WebkitTouchCallout: 'none',
                                 outline: 'none',
                                 boxShadow: 'none',
                             }}
-                            title={preview.fileUrl ? 'Открыть ссылку' : preview.title}
                         >
                             <div className={`relative h-[60px] w-[60px] shrink-0 overflow-hidden rounded-[16px] border ${getMobileFileTone(preview.type)}`}>
                                 {previewSrc ? (
@@ -1932,6 +1922,7 @@ export default function Dashboard() {
                                             muted
                                             playsInline
                                             preload="metadata"
+                                            draggable={false}
                                             className="h-full w-full object-cover"
                                             onLoadedMetadata={(e) => {
                                                 try {
@@ -1971,6 +1962,7 @@ export default function Dashboard() {
                                             src={previewSrc}
                                             alt={preview.title}
                                             loading="lazy"
+                                            draggable={false}
                                             className="h-full w-full object-cover"
                                             onError={() => {
                                                 console.warn('[MobilePreview] image decode failed', {
@@ -2009,29 +2001,22 @@ export default function Dashboard() {
                                     {preview.mobileMetaLine}
                                 </p>
                             </div>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={(e) => e.stopPropagation()}
-                            onFocus={(e) => {
-                                e.currentTarget.blur()
-                            }}
-                            className="mobile-file-row-actions m-0 shrink-0 appearance-none rounded-full border-0 bg-transparent p-2 text-[#8b95aa] transition-colors hover:bg-white/[0.06] hover:text-white"
+                        </div>
+                        <div
+                            className="mobile-file-row-actions m-0 shrink-0 appearance-none rounded-full border-0 bg-transparent p-2 text-[#8b95aa] pointer-events-none select-none"
                             style={{
                                 WebkitTapHighlightColor: 'transparent',
                                 WebkitTouchCallout: 'none',
                                 outline: 'none',
                                 boxShadow: 'none',
                             }}
-                            title="Действия с файлом"
-                            aria-label="Действия с файлом"
                         >
                             <svg viewBox="0 0 24 24" fill="currentColor" className="h-[20px] w-[20px]">
                                 <circle cx="12" cy="5" r="1.9"></circle>
                                 <circle cx="12" cy="12" r="1.9"></circle>
                                 <circle cx="12" cy="19" r="1.9"></circle>
                             </svg>
-                        </button>
+                        </div>
                     </div>
                 </div>
             )

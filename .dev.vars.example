@@ -1,4 +1,11 @@
 TELEGRAM_API_ID=123456
 TELEGRAM_API_HASH=your_api_hash_here
 TELEGRAM_SESSION_SECRET=replace_with_long_random_string
+TELEGRAM_DB_SESSION_SECRET=replace_with_another_long_random_string
+GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+# Optional: override callback URL (otherwise auto-resolved as <origin>/api/auth/google-callback)
+# GOOGLE_REDIRECT_URI=https://your-domain/api/auth/google-callback
 

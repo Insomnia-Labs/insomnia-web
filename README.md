@@ -35,33 +35,46 @@ npm run dev
 npm run build
 ```
 
-## 🔐 Telegram Auth Architecture (Cloudflare)
+## 🔐 Auth Architecture (Google + Supabase + Telegram)
 
-Telegram API keys are now handled server-side via Cloudflare Pages Functions:
+Authentication is fully server-side on Cloudflare Pages Functions:
 
-- Frontend calls `/api/tg/*`
-- Pages Functions connect to Telegram (GramJS)
+- Frontend talks to `/api/auth/*` and `/api/tg/*`
+- Google OAuth identifies the website user
+- Supabase stores app sessions (`users`, `app_sessions`)
+- Telegram MTProto session is stored in Supabase per user (encrypted)
 - Browser never receives `TELEGRAM_API_ID` / `TELEGRAM_API_HASH`
 
-### Required Cloudflare Secrets
+### Required Cloudflare Variables
 
-In your **Cloudflare Pages project** (`Settings -> Environment variables`), add:
+Set these in **Cloudflare Pages -> Settings -> Environment variables** (Preview + Production):
 
 - `TELEGRAM_API_ID`
 - `TELEGRAM_API_HASH`
-- `TELEGRAM_SESSION_SECRET` (long random string, 32+ chars)
+- `TELEGRAM_SESSION_SECRET` (32+ chars)
+- `TELEGRAM_DB_SESSION_SECRET` (32+ chars, separate from cookie secret)
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `SUPABASE_URL` (your project URL, e.g. `https://xxxx.supabase.co`)
+- `SUPABASE_SERVICE_ROLE_KEY` (server-only secret key)
+- Optional: `GOOGLE_REDIRECT_URI` (if callback must be fixed explicitly)
 
-Add them for both environments you use (`Production` and `Preview`), then redeploy.
+### Required Supabase Tables
+
+Create tables in Supabase SQL Editor by pasting the file contents from:
+
+- `supabase/schema.sql`
 
 ### Important
 
-- Do **not** use `VITE_TELEGRAM_API_ID` / `VITE_TELEGRAM_API_HASH` anymore.
-- Anything prefixed with `VITE_` is exposed to browser users.
+- Do **not** expose Telegram credentials or Supabase service key via `VITE_*` variables.
+- Anything prefixed with `VITE_` is public in the browser bundle.
+- OAuth callback should be: `https://<your-domain>/api/auth/google-callback`.
 
-### Optional frontend API base override
+### Optional Frontend API Base Override
 
-By default, frontend calls same-origin `/api/tg/*`.
-If API is hosted on another domain, set:
+By default frontend calls same-origin API paths.
+If API is proxied on another domain, set:
 
 - `VITE_TELEGRAM_API_BASE_URL=https://your-api-domain`
 

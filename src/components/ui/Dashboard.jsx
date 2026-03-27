@@ -9,10 +9,31 @@ const HISTORY_TOP_THRESHOLD = 48
 const STICK_TO_BOTTOM_THRESHOLD = 120
 const EXPORT_BATCH_DELAY_MS = 140
 const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'heic', 'heif', 'avif'])
-const VIDEO_EXTENSIONS = new Set(['mp4', 'mov', 'mkv', 'webm', 'avi', 'm4v'])
+const VIDEO_EXTENSIONS = new Set([
+    'mp4', 'm4v', 'mov', 'mkv', 'webm', 'avi', 'wmv', 'flv',
+    'ts', 'mts', 'm2ts', '3gp', '3g2', 'mpg', 'mpeg', 'mpe',
+    'mpv', 'ogv', 'ogm', 'asf', 'vob', 'f4v', 'rm', 'rmvb',
+])
 const MOBILE_PREVIEW_BATCH_LIMIT = 12
-const MOBILE_PREVIEW_MAX_PARALLEL = 4
-const MOBILE_PREVIEW_RETRY_SCHEDULE_MS = [600, 1_800, 4_000]
+const MOBILE_PREVIEW_MAX_PARALLEL = 2
+const MOBILE_PREVIEW_RETRY_SCHEDULE_MS = [450, 1_100, 2_400]
+
+const isLikelyVideoMime = (value) => {
+    const mime = (value || '').toLowerCase()
+    if (!mime) return false
+    if (mime.startsWith('video/')) return true
+    return mime.includes('matroska')
+        || mime.includes('x-msvideo')
+        || mime.includes('msvideo')
+        || mime.includes('x-ms-wmv')
+        || mime.includes('x-ms-asf')
+        || mime.includes('quicktime')
+        || mime.includes('x-flv')
+        || mime.includes('3gpp')
+        || mime.includes('3gpp2')
+        || mime.includes('mp2t')
+        || mime.includes('vnd.dlna.mpeg-tts')
+}
 
 export default function Dashboard() {
     const { selectedChatId, setPostLoginView, setSelectedChatId } = useStore()
@@ -1165,7 +1186,7 @@ export default function Dashboard() {
         )
 
         const isVideo = hasVideoAttribute
-            || mime.startsWith('video/')
+            || isLikelyVideoMime(mime)
             || VIDEO_EXTENSIONS.has(fileExtension)
 
         return {
@@ -1338,8 +1359,8 @@ export default function Dashboard() {
         const modifiedLabel = formatRelativeModifiedAt(dateObj)
         const metaPrimary = fileSize || typeLabel
         const mobileMetaLine = metaPrimary ? `${metaPrimary}, ${modifiedLabel}` : modifiedLabel
-        const canPreview = (type === 'photo' || type === 'video') && Boolean(chatId) && Boolean(messageId)
         const docThumbCount = (Number(media.document?.thumbCount) || 0) + (Number(media.document?.videoThumbCount) || 0)
+        const canPreview = (type === 'photo' || type === 'video') && Boolean(chatId) && Boolean(messageId)
         // Photo: only if Telegram has a thumb on the document (avoid huge image downloads). Video: always try — server may return a head sample for WebM/MKV without embedded thumbs.
         const canFetchRemotePreview = (() => {
             if (!canPreview) return false
@@ -1831,8 +1852,16 @@ export default function Dashboard() {
 
                 mobilePreviewInFlightRef.current.add(key)
                 try {
+                    const previousAttempts = mobilePreviewAttemptCountRef.current.get(key) || 0
+                    const nextAttempts = previousAttempts + 1
+                    mobilePreviewAttemptCountRef.current.set(key, nextAttempts)
+                    const previewMode = nextAttempts === 1 ? 'fast' : 'high'
+                    const allowWasm = true
+
                     const previewAsset = await getMessageMediaPreview(preview.chatId, preview.messageId, {
-                        mode: 'fast',
+                        mode: previewMode,
+                        allowWasm,
+                        allowEscalation: false,
                     })
                     if (cancelled) continue
 
@@ -1846,19 +1875,26 @@ export default function Dashboard() {
                             return { ...prev, [key]: previewAsset }
                         })
                     } else {
-                        mobilePreviewUnavailableRef.current.add(key)
-                        mobilePreviewRetryAtRef.current.delete(key)
-                        mobilePreviewAttemptCountRef.current.delete(key)
+                        const maxVideoAttempts = MOBILE_PREVIEW_RETRY_SCHEDULE_MS.length + 1
+                        const retryIndex = Math.min(nextAttempts - 1, MOBILE_PREVIEW_RETRY_SCHEDULE_MS.length - 1)
+                        const retryDelay = MOBILE_PREVIEW_RETRY_SCHEDULE_MS[retryIndex]
+                        const allowRetryOnNull = preview?.type === 'video' && nextAttempts < maxVideoAttempts
+
+                        if (allowRetryOnNull) {
+                            mobilePreviewRetryAtRef.current.set(key, Date.now() + retryDelay)
+                        } else {
+                            mobilePreviewUnavailableRef.current.add(key)
+                            mobilePreviewRetryAtRef.current.delete(key)
+                        }
                         scheduleNextMobilePreviewRetry()
                     }
                 } catch (err) {
-                    const previousAttempts = mobilePreviewAttemptCountRef.current.get(key) || 0
-                    const nextAttempts = previousAttempts + 1
-                    mobilePreviewAttemptCountRef.current.set(key, nextAttempts)
+                    const nextAttempts = mobilePreviewAttemptCountRef.current.get(key) || 1
 
                     const retryIndex = Math.min(nextAttempts - 1, MOBILE_PREVIEW_RETRY_SCHEDULE_MS.length - 1)
                     const retryDelay = MOBILE_PREVIEW_RETRY_SCHEDULE_MS[retryIndex]
-                    const exhausted = nextAttempts > MOBILE_PREVIEW_RETRY_SCHEDULE_MS.length
+                    const maxVideoAttempts = MOBILE_PREVIEW_RETRY_SCHEDULE_MS.length + 1
+                    const exhausted = nextAttempts >= maxVideoAttempts
 
                     if (exhausted) {
                         mobilePreviewUnavailableRef.current.add(key)

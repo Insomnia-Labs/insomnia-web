@@ -1,3 +1,5 @@
+import { extractStillFrameFromVideoWithWasm } from './videoThumbWasm.js'
+
 /**
  * Server-backed Telegram client adapter.
  * Frontend calls Cloudflare Pages Functions (/api/tg/*);
@@ -9,25 +11,42 @@ const API_PREFIX = `${API_BASE}/api/tg`
 
 const REQUEST_TIMEOUT_MS = 30_000
 const AUTH_REQUEST_TIMEOUT_MS = 70_000
-const MEDIA_PREVIEW_REQUEST_TIMEOUT_MS = 8_000
-const MEDIA_PREVIEW_FAST_TIMEOUT_MS = 4_500
+const MEDIA_PREVIEW_REQUEST_TIMEOUT_MS = 10_000
+const MEDIA_PREVIEW_FAST_TIMEOUT_MS = 7_500
 const MEDIA_PREVIEW_ULTRAFAST_TIMEOUT_MS = 2_400
+const MEDIA_PREVIEW_HIGH_TIMEOUT_MS = 20_000
 const MEDIA_PREVIEW_VIDEO_FRAME_FAST_TIMEOUT_MS = 1_800
 const MEDIA_PREVIEW_VIDEO_FRAME_ULTRAFAST_TIMEOUT_MS = 1_100
 const MEDIA_PREVIEW_VIDEO_FRAME_TIMEOUT_MS = 2_800
+const MEDIA_PREVIEW_VIDEO_WASM_FAST_TIMEOUT_MS = 4_000
+const MEDIA_PREVIEW_VIDEO_WASM_TIMEOUT_MS = 6_200
+const UPLOAD_THUMB_MAX_BYTES = 400 * 1024
+const UPLOAD_THUMB_PROBE_BYTES = [5 * 1024 * 1024, 15 * 1024 * 1024]
+const UPLOAD_THUMB_NATIVE_TIMEOUT_MS = 2_500
+const UPLOAD_THUMB_WASM_TIMEOUT_MS = 4_500
+const UPLOAD_THUMB_WASM_SECOND_TIMEOUT_MS = 7_000
 const MESSAGE_POLL_INTERVAL_MS = 2_500
 const PRESENCE_POLL_INTERVAL_MS = 12_000
 
 const avatarCache = new Map()
 const mediaPreviewCache = new Map()
-/** chatId:messageId — server returned 404/415; do not refetch all modes */
-const mediaPreviewMissCache = new Set()
+/** chatId:messageId -> timestamp(ms) until which preview refetch is suppressed */
+const mediaPreviewMissCache = new Map()
 const messagePollers = new Map()
 const presenceSubscribers = new Set()
 
 let presenceTimerId = 0
 let presenceTickInFlight = false
 let presenceSnapshot = new Map()
+const VIDEO_FILE_EXTENSIONS = new Set([
+  'mp4', 'm4v', 'mov', 'webm', 'mkv', 'avi', 'wmv', 'flv',
+  'ts', 'mts', 'm2ts', '3gp', '3g2', 'mpg', 'mpeg', 'mpe',
+  'mpv', 'ogv', 'ogm', 'asf', 'vob', 'f4v', 'rm', 'rmvb',
+])
+const COMPLEX_VIDEO_EXTENSIONS = new Set([
+  'mkv', 'avi', 'wmv', 'flv', 'ts', 'mts', 'm2ts', 'mpg',
+  'mpeg', 'mpe', 'mpv', 'ogv', 'ogm', 'asf', 'vob', 'rm', 'rmvb',
+])
 
 function buildApiUrl(path, query) {
   const url = new URL(`${API_PREFIX}${path}`, window.location.origin)
@@ -126,19 +145,123 @@ async function readTextSafely(response, maxLength = 700) {
   }
 }
 
-/** Browsers reliably decode only a few containers; skip MKV/AVI to avoid long hangs and useless work. */
 function shouldExtractUploadThumbFromVideoFile(file) {
   if (!file || typeof file.size !== 'number' || file.size <= 0) return false
-  const mime = String(file.type || '').toLowerCase()
-  if (mime.startsWith('video/')) {
-    if (mime.includes('matroska') || mime.includes('msvideo') || mime.includes('x-ms-wmv')) return false
-    if (mime.includes('mp4') || mime.includes('webm') || mime.includes('quicktime') || mime.includes('3gpp')) return true
-    return false
+  const mime = String(file.type || '').trim().toLowerCase()
+  if (isLikelyVideoMime(mime)) return true
+  const ext = getFileExtension(file.name)
+  return VIDEO_FILE_EXTENSIONS.has(ext)
+}
+
+function isLikelyComplexVideoContainer(file) {
+  if (!file) return false
+  const mime = String(file.type || '').trim().toLowerCase()
+  const ext = getFileExtension(file.name)
+  return mime.includes('matroska')
+    || mime.includes('msvideo')
+    || mime.includes('x-ms-wmv')
+    || mime.includes('x-flv')
+    || mime.includes('mp2t')
+    || COMPLEX_VIDEO_EXTENSIONS.has(ext)
+}
+
+function buildUploadProbeSizes(file) {
+  const total = Number(file?.size) || 0
+  if (total <= 0) return []
+  const unique = new Set()
+  UPLOAD_THUMB_PROBE_BYTES.forEach(limit => {
+    const size = Math.max(0, Math.min(total, Number(limit) || 0))
+    if (size > 0) unique.add(size)
+  })
+  return Array.from(unique)
+}
+
+function toUploadThumbFile(blob, fileName = 'thumb.jpg') {
+  if (!(blob instanceof Blob) || blob.size <= 0 || blob.size > UPLOAD_THUMB_MAX_BYTES) return null
+  return new File([blob], fileName, { type: 'image/jpeg' })
+}
+
+function getFileExtension(value) {
+  const text = String(value || '').trim().toLowerCase()
+  if (!text) return ''
+  const idx = text.lastIndexOf('.')
+  if (idx <= 0 || idx >= text.length - 1) return ''
+  return text.slice(idx + 1).replace(/[^a-z0-9]/g, '')
+}
+
+function isLikelyVideoMime(value) {
+  const mime = String(value || '').trim().toLowerCase()
+  if (!mime) return false
+  if (mime.startsWith('video/')) return true
+  return mime.includes('matroska')
+    || mime.includes('x-msvideo')
+    || mime.includes('msvideo')
+    || mime.includes('x-ms-wmv')
+    || mime.includes('x-ms-asf')
+    || mime.includes('quicktime')
+    || mime.includes('x-flv')
+    || mime.includes('3gpp')
+    || mime.includes('3gpp2')
+    || mime.includes('mp2t')
+    || mime.includes('vnd.dlna.mpeg-tts')
+    || mime.includes('video')
+}
+
+function guessVideoExtensionFromMime(value) {
+  const mime = String(value || '').trim().toLowerCase()
+  if (!mime) return 'bin'
+  if (mime.includes('matroska')) return 'mkv'
+  if (mime.includes('webm')) return 'webm'
+  if (mime.includes('quicktime')) return 'mov'
+  if (mime.includes('x-msvideo') || mime.includes('msvideo')) return 'avi'
+  if (mime.includes('x-ms-wmv')) return 'wmv'
+  if (mime.includes('x-flv')) return 'flv'
+  if (mime.includes('mp2t') || mime.includes('mpeg-tts')) return 'ts'
+  if (mime.includes('3gpp2')) return '3g2'
+  if (mime.includes('3gpp')) return '3gp'
+  if (mime.includes('ogg')) return 'ogv'
+  if (mime.includes('mpeg')) return 'mpeg'
+  if (mime.includes('mp4')) return 'mp4'
+  return 'bin'
+}
+
+async function detectMediaKindFromBlob(blob) {
+  if (!(blob instanceof Blob) || blob.size <= 0) return ''
+  try {
+    const head = new Uint8Array(await blob.slice(0, Math.min(blob.size, 4096)).arrayBuffer())
+    if (head.length < 12) return ''
+
+    const b0 = head[0]
+    const b1 = head[1]
+    const b2 = head[2]
+    const b3 = head[3]
+
+    if (b0 === 0xff && b1 === 0xd8 && b2 === 0xff) return 'image'
+    if (
+      b0 === 0x89 && b1 === 0x50 && b2 === 0x4e && b3 === 0x47
+      && head[4] === 0x0d && head[5] === 0x0a && head[6] === 0x1a && head[7] === 0x0a
+    ) return 'image'
+    if (
+      b0 === 0x47 && b1 === 0x49 && b2 === 0x46
+      && (head[3] === 0x38 && (head[4] === 0x37 || head[4] === 0x39) && head[5] === 0x61)
+    ) return 'image'
+    if (
+      b0 === 0x52 && b1 === 0x49 && b2 === 0x46 && b3 === 0x46
+      && head[8] === 0x57 && head[9] === 0x45 && head[10] === 0x42 && head[11] === 0x50
+    ) return 'image'
+
+    if (head[4] === 0x66 && head[5] === 0x74 && head[6] === 0x79 && head[7] === 0x70) return 'video'
+    if (b0 === 0x1a && b1 === 0x45 && b2 === 0xdf && b3 === 0xa3) return 'video'
+    if (
+      b0 === 0x52 && b1 === 0x49 && b2 === 0x46 && b3 === 0x46
+      && head[8] === 0x41 && head[9] === 0x56 && head[10] === 0x49 && head[11] === 0x20
+    ) return 'video'
+    if (b0 === 0x46 && b1 === 0x4c && b2 === 0x56) return 'video'
+    if (head.length > 376 && head[0] === 0x47 && head[188] === 0x47) return 'video'
+  } catch {
+    return ''
   }
-  const name = String(file.name || '').toLowerCase()
-  if (/\.(mkv|avi|wmv|flv|ts|mts)$/i.test(name)) return false
-  if (/\.(mp4|m4v|webm|mov|3gp)$/i.test(name)) return true
-  return false
+  return ''
 }
 
 async function extractStillFrameFromVideoBlob(blob, options = {}) {
@@ -153,6 +276,7 @@ async function extractStillFrameFromVideoBlob(blob, options = {}) {
   const jpegQuality = Number.isFinite(Number(options.quality))
     ? Math.max(0.45, Math.min(0.95, Number(options.quality)))
     : 0.72
+  const asBlob = options?.asBlob === true
 
   const forcedMime = String(options.mimeType || '').trim().toLowerCase()
   let workBlob = blob
@@ -224,6 +348,10 @@ async function extractStillFrameFromVideoBlob(blob, options = {}) {
         canvas.toBlob(nextBlob => {
           if (!nextBlob || nextBlob.size <= 0) {
             finish(null)
+            return
+          }
+          if (asBlob) {
+            finish(nextBlob)
             return
           }
           try {
@@ -647,21 +775,43 @@ export async function sendFileToChat(chatId, file, options = {}) {
 
   const signal = options.signal instanceof AbortSignal ? options.signal : null
 
-  // Small JPEG thumb for Telegram (only when the browser can decode the container).
-  // MKV/AVI: skip client-side decode; upload stays fast. Use MP4/WebM/MOV for thumbnails in-app.
+  // Small JPEG thumb for Telegram.
+  // Strategy: try fast native extraction first; for complex containers use WASM fallback with bounded probes.
   let thumbFile = null
+  const isComplexContainer = isLikelyComplexVideoContainer(file)
   if (shouldExtractUploadThumbFromVideoFile(file)) {
     try {
       const thumbBlob = await extractStillFrameFromVideoBlob(file, {
-        timeoutMs: 2_500,
+        asBlob: true,
+        mimeType: file.type || '',
+        timeoutMs: isComplexContainer ? 1_200 : UPLOAD_THUMB_NATIVE_TIMEOUT_MS,
         maxEdge: 160,
         quality: 0.64,
       })
-      if (thumbBlob && thumbBlob.size > 0 && thumbBlob.size < 400 * 1024) {
-        thumbFile = new File([thumbBlob], 'thumb.jpg', { type: 'image/jpeg' })
-      }
+      thumbFile = toUploadThumbFile(thumbBlob, 'thumb.jpg')
     } catch {
       // optional
+    }
+  }
+  if (!thumbFile && isComplexContainer) {
+    const probeSizes = buildUploadProbeSizes(file)
+    for (let i = 0; i < probeSizes.length; i += 1) {
+      const probeSize = probeSizes[i]
+      try {
+        const probeBlob = file.slice(0, probeSize, file.type || 'application/octet-stream')
+        const wasmBlob = await extractStillFrameFromVideoWithWasm(probeBlob, {
+          fileName: file.name || 'upload.bin',
+          mimeType: file.type || '',
+          captureMs: 1_200,
+          maxEdge: 160,
+          quality: 0.64,
+          timeoutMs: i === 0 ? UPLOAD_THUMB_WASM_TIMEOUT_MS : UPLOAD_THUMB_WASM_SECOND_TIMEOUT_MS,
+        })
+        thumbFile = toUploadThumbFile(wasmBlob, 'thumb.jpg')
+        if (thumbFile) break
+      } catch {
+        // optional
+      }
     }
   }
 
@@ -764,6 +914,11 @@ function buildMediaPreviewCacheKey(chatId, messageId, mode = 'fast') {
 
 export async function getMessageMediaPreview(chatId, messageId, options = {}) {
   const mode = String(options?.mode || 'fast').trim().toLowerCase() || 'fast'
+  const allowWasm = options?.allowWasm !== false
+  const allowEscalation = options?.allowEscalation !== false
+  const escalationDepth = Number.isFinite(Number(options?.escalationDepth))
+    ? Math.max(0, Number(options.escalationDepth))
+    : 0
   const cacheKey = buildMediaPreviewCacheKey(chatId, messageId, mode)
   if (!cacheKey) {
     console.warn('[TG API] media preview skipped: invalid chatId/messageId', { chatId, messageId })
@@ -771,8 +926,12 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
   }
 
   const missKey = `${String(chatId).trim()}:${String(messageId).trim()}`
-  if (mediaPreviewMissCache.has(missKey)) {
+  const missUntil = Number(mediaPreviewMissCache.get(missKey)) || 0
+  if (missUntil > Date.now()) {
     return null
+  }
+  if (missUntil > 0) {
+    mediaPreviewMissCache.delete(missKey)
   }
 
   if (mediaPreviewCache.has(cacheKey)) {
@@ -781,9 +940,12 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
 
   const pending = (async () => {
     try {
+      const isHighQualityMode = mode === 'high' || mode === 'best' || mode === 'full'
       const requestTimeoutMs = mode === 'ultrafast'
         ? MEDIA_PREVIEW_ULTRAFAST_TIMEOUT_MS
-        : (mode === 'fast' ? MEDIA_PREVIEW_FAST_TIMEOUT_MS : MEDIA_PREVIEW_REQUEST_TIMEOUT_MS)
+        : (mode === 'fast'
+          ? MEDIA_PREVIEW_FAST_TIMEOUT_MS
+          : (isHighQualityMode ? MEDIA_PREVIEW_HIGH_TIMEOUT_MS : MEDIA_PREVIEW_REQUEST_TIMEOUT_MS))
 
       const response = await fetchWithTimeout(
         buildApiUrl('/media-preview', { chatId, messageId, mode }),
@@ -805,7 +967,8 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
 
         // 404/415 are expected for unsupported messages (files without thumbnails, links, etc.).
         if (response.status === 404 || response.status === 415) {
-          mediaPreviewMissCache.add(missKey)
+          const missTtlMs = 45_000
+          mediaPreviewMissCache.set(missKey, Date.now() + missTtlMs)
           console.info('[TG API] media preview unavailable:', {
             code: err.code,
             status: err.status,
@@ -828,14 +991,9 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
       const rawContentType = response.headers.get('content-type') || ''
       const contentType = rawContentType.split(';')[0].trim().toLowerCase()
       const previewSource = response.headers.get('x-tg-preview-source') || ''
-      const isRenderableMedia = contentType.startsWith('image/') || contentType.startsWith('video/')
-      if (!isRenderableMedia) {
-        throw createError('MEDIA_PREVIEW_NON_RENDERABLE_RESPONSE', `Expected image/* or video/* but got ${rawContentType || 'empty content-type'}`, 502, {
-          contentType,
-          chatId: String(chatId || ''),
-          messageId: String(messageId || ''),
-        })
-      }
+      let isImageContentType = contentType.startsWith('image/')
+      let isVideoContentType = contentType.startsWith('video/')
+      const isVideoSampleLike = previewSource === 'video-head-sample'
 
       const blob = await response.blob()
       if (!blob || blob.size === 0) {
@@ -845,14 +1003,30 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
         })
       }
 
-      if (contentType.startsWith('video/')) {
-        const isMatroska = contentType.includes('matroska')
+      if (!isImageContentType && !isVideoContentType && !isVideoSampleLike) {
+        const detectedKind = await detectMediaKindFromBlob(blob)
+        if (detectedKind === 'image') {
+          isImageContentType = true
+        } else if (detectedKind === 'video') {
+          isVideoContentType = true
+        } else {
+          throw createError('MEDIA_PREVIEW_NON_RENDERABLE_RESPONSE', `Expected image/* or video/* but got ${rawContentType || 'empty content-type'}`, 502, {
+            contentType,
+            chatId: String(chatId || ''),
+            messageId: String(messageId || ''),
+          })
+        }
+      }
+
+      if (isVideoContentType || isVideoSampleLike) {
+        const inferredVideoMime = isLikelyVideoMime(contentType) ? contentType : 'video/mp4'
+        const isMatroska = inferredVideoMime.includes('matroska')
         const stillFrameUrl = await extractStillFrameFromVideoBlob(blob, {
-          mimeType: contentType,
+          mimeType: inferredVideoMime,
           timeoutMs: mode === 'ultrafast'
             ? MEDIA_PREVIEW_VIDEO_FRAME_ULTRAFAST_TIMEOUT_MS
             : (mode === 'fast'
-              ? (isMatroska ? 4_200 : MEDIA_PREVIEW_VIDEO_FRAME_FAST_TIMEOUT_MS)
+              ? (isMatroska ? 1_900 : MEDIA_PREVIEW_VIDEO_FRAME_FAST_TIMEOUT_MS)
               : MEDIA_PREVIEW_VIDEO_FRAME_TIMEOUT_MS),
           maxEdge: mode === 'ultrafast' ? 220 : (mode === 'fast' ? 260 : 340),
           quality: mode === 'ultrafast' ? 0.58 : (mode === 'fast' ? 0.66 : 0.74),
@@ -865,13 +1039,53 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
           }
         }
 
+        if (allowWasm) {
+          const wasmFrame = await extractStillFrameFromVideoWithWasm(blob, {
+            mimeType: inferredVideoMime,
+            fileName: `preview_${String(chatId || 'chat')}_${String(messageId || 'msg')}.${guessVideoExtensionFromMime(inferredVideoMime)}`,
+            captureMs: 1_200,
+            maxEdge: mode === 'ultrafast' ? 220 : (mode === 'fast' ? 260 : 340),
+            quality: mode === 'ultrafast' ? 0.58 : (mode === 'fast' ? 0.66 : 0.74),
+            timeoutMs: mode === 'fast' || mode === 'ultrafast'
+              ? MEDIA_PREVIEW_VIDEO_WASM_FAST_TIMEOUT_MS
+              : MEDIA_PREVIEW_VIDEO_WASM_TIMEOUT_MS,
+          })
+          if (wasmFrame instanceof Blob && wasmFrame.size > 0) {
+            return {
+              url: URL.createObjectURL(wasmFrame),
+              mimeType: 'image/jpeg',
+            }
+          }
+        }
+
         console.info('[TG API] media preview video frame extraction unavailable, preview skipped', {
           chatId: String(chatId || ''),
           messageId: String(messageId || ''),
-          mimeType: contentType,
+          mode,
+          mimeType: inferredVideoMime,
           previewSource,
           size: blob.size,
+          allowWasm,
         })
+
+        if (
+          allowEscalation
+          && escalationDepth < 2
+          && (mode === 'fast' || mode === 'ultrafast')
+          && previewSource === 'video-head-sample'
+        ) {
+          try {
+            const fallbackMode = mode === 'ultrafast' ? 'fast' : 'high'
+            return await getMessageMediaPreview(chatId, messageId, {
+              mode: fallbackMode,
+              allowWasm,
+              allowEscalation,
+              escalationDepth: escalationDepth + 1,
+            })
+          } catch {
+            // keep null fallback below
+          }
+        }
 
         return null
       }

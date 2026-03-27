@@ -54,8 +54,19 @@ function toPositiveInt(value) {
 }
 
 const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'heic', 'heif', 'avif'])
-const VIDEO_EXTENSIONS = new Set(['mp4', 'mov', 'mkv', 'webm', 'avi', 'm4v'])
-const PREVIEW_ETAG_VERSION = 'v7'
+const VIDEO_EXTENSIONS = new Set([
+  'mp4', 'm4v', 'mov', 'mkv', 'webm', 'avi', 'wmv', 'flv',
+  'ts', 'mts', 'm2ts', '3gp', '3g2', 'mpg', 'mpeg', 'mpe',
+  'mpv', 'ogv', 'ogm', 'asf', 'vob', 'f4v', 'rm', 'rmvb',
+])
+const GENERIC_BINARY_MIMES = new Set([
+  'application/octet-stream',
+  'binary/octet-stream',
+  'application/x-octet-stream',
+  'application/x-binary',
+  'application/unknown',
+])
+const PREVIEW_ETAG_VERSION = 'v9'
 const MIN_ACCEPTABLE_PHOTO_PREVIEW_BYTES = 24 * 1024
 
 function getFileExtension(value) {
@@ -86,8 +97,48 @@ function inferVideoMimeByExtension(ext) {
   if (ext === 'mkv') return 'video/x-matroska'
   if (ext === 'mov') return 'video/quicktime'
   if (ext === 'avi') return 'video/x-msvideo'
+  if (ext === 'wmv') return 'video/x-ms-wmv'
+  if (ext === 'asf') return 'video/x-ms-asf'
+  if (ext === 'flv') return 'video/x-flv'
+  if (ext === 'ts' || ext === 'mts' || ext === 'm2ts') return 'video/mp2t'
+  if (ext === '3gp') return 'video/3gpp'
+  if (ext === '3g2') return 'video/3gpp2'
+  if (ext === 'mpg' || ext === 'mpeg' || ext === 'mpe' || ext === 'mpv' || ext === 'vob') return 'video/mpeg'
+  if (ext === 'ogv' || ext === 'ogm') return 'video/ogg'
+  if (ext === 'f4v') return 'video/mp4'
   if (ext === 'mp4' || ext === 'm4v') return 'video/mp4'
   return ''
+}
+
+function isGenericBinaryMime(value) {
+  const mime = toText(value).toLowerCase()
+  if (!mime) return false
+  return GENERIC_BINARY_MIMES.has(mime)
+}
+
+function isLikelyVideoMime(value) {
+  const mime = toText(value).toLowerCase()
+  if (!mime) return false
+  if (mime.startsWith('video/')) return true
+  return mime.includes('matroska')
+    || mime.includes('x-msvideo')
+    || mime.includes('msvideo')
+    || mime.includes('quicktime')
+    || mime.includes('x-ms-wmv')
+    || mime.includes('x-ms-asf')
+    || mime.includes('x-flv')
+    || mime.includes('3gpp')
+    || mime.includes('3gpp2')
+    || mime.includes('mp2t')
+    || mime.includes('vnd.dlna.mpeg-tts')
+}
+
+function resolveVideoPreviewMime(documentMime, fileExtension) {
+  const mime = toText(documentMime).toLowerCase()
+  if (mime && !isGenericBinaryMime(mime) && isLikelyVideoMime(mime)) {
+    return mime
+  }
+  return inferVideoMimeByExtension(fileExtension) || ''
 }
 
 function detectMediaContentType(bytes, fallback = '') {
@@ -127,6 +178,30 @@ function detectMediaContentType(bytes, fallback = '') {
   if (bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
     return 'video/mp4'
   }
+  // Matroska / WebM (EBML)
+  if (b0 === 0x1a && b1 === 0x45 && b2 === 0xdf && b3 === 0xa3) {
+    const text = new TextDecoder('utf-8', { fatal: false }).decode(bytes.slice(0, Math.min(bytes.length, 4096))).toLowerCase()
+    if (text.includes('webm')) return 'video/webm'
+    return 'video/x-matroska'
+  }
+  // AVI
+  if (
+    b0 === 0x52 && b1 === 0x49 && b2 === 0x46 && b3 === 0x46
+    && bytes[8] === 0x41 && bytes[9] === 0x56 && bytes[10] === 0x49 && bytes[11] === 0x20
+  ) {
+    return 'video/x-msvideo'
+  }
+  // FLV
+  if (b0 === 0x46 && b1 === 0x4c && b2 === 0x56) return 'video/x-flv'
+  // ASF/WMV container
+  if (
+    b0 === 0x30 && b1 === 0x26 && b2 === 0xb2 && b3 === 0x75
+    && bytes[4] === 0x8e && bytes[5] === 0x66 && bytes[6] === 0xcf && bytes[7] === 0x11
+  ) {
+    return 'video/x-ms-asf'
+  }
+  // MPEG-TS (sync byte every 188 bytes)
+  if (bytes.length > 376 && bytes[0] === 0x47 && bytes[188] === 0x47) return 'video/mp2t'
 
   return fallback
 }
@@ -697,17 +772,18 @@ async function handleGetMediaPreview({ request, env, state, user, session }) {
     const photoThumbs = [...photoSizes, ...photoVideoSizes].filter(item => item?.className !== 'PhotoPathSize')
     const filenameAttr = documentAttributes.find(attr => attr?.className === 'DocumentAttributeFilename')
     const fileExtension = getFileExtension(filenameAttr?.fileName)
+    const resolvedVideoMime = resolveVideoPreviewMime(documentMime, fileExtension)
 
     const isPhoto = Boolean(media?.photo)
     const isImageDocument = documentMime.startsWith('image/')
       || documentAttributes.some(attr => attr?.className === 'DocumentAttributeImageSize')
       || IMAGE_EXTENSIONS.has(fileExtension)
-    const isVideoDocument = documentMime.startsWith('video/')
+    const isVideoDocument = isLikelyVideoMime(documentMime)
       || documentAttributes.some(attr => attr?.className === 'DocumentAttributeVideo')
       || VIDEO_EXTENSIONS.has(fileExtension)
+      || Boolean(resolvedVideoMime)
     const availableThumbCount = isPhoto ? photoThumbs.length : documentThumbs.length
     const thumbIndexes = buildThumbAttemptIndexes(availableThumbCount)
-
     if (!isPhoto && !isImageDocument && !isVideoDocument) {
       console.info('[TG API] getMediaPreview unsupported media type', {
         chatId,
@@ -869,8 +945,8 @@ async function handleGetMediaPreview({ request, env, state, user, session }) {
     if (!bytes && isVideoDocument && document) {
       try {
         const noTelegramThumbs = documentThumbs.length === 0 && documentVideoThumbs.length === 0
-        const isWebmOrMkv = documentMime.includes('webm')
-          || documentMime.includes('matroska')
+        const isWebmOrMkv = resolvedVideoMime.includes('webm')
+          || resolvedVideoMime.includes('matroska')
           || fileExtension === 'webm'
           || fileExtension === 'mkv'
 
@@ -878,16 +954,16 @@ async function handleGetMediaPreview({ request, env, state, user, session }) {
         if (isUltraFastMode) {
           sampleMaxBytes = 384 * 1024
         } else if (isFastMode) {
-          sampleMaxBytes = 320 * 1024
+          sampleMaxBytes = 786_432
         } else {
-          sampleMaxBytes = 768 * 1024
+          sampleMaxBytes = 2_097_152
         }
         if (noTelegramThumbs && isWebmOrMkv) {
-          if (isUltraFastMode) sampleMaxBytes = 512 * 1024
-          else if (isFastMode) sampleMaxBytes = 768 * 1024
-          else sampleMaxBytes = 1_572_864
+          if (isUltraFastMode) sampleMaxBytes = 524_288
+          else if (isFastMode) sampleMaxBytes = 1_572_864
+          else sampleMaxBytes = 10_485_760
         }
-        const sampleTimeoutMs = isUltraFastMode ? 2_200 : (isFastMode ? 3_200 : 7_000)
+        const sampleTimeoutMs = isUltraFastMode ? 2_400 : (isFastMode ? 7_500 : 20_000)
         const sampled = await withPromiseTimeout(
           downloadDocumentHeadSample(client, document, sampleMaxBytes),
           sampleTimeoutMs
@@ -895,7 +971,7 @@ async function handleGetMediaPreview({ request, env, state, user, session }) {
         const minHead = isWebmOrMkv && noTelegramThumbs ? 48 * 1024 : 64 * 1024
         if (sampled && sampled.length >= minHead) {
           bytes = sampled
-          forcedContentType = documentMime || inferVideoMimeByExtension(fileExtension) || 'video/mp4'
+          forcedContentType = resolvedVideoMime || 'video/mp4'
           previewSource = 'video-head-sample'
         }
       } catch (err) {
@@ -929,7 +1005,7 @@ async function handleGetMediaPreview({ request, env, state, user, session }) {
       } else if (isImageDocument && fileExtension) {
         contentType = inferImageMimeByExtension(fileExtension) || 'image/jpeg'
       } else if (isVideoDocument) {
-        contentType = documentMime || inferVideoMimeByExtension(fileExtension) || 'video/mp4'
+        contentType = resolvedVideoMime || 'video/mp4'
       } else {
         contentType = 'image/jpeg'
       }

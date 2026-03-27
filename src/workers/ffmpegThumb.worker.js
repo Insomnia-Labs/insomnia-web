@@ -65,31 +65,37 @@ function ensureFfmpegApiLoaded() {
 
 async function ensureFfmpegLoaded() {
   if (ffmpegRef) return ffmpegRef
-  if (ffmpegLoadPromise) return await ffmpegLoadPromise
+  if (!ffmpegLoadPromise) {
+    ffmpegLoadPromise = (async () => {
+      const api = ensureFfmpegApiLoaded()
+      let lastError = null
 
-  ffmpegLoadPromise = (async () => {
-    const api = ensureFfmpegApiLoaded()
-    let lastError = null
-
-    for (const corePath of FFMPEG_CORE_SCRIPT_URLS) {
-      try {
-        const instance = api.createFFmpeg({
-          log: false,
-          corePath,
-        })
-        await instance.load()
-        ffmpegRef = instance
-        return instance
-      } catch (err) {
-        lastError = err
+      for (const corePath of FFMPEG_CORE_SCRIPT_URLS) {
+        try {
+          const instance = api.createFFmpeg({
+            log: false,
+            corePath,
+          })
+          await instance.load()
+          ffmpegRef = instance
+          return instance
+        } catch (err) {
+          lastError = err
+        }
       }
-    }
 
-    const message = String(lastError?.message || lastError || 'FFMPEG_CORE_LOAD_FAILED')
-    throw new Error(message)
-  })()
+      const message = String(lastError?.message || lastError || 'FFMPEG_CORE_LOAD_FAILED')
+      throw new Error(message)
+    })()
+  }
 
-  return await ffmpegLoadPromise
+  try {
+    return await ffmpegLoadPromise
+  } catch (err) {
+    ffmpegLoadPromise = null
+    ffmpegRef = null
+    throw err
+  }
 }
 
 async function runThumbnailExtraction({ bytes, fileName, captureMs, maxEdge, quality }) {

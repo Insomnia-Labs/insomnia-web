@@ -27,9 +27,11 @@ const UPLOAD_THUMB_WASM_TIMEOUT_MS = 4_500
 const UPLOAD_THUMB_WASM_SECOND_TIMEOUT_MS = 7_000
 const MESSAGE_POLL_INTERVAL_MS = 2_500
 const PRESENCE_POLL_INTERVAL_MS = 12_000
+const MEDIA_PREVIEW_MISS_CACHE_MAX_ENTRIES = 1_200
 
 const avatarCache = new Map()
 const mediaPreviewCache = new Map()
+const mediaPreviewInFlight = new Map()
 /** chatId:messageId -> timestamp(ms) until which preview refetch is suppressed */
 const mediaPreviewMissCache = new Map()
 const messagePollers = new Map()
@@ -512,6 +514,55 @@ function resetPresencePolling() {
   presenceTickInFlight = false
 }
 
+function revokeObjectUrlIfBlob(url) {
+  if (typeof url !== 'string') return
+  if (!url.startsWith('blob:')) return
+  try {
+    URL.revokeObjectURL(url)
+  } catch {
+    // noop
+  }
+}
+
+function revokeMediaPreviewEntry(entry) {
+  if (!entry) return
+  if (typeof entry === 'string') {
+    revokeObjectUrlIfBlob(entry)
+    return
+  }
+  if (typeof entry === 'object' && typeof entry.url === 'string') {
+    revokeObjectUrlIfBlob(entry.url)
+  }
+}
+
+function setMediaPreviewMissCache(key, ttlMs) {
+  const cacheKey = String(key || '').trim()
+  const ttl = Number(ttlMs) || 0
+  if (!cacheKey || ttl <= 0) return
+
+  if (!mediaPreviewMissCache.has(cacheKey) && mediaPreviewMissCache.size >= MEDIA_PREVIEW_MISS_CACHE_MAX_ENTRIES) {
+    const trimCount = Math.max(1, Math.floor(MEDIA_PREVIEW_MISS_CACHE_MAX_ENTRIES * 0.15))
+    let removed = 0
+    for (const staleKey of mediaPreviewMissCache.keys()) {
+      mediaPreviewMissCache.delete(staleKey)
+      removed += 1
+      if (removed >= trimCount) break
+    }
+  }
+
+  mediaPreviewMissCache.set(cacheKey, Date.now() + ttl)
+}
+
+function setMediaPreviewCacheEntry(cacheKey, entry) {
+  const key = String(cacheKey || '').trim()
+  if (!key || !entry) return
+
+  if (mediaPreviewCache.has(key)) {
+    mediaPreviewCache.delete(key)
+  }
+  mediaPreviewCache.set(key, entry)
+}
+
 function resetCaches() {
   for (const cached of avatarCache.values()) {
     if (typeof cached === 'string') {
@@ -525,24 +576,10 @@ function resetCaches() {
   avatarCache.clear()
 
   for (const cached of mediaPreviewCache.values()) {
-    if (typeof cached === 'string') {
-      try {
-        URL.revokeObjectURL(cached)
-      } catch {
-        // noop
-      }
-      continue
-    }
-
-    if (cached && typeof cached === 'object' && typeof cached.url === 'string') {
-      try {
-        URL.revokeObjectURL(cached.url)
-      } catch {
-        // noop
-      }
-    }
+    revokeMediaPreviewEntry(cached)
   }
   mediaPreviewCache.clear()
+  mediaPreviewInFlight.clear()
   mediaPreviewMissCache.clear()
 }
 
@@ -913,6 +950,46 @@ function buildMediaPreviewCacheKey(chatId, messageId, mode = 'fast', variant = '
   return `${chat}:${msg}:${quality || 'fast'}:${extra || 'base'}`
 }
 
+function buildVideoProbePlan({ includeLargeHead = false } = {}) {
+  const plan = []
+  if (includeLargeHead) {
+    plan.push({ offset: 0, bytes: 12 * 1024 * 1024, captureMs: 1_200 })
+  }
+  plan.push(
+    { offset: 2 * 1024 * 1024, bytes: 2 * 1024 * 1024, captureMs: 800 },
+    { offset: 8 * 1024 * 1024, bytes: 3 * 1024 * 1024, captureMs: 1_200 },
+    { offset: 24 * 1024 * 1024, bytes: 4 * 1024 * 1024, captureMs: 1_600 },
+  )
+  return plan
+}
+
+async function runVideoProbeEscalation(chatId, messageId, options = {}) {
+  const {
+    escalationDepth = 0,
+    includeLargeHead = false,
+  } = options
+
+  const probePlan = buildVideoProbePlan({ includeLargeHead })
+  for (const probe of probePlan) {
+    try {
+      const probed = await getMessageMediaPreview(chatId, messageId, {
+        mode: 'high',
+        allowWasm: true,
+        allowEscalation: false,
+        escalationDepth: escalationDepth + 1,
+        probeOffsetBytes: probe.offset,
+        probeMaxBytes: probe.bytes,
+        preferredCaptureMs: probe.captureMs,
+      })
+      if (probed?.url) return probed
+    } catch {
+      // continue with next probe
+    }
+  }
+
+  return null
+}
+
 export async function getMessageMediaPreview(chatId, messageId, options = {}) {
   const mode = String(options?.mode || 'fast').trim().toLowerCase() || 'fast'
   const allowWasm = options?.allowWasm !== false
@@ -948,7 +1025,11 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
   }
 
   if (mediaPreviewCache.has(cacheKey)) {
-    return await mediaPreviewCache.get(cacheKey)
+    return mediaPreviewCache.get(cacheKey)
+  }
+
+  if (mediaPreviewInFlight.has(cacheKey)) {
+    return await mediaPreviewInFlight.get(cacheKey)
   }
 
   const pending = (async () => {
@@ -972,6 +1053,53 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
         requestTimeoutMs
       )
 
+      if (response.status === 204) {
+        const missCode = String(response.headers.get('x-tg-preview-miss-code') || '').trim().toUpperCase()
+        const canEscalateEmpty = !missCode || missCode === 'MEDIA_PREVIEW_EMPTY'
+
+        if (
+          canEscalateEmpty
+          && allowEscalation
+          && escalationDepth < 2
+          && (mode === 'fast' || mode === 'ultrafast')
+        ) {
+          try {
+            const fallbackMode = mode === 'ultrafast' ? 'fast' : 'high'
+            return await getMessageMediaPreview(chatId, messageId, {
+              mode: fallbackMode,
+              allowWasm,
+              allowEscalation,
+              escalationDepth: escalationDepth + 1,
+              probeOffsetBytes,
+              probeMaxBytes,
+              preferredCaptureMs,
+            })
+          } catch {
+            // continue to null fallback below
+          }
+        }
+
+        if (
+          canEscalateEmpty
+          && allowEscalation
+          && escalationDepth < 3
+          && mode === 'high'
+          && probeOffsetBytes <= 0
+        ) {
+          const probed = await runVideoProbeEscalation(chatId, messageId, {
+            escalationDepth,
+            includeLargeHead: true,
+          })
+          if (probed?.url) {
+            return probed
+          }
+        }
+
+        const missTtlMs = missCode === 'MEDIA_PREVIEW_UNSUPPORTED' ? 45_000 : 20_000
+        setMediaPreviewMissCache(missKey, missTtlMs)
+        return null
+      }
+
       if (!response.ok) {
         const payload = await readJsonSafely(response)
         const fallbackText = payload ? '' : await readTextSafely(response, 260)
@@ -989,13 +1117,7 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
         // 404/415 are expected for unsupported messages (files without thumbnails, links, etc.).
         if ((response.status === 404 || response.status === 415) && !isTransientPreviewEmpty) {
           const missTtlMs = response.status === 415 ? 45_000 : 20_000
-          mediaPreviewMissCache.set(missKey, Date.now() + missTtlMs)
-          console.info('[TG API] media preview unavailable:', {
-            code: err.code,
-            status: err.status,
-            chatId: String(chatId || ''),
-            messageId: String(messageId || ''),
-          })
+          setMediaPreviewMissCache(missKey, missTtlMs)
           return null
         }
 
@@ -1028,37 +1150,15 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
           && mode === 'high'
           && probeOffsetBytes <= 0
         ) {
-          const probePlan = [
-            { offset: 0, bytes: 12 * 1024 * 1024, captureMs: 1_200 },
-            { offset: 2 * 1024 * 1024, bytes: 2 * 1024 * 1024, captureMs: 800 },
-            { offset: 8 * 1024 * 1024, bytes: 3 * 1024 * 1024, captureMs: 1_200 },
-            { offset: 24 * 1024 * 1024, bytes: 4 * 1024 * 1024, captureMs: 1_600 },
-          ]
-          for (const probe of probePlan) {
-            try {
-              const probed = await getMessageMediaPreview(chatId, messageId, {
-                mode: 'high',
-                allowWasm: true,
-                allowEscalation: false,
-                escalationDepth: escalationDepth + 1,
-                probeOffsetBytes: probe.offset,
-                probeMaxBytes: probe.bytes,
-                preferredCaptureMs: probe.captureMs,
-              })
-              if (probed?.url) return probed
-            } catch {
-              // continue with next probe
-            }
+          const probed = await runVideoProbeEscalation(chatId, messageId, {
+            escalationDepth,
+            includeLargeHead: true,
+          })
+          if (probed?.url) {
+            return probed
           }
         }
 
-        console.error('[TG API] media preview request failed:', {
-          code: err.code,
-          status: err.status,
-          message: err.message,
-          chatId: String(chatId || ''),
-          messageId: String(messageId || ''),
-        })
         throw err
       }
 
@@ -1139,7 +1239,7 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
           }
         }
 
-        console.info('[TG API] media preview video frame extraction unavailable, preview skipped', {
+        console.debug('[TG API] media preview video frame extraction unavailable, preview skipped', {
           chatId: String(chatId || ''),
           messageId: String(messageId || ''),
           mode,
@@ -1180,31 +1280,12 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
           && probeOffsetBytes <= 0
           && (previewSource === 'video-head-sample' || previewSource === 'video-probe-sample')
         ) {
-          const probePlan = []
-          if (isMp4Like || isWebm) {
-            // For MP4/WebM, a larger contiguous head sample often helps with delayed keyframes/metadata layout.
-            probePlan.push({ offset: 0, bytes: 12 * 1024 * 1024, captureMs: 1_200 })
-          }
-          probePlan.push(
-            { offset: 2 * 1024 * 1024, bytes: 2 * 1024 * 1024, captureMs: 800 },
-            { offset: 8 * 1024 * 1024, bytes: 3 * 1024 * 1024, captureMs: 1_200 },
-            { offset: 24 * 1024 * 1024, bytes: 4 * 1024 * 1024, captureMs: 1_600 },
-          )
-          for (const probe of probePlan) {
-            try {
-              const probed = await getMessageMediaPreview(chatId, messageId, {
-                mode: 'high',
-                allowWasm: true,
-                allowEscalation: false,
-                escalationDepth: escalationDepth + 1,
-                probeOffsetBytes: probe.offset,
-                probeMaxBytes: probe.bytes,
-                preferredCaptureMs: probe.captureMs,
-              })
-              if (probed?.url) return probed
-            } catch {
-              // continue with next probe
-            }
+          const probed = await runVideoProbeEscalation(chatId, messageId, {
+            escalationDepth,
+            includeLargeHead: isMp4Like || isWebm,
+          })
+          if (probed?.url) {
+            return probed
           }
         }
 
@@ -1217,6 +1298,10 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
       }
     } catch (err) {
       const wrapped = err?.code ? err : createError('MEDIA_PREVIEW_FETCH_FAILED', String(err?.message || err || 'Failed to fetch media preview'), 500)
+      const code = String(wrapped?.code || '').trim().toUpperCase()
+      if (code === 'MEDIA_PREVIEW_EMPTY' || code === 'MEDIA_PREVIEW_NOT_FOUND' || code === 'MEDIA_PREVIEW_UNSUPPORTED') {
+        return null
+      }
       console.warn('[TG API] media preview exception:', {
         code: wrapped.code,
         status: wrapped.status,
@@ -1228,11 +1313,11 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
     }
   })()
 
-  mediaPreviewCache.set(cacheKey, pending)
+  mediaPreviewInFlight.set(cacheKey, pending)
   try {
     const resolved = await pending
     if (resolved) {
-      mediaPreviewCache.set(cacheKey, resolved)
+      setMediaPreviewCacheEntry(cacheKey, resolved)
     } else {
       mediaPreviewCache.delete(cacheKey)
     }
@@ -1240,11 +1325,38 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
   } catch (err) {
     mediaPreviewCache.delete(cacheKey)
     throw err
+  } finally {
+    mediaPreviewInFlight.delete(cacheKey)
   }
 }
 
 export async function getChatFolders() {
   return apiRequest('/chat-folders')
+}
+
+export function clearMediaPreviewCacheByChat(chatId) {
+  const chat = String(chatId || '').trim()
+  if (!chat) return
+
+  const prefix = `${chat}:`
+
+  for (const [key, entry] of mediaPreviewCache.entries()) {
+    if (!key.startsWith(prefix)) continue
+    mediaPreviewCache.delete(key)
+    revokeMediaPreviewEntry(entry)
+  }
+
+  for (const key of mediaPreviewInFlight.keys()) {
+    if (key.startsWith(prefix)) {
+      mediaPreviewInFlight.delete(key)
+    }
+  }
+
+  for (const key of mediaPreviewMissCache.keys()) {
+    if (key.startsWith(prefix)) {
+      mediaPreviewMissCache.delete(key)
+    }
+  }
 }
 
 export function clearSession() {

@@ -92,8 +92,11 @@ async function runWasmJob(inputBlob, options = {}) {
   return await new Promise((resolve, reject) => {
     const jobId = nextJobId++
     const timeoutId = setTimeout(() => {
+      if (!pendingJobs.has(jobId)) return
       pendingJobs.delete(jobId)
       reject(new Error('WASM_THUMBNAIL_TIMEOUT'))
+      // If ffmpeg got stuck on this input, recreate worker to unblock subsequent jobs.
+      resetWorker('WASM_THUMBNAIL_TIMEOUT')
     }, timeoutMs)
 
     pendingJobs.set(jobId, {
@@ -102,16 +105,22 @@ async function runWasmJob(inputBlob, options = {}) {
       timeoutId,
     })
 
-    worker.postMessage({
-      type: 'extract',
-      jobId,
-      buffer: arrayBuffer,
-      mimeType,
-      fileName,
-      captureMs,
-      maxEdge,
-      quality,
-    }, [arrayBuffer])
+    try {
+      worker.postMessage({
+        type: 'extract',
+        jobId,
+        buffer: arrayBuffer,
+        mimeType,
+        fileName,
+        captureMs,
+        maxEdge,
+        quality,
+      }, [arrayBuffer])
+    } catch (err) {
+      clearTimeout(timeoutId)
+      pendingJobs.delete(jobId)
+      reject(err instanceof Error ? err : new Error(String(err || 'WASM_POST_MESSAGE_FAILED')))
+    }
   })
 }
 

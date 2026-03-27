@@ -727,18 +727,18 @@ async function handleGetMediaPreview({ request, env, state, user, session }) {
     })
   }
 
-  const { result } = await runWithUserTelegramSession({ env, user, session }, async ({ client }) => {
-    const peer = await resolvePeerEntity(client, chatId, 'getMediaPreview')
+  let result
+  try {
+    const response = await runWithUserTelegramSession({ env, user, session }, async ({ client }) => {
+      const peer = await resolvePeerEntity(client, chatId, 'getMediaPreview')
 
     let targetMessage = null
 
     const resolveByIdCandidates = async () => {
-      const attempts = isFastMode
-        ? [{ ids: [messageId] }]
-        : [
-          { ids: [messageId] },
-          { ids: messageId },
-        ]
+      const attempts = [
+        { ids: [messageId] },
+        { ids: messageId },
+      ]
 
       for (const options of attempts) {
         try {
@@ -1040,8 +1040,30 @@ async function handleGetMediaPreview({ request, env, state, user, session }) {
       }
     }
 
-    return { bytes, contentType, source: previewSource || 'unknown' }
-  })
+      return { bytes, contentType, source: previewSource || 'unknown' }
+    })
+    result = response.result
+  } catch (err) {
+    const mapped = mapApiError(err)
+    const expectedMissCodes = new Set([
+      'MEDIA_PREVIEW_EMPTY',
+      'MEDIA_PREVIEW_NOT_FOUND',
+      'MEDIA_PREVIEW_UNSUPPORTED',
+    ])
+
+    if (expectedMissCodes.has(mapped.code)) {
+      const nextState = withLegacySessionCleared(state)
+      const headers = new Headers({
+        'cache-control': 'private, max-age=45',
+        'x-tg-preview-source': 'unavailable',
+        'x-tg-preview-miss-code': mapped.code,
+        'set-cookie': await buildSessionCookie(nextState, env),
+      })
+      return new Response(null, { status: 204, headers })
+    }
+
+    throw err
+  }
 
   const nextState = withLegacySessionCleared(state)
 

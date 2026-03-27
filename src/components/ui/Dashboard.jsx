@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useState, useRef, useMemo } from 'react'
 import { useStore } from '../../store/useStore'
-import { getChatHistory, getDialogs, getMe, getProfilePhoto, getMessageMediaPreview, getChatFolders, sendMessage, sendFileToChat, subscribeToMessages, subscribeToPresence, subscribeToTyping } from '../../services/telegramClient'
+import { getChatHistory, getDialogs, getMe, getProfilePhoto, getMessageMediaPreview, clearMediaPreviewCacheByChat, getChatFolders, sendMessage, sendFileToChat, subscribeToMessages, subscribeToPresence, subscribeToTyping } from '../../services/telegramClient'
 import { motion, AnimatePresence } from 'framer-motion'
 import './terminal-mode.css'
 
@@ -17,6 +17,15 @@ const VIDEO_EXTENSIONS = new Set([
 const MOBILE_PREVIEW_BATCH_LIMIT = 12
 const MOBILE_PREVIEW_MAX_PARALLEL = 2
 const MOBILE_PREVIEW_RETRY_SCHEDULE_MS = [450, 1_100, 2_400, 5_500, 11_000]
+const MOBILE_PREVIEW_EXPECTED_ERROR_CODES = new Set([
+    'MEDIA_PREVIEW_EMPTY',
+    'MEDIA_PREVIEW_NOT_FOUND',
+    'MEDIA_PREVIEW_UNSUPPORTED',
+    'MEDIA_PREVIEW_FETCH_FAILED',
+    'REQUEST_TIMEOUT',
+    'ABORT_ERR',
+    'ABORT_ERROR',
+])
 
 const isLikelyVideoMime = (value) => {
     const mime = (value || '').toLowerCase()
@@ -90,6 +99,7 @@ export default function Dashboard() {
     const mobilePreviewAttemptCountRef = useRef(new Map())
     const mobilePreviewUnavailableRef = useRef(new Set())
     const mobilePreviewRetryTimerRef = useRef(0)
+    const mobilePreviewChatIdRef = useRef('')
 
     useEffect(() => {
         // Keep current view persisted so accidental reload/tab discard returns here.
@@ -1759,8 +1769,8 @@ export default function Dashboard() {
         const allFileRows = getFilteredFileMessages()
         const query = mobileSearchQuery.trim().toLowerCase()
         return allFileRows
-            .map(msg => ({ msg, preview: getFilePreviewData(msg) }))
-            .filter(({ preview }) => {
+            .map(msg => getFilePreviewData(msg))
+            .filter(preview => {
                 if (!query) return true
                 return (
                     preview.title.toLowerCase().includes(query) ||
@@ -1771,6 +1781,13 @@ export default function Dashboard() {
     }, [messages, activeTab, mobileSearchQuery])
 
     useEffect(() => {
+        const previousChatId = mobilePreviewChatIdRef.current
+        const nextChatId = String(selectedChatId || '').trim()
+        if (previousChatId && previousChatId !== nextChatId) {
+            clearMediaPreviewCacheByChat(previousChatId)
+        }
+        mobilePreviewChatIdRef.current = nextChatId
+
         clearMobilePreviewRetryTimer()
         mobilePreviewInFlightRef.current.clear()
         mobilePreviewRetryAtRef.current.clear()
@@ -1793,13 +1810,11 @@ export default function Dashboard() {
         }
 
         const candidates = mobileVisibleRows
-            .map(({ preview }) => preview)
             .filter(preview => preview?.canPreview && preview?.canFetchRemotePreview && preview?.chatId && preview?.messageId)
 
         if (candidates.length === 0) {
             const totalRows = mobileVisibleRows.length
             const previewRows = mobileVisibleRows
-                .map(item => item?.preview)
                 .filter(Boolean)
                 .filter(preview => preview?.type === 'photo' || preview?.type === 'video')
             if (totalRows > 0 && previewRows.length > 0) {
@@ -1889,6 +1904,7 @@ export default function Dashboard() {
                     }
                 } catch (err) {
                     const nextAttempts = mobilePreviewAttemptCountRef.current.get(key) || 1
+                    const errorCode = String(err?.code || '').trim().toUpperCase()
 
                     const retryIndex = Math.min(nextAttempts - 1, MOBILE_PREVIEW_RETRY_SCHEDULE_MS.length - 1)
                     const retryDelay = MOBILE_PREVIEW_RETRY_SCHEDULE_MS[retryIndex]
@@ -1903,16 +1919,19 @@ export default function Dashboard() {
                     }
                     scheduleNextMobilePreviewRetry()
 
-                    console.warn('[MobilePreview] failed to load preview', {
-                        code: err?.code,
-                        status: err?.status,
-                        message: err?.message,
-                        attempts: nextAttempts,
-                        exhausted,
-                        chatId: preview?.chatId,
-                        messageId: preview?.messageId,
-                        type: preview?.type,
-                    })
+                    if (!MOBILE_PREVIEW_EXPECTED_ERROR_CODES.has(errorCode)) {
+                        const logger = exhausted ? console.warn : console.debug
+                        logger('[MobilePreview] failed to load preview', {
+                            code: err?.code,
+                            status: err?.status,
+                            message: err?.message,
+                            attempts: nextAttempts,
+                            exhausted,
+                            chatId: preview?.chatId,
+                            messageId: preview?.messageId,
+                            type: preview?.type,
+                        })
+                    }
                 } finally {
                     mobilePreviewInFlightRef.current.delete(key)
                 }
@@ -1932,7 +1951,7 @@ export default function Dashboard() {
     }, [mobileVisibleRows, mobilePreviewUrls, activeSection, selectedChatId, mobilePreviewRetryNonce])
 
     const mobileVisibleRowItems = useMemo(() => {
-        return mobileVisibleRows.map(({ preview }) => {
+        return mobileVisibleRows.map(preview => {
             const previewKey = buildMobilePreviewKey(preview.chatId, preview.messageId)
             const previewAsset = previewKey ? mobilePreviewUrls[previewKey] : null
             const previewSrc = previewAsset?.url || ''

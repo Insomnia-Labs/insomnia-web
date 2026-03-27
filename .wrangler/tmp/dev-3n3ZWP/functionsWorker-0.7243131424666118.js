@@ -1,42 +1,12 @@
-var __create = Object.create;
 var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __esm = (fn, res) => function __init() {
-  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
-};
-var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-};
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/_internal/utils.mjs
+// ../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/_internal/utils.mjs
 // @__NO_SIDE_EFFECTS__
 function createNotImplementedError(name) {
   return new Error(`[unenv] ${name} is not implemented yet!`);
 }
+__name(createNotImplementedError, "createNotImplementedError");
 // @__NO_SIDE_EFFECTS__
 function notImplemented(name) {
   const fn = /* @__PURE__ */ __name(() => {
@@ -44,13 +14,915 @@ function notImplemented(name) {
   }, "fn");
   return Object.assign(fn, { __unenv__: true });
 }
+__name(notImplemented, "notImplemented");
+
+// ../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/perf_hooks/performance.mjs
+var _timeOrigin = globalThis.performance?.timeOrigin ?? Date.now();
+var _performanceNow = globalThis.performance?.now ? globalThis.performance.now.bind(globalThis.performance) : () => Date.now() - _timeOrigin;
+var nodeTiming = {
+  name: "node",
+  entryType: "node",
+  startTime: 0,
+  duration: 0,
+  nodeStart: 0,
+  v8Start: 0,
+  bootstrapComplete: 0,
+  environment: 0,
+  loopStart: 0,
+  loopExit: 0,
+  idleTime: 0,
+  uvMetricsInfo: {
+    loopCount: 0,
+    events: 0,
+    eventsWaiting: 0
+  },
+  detail: void 0,
+  toJSON() {
+    return this;
+  }
+};
+var PerformanceEntry = class {
+  static {
+    __name(this, "PerformanceEntry");
+  }
+  __unenv__ = true;
+  detail;
+  entryType = "event";
+  name;
+  startTime;
+  constructor(name, options) {
+    this.name = name;
+    this.startTime = options?.startTime || _performanceNow();
+    this.detail = options?.detail;
+  }
+  get duration() {
+    return _performanceNow() - this.startTime;
+  }
+  toJSON() {
+    return {
+      name: this.name,
+      entryType: this.entryType,
+      startTime: this.startTime,
+      duration: this.duration,
+      detail: this.detail
+    };
+  }
+};
+var PerformanceMark = class PerformanceMark2 extends PerformanceEntry {
+  static {
+    __name(this, "PerformanceMark");
+  }
+  entryType = "mark";
+  constructor() {
+    super(...arguments);
+  }
+  get duration() {
+    return 0;
+  }
+};
+var PerformanceMeasure = class extends PerformanceEntry {
+  static {
+    __name(this, "PerformanceMeasure");
+  }
+  entryType = "measure";
+};
+var PerformanceResourceTiming = class extends PerformanceEntry {
+  static {
+    __name(this, "PerformanceResourceTiming");
+  }
+  entryType = "resource";
+  serverTiming = [];
+  connectEnd = 0;
+  connectStart = 0;
+  decodedBodySize = 0;
+  domainLookupEnd = 0;
+  domainLookupStart = 0;
+  encodedBodySize = 0;
+  fetchStart = 0;
+  initiatorType = "";
+  name = "";
+  nextHopProtocol = "";
+  redirectEnd = 0;
+  redirectStart = 0;
+  requestStart = 0;
+  responseEnd = 0;
+  responseStart = 0;
+  secureConnectionStart = 0;
+  startTime = 0;
+  transferSize = 0;
+  workerStart = 0;
+  responseStatus = 0;
+};
+var PerformanceObserverEntryList = class {
+  static {
+    __name(this, "PerformanceObserverEntryList");
+  }
+  __unenv__ = true;
+  getEntries() {
+    return [];
+  }
+  getEntriesByName(_name, _type) {
+    return [];
+  }
+  getEntriesByType(type2) {
+    return [];
+  }
+};
+var Performance = class {
+  static {
+    __name(this, "Performance");
+  }
+  __unenv__ = true;
+  timeOrigin = _timeOrigin;
+  eventCounts = /* @__PURE__ */ new Map();
+  _entries = [];
+  _resourceTimingBufferSize = 0;
+  navigation = void 0;
+  timing = void 0;
+  timerify(_fn, _options) {
+    throw createNotImplementedError("Performance.timerify");
+  }
+  get nodeTiming() {
+    return nodeTiming;
+  }
+  eventLoopUtilization() {
+    return {};
+  }
+  markResourceTiming() {
+    return new PerformanceResourceTiming("");
+  }
+  onresourcetimingbufferfull = null;
+  now() {
+    if (this.timeOrigin === _timeOrigin) {
+      return _performanceNow();
+    }
+    return Date.now() - this.timeOrigin;
+  }
+  clearMarks(markName) {
+    this._entries = markName ? this._entries.filter((e) => e.name !== markName) : this._entries.filter((e) => e.entryType !== "mark");
+  }
+  clearMeasures(measureName) {
+    this._entries = measureName ? this._entries.filter((e) => e.name !== measureName) : this._entries.filter((e) => e.entryType !== "measure");
+  }
+  clearResourceTimings() {
+    this._entries = this._entries.filter((e) => e.entryType !== "resource" || e.entryType !== "navigation");
+  }
+  getEntries() {
+    return this._entries;
+  }
+  getEntriesByName(name, type2) {
+    return this._entries.filter((e) => e.name === name && (!type2 || e.entryType === type2));
+  }
+  getEntriesByType(type2) {
+    return this._entries.filter((e) => e.entryType === type2);
+  }
+  mark(name, options) {
+    const entry = new PerformanceMark(name, options);
+    this._entries.push(entry);
+    return entry;
+  }
+  measure(measureName, startOrMeasureOptions, endMark) {
+    let start;
+    let end;
+    if (typeof startOrMeasureOptions === "string") {
+      start = this.getEntriesByName(startOrMeasureOptions, "mark")[0]?.startTime;
+      end = this.getEntriesByName(endMark, "mark")[0]?.startTime;
+    } else {
+      start = Number.parseFloat(startOrMeasureOptions?.start) || this.now();
+      end = Number.parseFloat(startOrMeasureOptions?.end) || this.now();
+    }
+    const entry = new PerformanceMeasure(measureName, {
+      startTime: start,
+      detail: {
+        start,
+        end
+      }
+    });
+    this._entries.push(entry);
+    return entry;
+  }
+  setResourceTimingBufferSize(maxSize) {
+    this._resourceTimingBufferSize = maxSize;
+  }
+  addEventListener(type2, listener, options) {
+    throw createNotImplementedError("Performance.addEventListener");
+  }
+  removeEventListener(type2, listener, options) {
+    throw createNotImplementedError("Performance.removeEventListener");
+  }
+  dispatchEvent(event) {
+    throw createNotImplementedError("Performance.dispatchEvent");
+  }
+  toJSON() {
+    return this;
+  }
+};
+var PerformanceObserver = class {
+  static {
+    __name(this, "PerformanceObserver");
+  }
+  __unenv__ = true;
+  static supportedEntryTypes = [];
+  _callback = null;
+  constructor(callback) {
+    this._callback = callback;
+  }
+  takeRecords() {
+    return [];
+  }
+  disconnect() {
+    throw createNotImplementedError("PerformanceObserver.disconnect");
+  }
+  observe(options) {
+    throw createNotImplementedError("PerformanceObserver.observe");
+  }
+  bind(fn) {
+    return fn;
+  }
+  runInAsyncScope(fn, thisArg, ...args) {
+    return fn.call(thisArg, ...args);
+  }
+  asyncId() {
+    return 0;
+  }
+  triggerAsyncId() {
+    return 0;
+  }
+  emitDestroy() {
+    return this;
+  }
+};
+var performance = globalThis.performance && "addEventListener" in globalThis.performance ? globalThis.performance : new Performance();
+
+// ../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/@cloudflare/unenv-preset/dist/runtime/polyfill/performance.mjs
+globalThis.performance = performance;
+globalThis.Performance = Performance;
+globalThis.PerformanceEntry = PerformanceEntry;
+globalThis.PerformanceMark = PerformanceMark;
+globalThis.PerformanceMeasure = PerformanceMeasure;
+globalThis.PerformanceObserver = PerformanceObserver;
+globalThis.PerformanceObserverEntryList = PerformanceObserverEntryList;
+globalThis.PerformanceResourceTiming = PerformanceResourceTiming;
+
+// ../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/process/hrtime.mjs
+var hrtime = /* @__PURE__ */ Object.assign(/* @__PURE__ */ __name(function hrtime2(startTime) {
+  const now = Date.now();
+  const seconds = Math.trunc(now / 1e3);
+  const nanos = now % 1e3 * 1e6;
+  if (startTime) {
+    let diffSeconds = seconds - startTime[0];
+    let diffNanos = nanos - startTime[0];
+    if (diffNanos < 0) {
+      diffSeconds = diffSeconds - 1;
+      diffNanos = 1e9 + diffNanos;
+    }
+    return [diffSeconds, diffNanos];
+  }
+  return [seconds, nanos];
+}, "hrtime"), { bigint: /* @__PURE__ */ __name(function bigint() {
+  return BigInt(Date.now() * 1e6);
+}, "bigint") });
+
+// ../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/process/process.mjs
+import { EventEmitter } from "node:events";
+
+// ../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/tty/read-stream.mjs
+var ReadStream = class {
+  static {
+    __name(this, "ReadStream");
+  }
+  fd;
+  isRaw = false;
+  isTTY = false;
+  constructor(fd) {
+    this.fd = fd;
+  }
+  setRawMode(mode) {
+    this.isRaw = mode;
+    return this;
+  }
+};
+
+// ../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/tty/write-stream.mjs
+var WriteStream = class {
+  static {
+    __name(this, "WriteStream");
+  }
+  fd;
+  columns = 80;
+  rows = 24;
+  isTTY = false;
+  constructor(fd) {
+    this.fd = fd;
+  }
+  clearLine(dir3, callback) {
+    callback && callback();
+    return false;
+  }
+  clearScreenDown(callback) {
+    callback && callback();
+    return false;
+  }
+  cursorTo(x, y, callback) {
+    callback && typeof callback === "function" && callback();
+    return false;
+  }
+  moveCursor(dx, dy, callback) {
+    callback && callback();
+    return false;
+  }
+  getColorDepth(env3) {
+    return 1;
+  }
+  hasColors(count3, env3) {
+    return false;
+  }
+  getWindowSize() {
+    return [this.columns, this.rows];
+  }
+  write(str, encoding, cb) {
+    if (str instanceof Uint8Array) {
+      str = new TextDecoder().decode(str);
+    }
+    try {
+      console.log(str);
+    } catch {
+    }
+    cb && typeof cb === "function" && cb();
+    return false;
+  }
+};
+
+// ../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/process/node-version.mjs
+var NODE_VERSION = "22.14.0";
+
+// ../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/process/process.mjs
+var Process = class _Process extends EventEmitter {
+  static {
+    __name(this, "Process");
+  }
+  env;
+  hrtime;
+  nextTick;
+  constructor(impl) {
+    super();
+    this.env = impl.env;
+    this.hrtime = impl.hrtime;
+    this.nextTick = impl.nextTick;
+    for (const prop of [...Object.getOwnPropertyNames(_Process.prototype), ...Object.getOwnPropertyNames(EventEmitter.prototype)]) {
+      const value = this[prop];
+      if (typeof value === "function") {
+        this[prop] = value.bind(this);
+      }
+    }
+  }
+  // --- event emitter ---
+  emitWarning(warning, type2, code) {
+    console.warn(`${code ? `[${code}] ` : ""}${type2 ? `${type2}: ` : ""}${warning}`);
+  }
+  emit(...args) {
+    return super.emit(...args);
+  }
+  listeners(eventName) {
+    return super.listeners(eventName);
+  }
+  // --- stdio (lazy initializers) ---
+  #stdin;
+  #stdout;
+  #stderr;
+  get stdin() {
+    return this.#stdin ??= new ReadStream(0);
+  }
+  get stdout() {
+    return this.#stdout ??= new WriteStream(1);
+  }
+  get stderr() {
+    return this.#stderr ??= new WriteStream(2);
+  }
+  // --- cwd ---
+  #cwd = "/";
+  chdir(cwd3) {
+    this.#cwd = cwd3;
+  }
+  cwd() {
+    return this.#cwd;
+  }
+  // --- dummy props and getters ---
+  arch = "";
+  platform = "";
+  argv = [];
+  argv0 = "";
+  execArgv = [];
+  execPath = "";
+  title = "";
+  pid = 200;
+  ppid = 100;
+  get version() {
+    return `v${NODE_VERSION}`;
+  }
+  get versions() {
+    return { node: NODE_VERSION };
+  }
+  get allowedNodeEnvironmentFlags() {
+    return /* @__PURE__ */ new Set();
+  }
+  get sourceMapsEnabled() {
+    return false;
+  }
+  get debugPort() {
+    return 0;
+  }
+  get throwDeprecation() {
+    return false;
+  }
+  get traceDeprecation() {
+    return false;
+  }
+  get features() {
+    return {};
+  }
+  get release() {
+    return {};
+  }
+  get connected() {
+    return false;
+  }
+  get config() {
+    return {};
+  }
+  get moduleLoadList() {
+    return [];
+  }
+  constrainedMemory() {
+    return 0;
+  }
+  availableMemory() {
+    return 0;
+  }
+  uptime() {
+    return 0;
+  }
+  resourceUsage() {
+    return {};
+  }
+  // --- noop methods ---
+  ref() {
+  }
+  unref() {
+  }
+  // --- unimplemented methods ---
+  umask() {
+    throw createNotImplementedError("process.umask");
+  }
+  getBuiltinModule() {
+    return void 0;
+  }
+  getActiveResourcesInfo() {
+    throw createNotImplementedError("process.getActiveResourcesInfo");
+  }
+  exit() {
+    throw createNotImplementedError("process.exit");
+  }
+  reallyExit() {
+    throw createNotImplementedError("process.reallyExit");
+  }
+  kill() {
+    throw createNotImplementedError("process.kill");
+  }
+  abort() {
+    throw createNotImplementedError("process.abort");
+  }
+  dlopen() {
+    throw createNotImplementedError("process.dlopen");
+  }
+  setSourceMapsEnabled() {
+    throw createNotImplementedError("process.setSourceMapsEnabled");
+  }
+  loadEnvFile() {
+    throw createNotImplementedError("process.loadEnvFile");
+  }
+  disconnect() {
+    throw createNotImplementedError("process.disconnect");
+  }
+  cpuUsage() {
+    throw createNotImplementedError("process.cpuUsage");
+  }
+  setUncaughtExceptionCaptureCallback() {
+    throw createNotImplementedError("process.setUncaughtExceptionCaptureCallback");
+  }
+  hasUncaughtExceptionCaptureCallback() {
+    throw createNotImplementedError("process.hasUncaughtExceptionCaptureCallback");
+  }
+  initgroups() {
+    throw createNotImplementedError("process.initgroups");
+  }
+  openStdin() {
+    throw createNotImplementedError("process.openStdin");
+  }
+  assert() {
+    throw createNotImplementedError("process.assert");
+  }
+  binding() {
+    throw createNotImplementedError("process.binding");
+  }
+  // --- attached interfaces ---
+  permission = { has: /* @__PURE__ */ notImplemented("process.permission.has") };
+  report = {
+    directory: "",
+    filename: "",
+    signal: "SIGUSR2",
+    compact: false,
+    reportOnFatalError: false,
+    reportOnSignal: false,
+    reportOnUncaughtException: false,
+    getReport: /* @__PURE__ */ notImplemented("process.report.getReport"),
+    writeReport: /* @__PURE__ */ notImplemented("process.report.writeReport")
+  };
+  finalization = {
+    register: /* @__PURE__ */ notImplemented("process.finalization.register"),
+    unregister: /* @__PURE__ */ notImplemented("process.finalization.unregister"),
+    registerBeforeExit: /* @__PURE__ */ notImplemented("process.finalization.registerBeforeExit")
+  };
+  memoryUsage = Object.assign(() => ({
+    arrayBuffers: 0,
+    rss: 0,
+    external: 0,
+    heapTotal: 0,
+    heapUsed: 0
+  }), { rss: /* @__PURE__ */ __name(() => 0, "rss") });
+  // --- undefined props ---
+  mainModule = void 0;
+  domain = void 0;
+  // optional
+  send = void 0;
+  exitCode = void 0;
+  channel = void 0;
+  getegid = void 0;
+  geteuid = void 0;
+  getgid = void 0;
+  getgroups = void 0;
+  getuid = void 0;
+  setegid = void 0;
+  seteuid = void 0;
+  setgid = void 0;
+  setgroups = void 0;
+  setuid = void 0;
+  // internals
+  _events = void 0;
+  _eventsCount = void 0;
+  _exiting = void 0;
+  _maxListeners = void 0;
+  _debugEnd = void 0;
+  _debugProcess = void 0;
+  _fatalException = void 0;
+  _getActiveHandles = void 0;
+  _getActiveRequests = void 0;
+  _kill = void 0;
+  _preload_modules = void 0;
+  _rawDebug = void 0;
+  _startProfilerIdleNotifier = void 0;
+  _stopProfilerIdleNotifier = void 0;
+  _tickCallback = void 0;
+  _disconnect = void 0;
+  _handleQueue = void 0;
+  _pendingMessage = void 0;
+  _channel = void 0;
+  _send = void 0;
+  _linkedBinding = void 0;
+};
+
+// ../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/@cloudflare/unenv-preset/dist/runtime/node/process.mjs
+var globalProcess = globalThis["process"];
+var getBuiltinModule = globalProcess.getBuiltinModule;
+var workerdProcess = getBuiltinModule("node:process");
+var isWorkerdProcessV2 = globalThis.Cloudflare.compatibilityFlags.enable_nodejs_process_v2;
+var unenvProcess = new Process({
+  env: globalProcess.env,
+  // `hrtime` is only available from workerd process v2
+  hrtime: isWorkerdProcessV2 ? workerdProcess.hrtime : hrtime,
+  // `nextTick` is available from workerd process v1
+  nextTick: workerdProcess.nextTick
+});
+var { exit, features, platform } = workerdProcess;
+var {
+  // Always implemented by workerd
+  env,
+  // Only implemented in workerd v2
+  hrtime: hrtime3,
+  // Always implemented by workerd
+  nextTick
+} = unenvProcess;
+var {
+  _channel,
+  _disconnect,
+  _events,
+  _eventsCount,
+  _handleQueue,
+  _maxListeners,
+  _pendingMessage,
+  _send,
+  assert,
+  disconnect,
+  mainModule
+} = unenvProcess;
+var {
+  // @ts-expect-error `_debugEnd` is missing typings
+  _debugEnd,
+  // @ts-expect-error `_debugProcess` is missing typings
+  _debugProcess,
+  // @ts-expect-error `_exiting` is missing typings
+  _exiting,
+  // @ts-expect-error `_fatalException` is missing typings
+  _fatalException,
+  // @ts-expect-error `_getActiveHandles` is missing typings
+  _getActiveHandles,
+  // @ts-expect-error `_getActiveRequests` is missing typings
+  _getActiveRequests,
+  // @ts-expect-error `_kill` is missing typings
+  _kill,
+  // @ts-expect-error `_linkedBinding` is missing typings
+  _linkedBinding,
+  // @ts-expect-error `_preload_modules` is missing typings
+  _preload_modules,
+  // @ts-expect-error `_rawDebug` is missing typings
+  _rawDebug,
+  // @ts-expect-error `_startProfilerIdleNotifier` is missing typings
+  _startProfilerIdleNotifier,
+  // @ts-expect-error `_stopProfilerIdleNotifier` is missing typings
+  _stopProfilerIdleNotifier,
+  // @ts-expect-error `_tickCallback` is missing typings
+  _tickCallback,
+  abort,
+  addListener,
+  allowedNodeEnvironmentFlags,
+  arch,
+  argv,
+  argv0,
+  availableMemory,
+  // @ts-expect-error `binding` is missing typings
+  binding,
+  channel,
+  chdir,
+  config,
+  connected,
+  constrainedMemory,
+  cpuUsage,
+  cwd,
+  debugPort,
+  dlopen,
+  // @ts-expect-error `domain` is missing typings
+  domain,
+  emit,
+  emitWarning,
+  eventNames,
+  execArgv,
+  execPath,
+  exitCode,
+  finalization,
+  getActiveResourcesInfo,
+  getegid,
+  geteuid,
+  getgid,
+  getgroups,
+  getMaxListeners,
+  getuid,
+  hasUncaughtExceptionCaptureCallback,
+  // @ts-expect-error `initgroups` is missing typings
+  initgroups,
+  kill,
+  listenerCount,
+  listeners,
+  loadEnvFile,
+  memoryUsage,
+  // @ts-expect-error `moduleLoadList` is missing typings
+  moduleLoadList,
+  off,
+  on,
+  once,
+  // @ts-expect-error `openStdin` is missing typings
+  openStdin,
+  permission,
+  pid,
+  ppid,
+  prependListener,
+  prependOnceListener,
+  rawListeners,
+  // @ts-expect-error `reallyExit` is missing typings
+  reallyExit,
+  ref,
+  release,
+  removeAllListeners,
+  removeListener,
+  report,
+  resourceUsage,
+  send,
+  setegid,
+  seteuid,
+  setgid,
+  setgroups,
+  setMaxListeners,
+  setSourceMapsEnabled,
+  setuid,
+  setUncaughtExceptionCaptureCallback,
+  sourceMapsEnabled,
+  stderr,
+  stdin,
+  stdout,
+  throwDeprecation,
+  title,
+  traceDeprecation,
+  umask,
+  unref,
+  uptime,
+  version,
+  versions
+} = isWorkerdProcessV2 ? workerdProcess : unenvProcess;
+var _process = {
+  abort,
+  addListener,
+  allowedNodeEnvironmentFlags,
+  hasUncaughtExceptionCaptureCallback,
+  setUncaughtExceptionCaptureCallback,
+  loadEnvFile,
+  sourceMapsEnabled,
+  arch,
+  argv,
+  argv0,
+  chdir,
+  config,
+  connected,
+  constrainedMemory,
+  availableMemory,
+  cpuUsage,
+  cwd,
+  debugPort,
+  dlopen,
+  disconnect,
+  emit,
+  emitWarning,
+  env,
+  eventNames,
+  execArgv,
+  execPath,
+  exit,
+  finalization,
+  features,
+  getBuiltinModule,
+  getActiveResourcesInfo,
+  getMaxListeners,
+  hrtime: hrtime3,
+  kill,
+  listeners,
+  listenerCount,
+  memoryUsage,
+  nextTick,
+  on,
+  off,
+  once,
+  pid,
+  platform,
+  ppid,
+  prependListener,
+  prependOnceListener,
+  rawListeners,
+  release,
+  removeAllListeners,
+  removeListener,
+  report,
+  resourceUsage,
+  setMaxListeners,
+  setSourceMapsEnabled,
+  stderr,
+  stdin,
+  stdout,
+  title,
+  throwDeprecation,
+  traceDeprecation,
+  umask,
+  uptime,
+  version,
+  versions,
+  // @ts-expect-error old API
+  domain,
+  initgroups,
+  moduleLoadList,
+  reallyExit,
+  openStdin,
+  assert,
+  binding,
+  send,
+  exitCode,
+  channel,
+  getegid,
+  geteuid,
+  getgid,
+  getgroups,
+  getuid,
+  setegid,
+  seteuid,
+  setgid,
+  setgroups,
+  setuid,
+  permission,
+  mainModule,
+  _events,
+  _eventsCount,
+  _exiting,
+  _maxListeners,
+  _debugEnd,
+  _debugProcess,
+  _fatalException,
+  _getActiveHandles,
+  _getActiveRequests,
+  _kill,
+  _preload_modules,
+  _rawDebug,
+  _startProfilerIdleNotifier,
+  _stopProfilerIdleNotifier,
+  _tickCallback,
+  _disconnect,
+  _handleQueue,
+  _pendingMessage,
+  _channel,
+  _send,
+  _linkedBinding
+};
+var process_default = _process;
+
+// ../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/_virtual_unenv_global_polyfill-@cloudflare-unenv-preset-node-process
+globalThis.process = process_default;
+
+// .wrangler/tmp/pages-3G2Hdv/functionsWorker-0.7243131424666118.mjs
+import { Writable } from "node:stream";
+import { EventEmitter as EventEmitter2 } from "node:events";
+import { Buffer as Buffer2 } from "node:buffer";
+import libDefault from "util";
+import libDefault2 from "crypto";
+import libDefault3 from "net";
+import libDefault4 from "events";
+import libDefault5 from "buffer";
+import libDefault6 from "stream";
+import libDefault7 from "path";
+import libDefault8 from "constants";
+import libDefault9 from "assert";
+import { Buffer as Buffer3 } from "node:buffer";
+import { Buffer as Buffer4 } from "node:buffer";
+import { Buffer as Buffer5 } from "node:buffer";
+import { Buffer as Buffer6 } from "node:buffer";
+var __create = Object.create;
+var __defProp2 = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
+var __esm = /* @__PURE__ */ __name((fn, res) => /* @__PURE__ */ __name(function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+}, "__init"), "__esm");
+var __commonJS = /* @__PURE__ */ __name((cb, mod) => /* @__PURE__ */ __name(function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+}, "__require"), "__commonJS");
+var __export = /* @__PURE__ */ __name((target, all) => {
+  for (var name in all)
+    __defProp2(target, name, { get: all[name], enumerable: true });
+}, "__export");
+var __copyProps = /* @__PURE__ */ __name((to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp2(to, key, { get: /* @__PURE__ */ __name(() => from[key], "get"), enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+}, "__copyProps");
+var __toESM = /* @__PURE__ */ __name((mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp2(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+)), "__toESM");
+// @__NO_SIDE_EFFECTS__
+function createNotImplementedError2(name) {
+  return new Error(`[unenv] ${name} is not implemented yet!`);
+}
+__name(createNotImplementedError2, "createNotImplementedError");
+// @__NO_SIDE_EFFECTS__
+function notImplemented2(name) {
+  const fn = /* @__PURE__ */ __name2(() => {
+    throw /* @__PURE__ */ createNotImplementedError2(name);
+  }, "fn");
+  return Object.assign(fn, { __unenv__: true });
+}
+__name(notImplemented2, "notImplemented");
 // @__NO_SIDE_EFFECTS__
 function notImplementedAsync(name) {
-  const fn = /* @__PURE__ */ notImplemented(name);
-  fn.__promisify__ = () => /* @__PURE__ */ notImplemented(name + ".__promisify__");
+  const fn = /* @__PURE__ */ notImplemented2(name);
+  fn.__promisify__ = () => /* @__PURE__ */ notImplemented2(name + ".__promisify__");
   fn.native = fn;
   return fn;
 }
+__name(notImplementedAsync, "notImplementedAsync");
 // @__NO_SIDE_EFFECTS__
 function notImplementedClass(name) {
   return class {
@@ -60,31 +932,40 @@ function notImplementedClass(name) {
     }
   };
 }
+__name(notImplementedClass, "notImplementedClass");
 var init_utils = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/_internal/utils.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
-    __name(createNotImplementedError, "createNotImplementedError");
-    __name(notImplemented, "notImplemented");
-    __name(notImplementedAsync, "notImplementedAsync");
-    __name(notImplementedClass, "notImplementedClass");
+    __name2(createNotImplementedError2, "createNotImplementedError");
+    __name2(notImplemented2, "notImplemented");
+    __name2(notImplementedAsync, "notImplementedAsync");
+    __name2(notImplementedClass, "notImplementedClass");
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/perf_hooks/performance.mjs
-var _timeOrigin, _performanceNow, nodeTiming, PerformanceEntry, PerformanceMark, PerformanceMeasure, PerformanceResourceTiming, PerformanceObserverEntryList, Performance, PerformanceObserver, performance;
+var _timeOrigin2;
+var _performanceNow2;
+var nodeTiming2;
+var PerformanceEntry2;
+var PerformanceMark3;
+var PerformanceMeasure2;
+var PerformanceResourceTiming2;
+var PerformanceObserverEntryList2;
+var Performance2;
+var PerformanceObserver2;
+var performance2;
 var init_performance = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/perf_hooks/performance.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     init_utils();
-    _timeOrigin = globalThis.performance?.timeOrigin ?? Date.now();
-    _performanceNow = globalThis.performance?.now ? globalThis.performance.now.bind(globalThis.performance) : () => Date.now() - _timeOrigin;
-    nodeTiming = {
+    _timeOrigin2 = globalThis.performance?.timeOrigin ?? Date.now();
+    _performanceNow2 = globalThis.performance?.now ? globalThis.performance.now.bind(globalThis.performance) : () => Date.now() - _timeOrigin2;
+    nodeTiming2 = {
       name: "node",
       entryType: "node",
       startTime: 0,
@@ -106,9 +987,12 @@ var init_performance = __esm({
         return this;
       }
     };
-    PerformanceEntry = class {
+    PerformanceEntry2 = class {
       static {
         __name(this, "PerformanceEntry");
+      }
+      static {
+        __name2(this, "PerformanceEntry");
       }
       __unenv__ = true;
       detail;
@@ -117,11 +1001,11 @@ var init_performance = __esm({
       startTime;
       constructor(name, options) {
         this.name = name;
-        this.startTime = options?.startTime || _performanceNow();
+        this.startTime = options?.startTime || _performanceNow2();
         this.detail = options?.detail;
       }
       get duration() {
-        return _performanceNow() - this.startTime;
+        return _performanceNow2() - this.startTime;
       }
       toJSON() {
         return {
@@ -133,9 +1017,12 @@ var init_performance = __esm({
         };
       }
     };
-    PerformanceMark = class PerformanceMark2 extends PerformanceEntry {
+    PerformanceMark3 = class PerformanceMark2 extends PerformanceEntry2 {
       static {
-        __name(this, "PerformanceMark");
+        __name(this, "PerformanceMark2");
+      }
+      static {
+        __name2(this, "PerformanceMark");
       }
       entryType = "mark";
       constructor() {
@@ -145,15 +1032,21 @@ var init_performance = __esm({
         return 0;
       }
     };
-    PerformanceMeasure = class extends PerformanceEntry {
+    PerformanceMeasure2 = class extends PerformanceEntry2 {
       static {
         __name(this, "PerformanceMeasure");
       }
+      static {
+        __name2(this, "PerformanceMeasure");
+      }
       entryType = "measure";
     };
-    PerformanceResourceTiming = class extends PerformanceEntry {
+    PerformanceResourceTiming2 = class extends PerformanceEntry2 {
       static {
         __name(this, "PerformanceResourceTiming");
+      }
+      static {
+        __name2(this, "PerformanceResourceTiming");
       }
       entryType = "resource";
       serverTiming = [];
@@ -178,9 +1071,12 @@ var init_performance = __esm({
       workerStart = 0;
       responseStatus = 0;
     };
-    PerformanceObserverEntryList = class {
+    PerformanceObserverEntryList2 = class {
       static {
         __name(this, "PerformanceObserverEntryList");
+      }
+      static {
+        __name2(this, "PerformanceObserverEntryList");
       }
       __unenv__ = true;
       getEntries() {
@@ -193,33 +1089,36 @@ var init_performance = __esm({
         return [];
       }
     };
-    Performance = class {
+    Performance2 = class {
       static {
         __name(this, "Performance");
       }
+      static {
+        __name2(this, "Performance");
+      }
       __unenv__ = true;
-      timeOrigin = _timeOrigin;
+      timeOrigin = _timeOrigin2;
       eventCounts = /* @__PURE__ */ new Map();
       _entries = [];
       _resourceTimingBufferSize = 0;
       navigation = void 0;
       timing = void 0;
       timerify(_fn, _options) {
-        throw createNotImplementedError("Performance.timerify");
+        throw /* @__PURE__ */ createNotImplementedError2("Performance.timerify");
       }
       get nodeTiming() {
-        return nodeTiming;
+        return nodeTiming2;
       }
       eventLoopUtilization() {
         return {};
       }
       markResourceTiming() {
-        return new PerformanceResourceTiming("");
+        return new PerformanceResourceTiming2("");
       }
       onresourcetimingbufferfull = null;
       now() {
-        if (this.timeOrigin === _timeOrigin) {
-          return _performanceNow();
+        if (this.timeOrigin === _timeOrigin2) {
+          return _performanceNow2();
         }
         return Date.now() - this.timeOrigin;
       }
@@ -242,7 +1141,7 @@ var init_performance = __esm({
         return this._entries.filter((e) => e.entryType === type2);
       }
       mark(name, options) {
-        const entry = new PerformanceMark(name, options);
+        const entry = new PerformanceMark3(name, options);
         this._entries.push(entry);
         return entry;
       }
@@ -256,7 +1155,7 @@ var init_performance = __esm({
           start = Number.parseFloat(startOrMeasureOptions?.start) || this.now();
           end = Number.parseFloat(startOrMeasureOptions?.end) || this.now();
         }
-        const entry = new PerformanceMeasure(measureName, {
+        const entry = new PerformanceMeasure2(measureName, {
           startTime: start,
           detail: {
             start,
@@ -270,21 +1169,24 @@ var init_performance = __esm({
         this._resourceTimingBufferSize = maxSize;
       }
       addEventListener(type2, listener, options) {
-        throw createNotImplementedError("Performance.addEventListener");
+        throw /* @__PURE__ */ createNotImplementedError2("Performance.addEventListener");
       }
       removeEventListener(type2, listener, options) {
-        throw createNotImplementedError("Performance.removeEventListener");
+        throw /* @__PURE__ */ createNotImplementedError2("Performance.removeEventListener");
       }
       dispatchEvent(event) {
-        throw createNotImplementedError("Performance.dispatchEvent");
+        throw /* @__PURE__ */ createNotImplementedError2("Performance.dispatchEvent");
       }
       toJSON() {
         return this;
       }
     };
-    PerformanceObserver = class {
+    PerformanceObserver2 = class {
       static {
         __name(this, "PerformanceObserver");
+      }
+      static {
+        __name2(this, "PerformanceObserver");
       }
       __unenv__ = true;
       static supportedEntryTypes = [];
@@ -296,10 +1198,10 @@ var init_performance = __esm({
         return [];
       }
       disconnect() {
-        throw createNotImplementedError("PerformanceObserver.disconnect");
+        throw /* @__PURE__ */ createNotImplementedError2("PerformanceObserver.disconnect");
       }
       observe(options) {
-        throw createNotImplementedError("PerformanceObserver.observe");
+        throw /* @__PURE__ */ createNotImplementedError2("PerformanceObserver.observe");
       }
       bind(fn) {
         return fn;
@@ -317,41 +1219,35 @@ var init_performance = __esm({
         return this;
       }
     };
-    performance = globalThis.performance && "addEventListener" in globalThis.performance ? globalThis.performance : new Performance();
+    performance2 = globalThis.performance && "addEventListener" in globalThis.performance ? globalThis.performance : new Performance2();
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/perf_hooks.mjs
 var init_perf_hooks = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/perf_hooks.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     init_performance();
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/@cloudflare/unenv-preset/dist/runtime/polyfill/performance.mjs
 var init_performance2 = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/@cloudflare/unenv-preset/dist/runtime/polyfill/performance.mjs"() {
     init_perf_hooks();
-    globalThis.performance = performance;
-    globalThis.Performance = Performance;
-    globalThis.PerformanceEntry = PerformanceEntry;
-    globalThis.PerformanceMark = PerformanceMark;
-    globalThis.PerformanceMeasure = PerformanceMeasure;
-    globalThis.PerformanceObserver = PerformanceObserver;
-    globalThis.PerformanceObserverEntryList = PerformanceObserverEntryList;
-    globalThis.PerformanceResourceTiming = PerformanceResourceTiming;
+    globalThis.performance = performance2;
+    globalThis.Performance = Performance2;
+    globalThis.PerformanceEntry = PerformanceEntry2;
+    globalThis.PerformanceMark = PerformanceMark3;
+    globalThis.PerformanceMeasure = PerformanceMeasure2;
+    globalThis.PerformanceObserver = PerformanceObserver2;
+    globalThis.PerformanceObserverEntryList = PerformanceObserverEntryList2;
+    globalThis.PerformanceResourceTiming = PerformanceResourceTiming2;
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/mock/noop.mjs
 var noop_default;
 var init_noop = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/mock/noop.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -359,13 +1255,39 @@ var init_noop = __esm({
     }, { __unenv__: true });
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/console.mjs
-import { Writable } from "node:stream";
-var _console, _ignoreErrors, _stderr, _stdout, log, info, trace, debug, table, error, warn, createTask, clear, count, countReset, dir, dirxml, group, groupEnd, groupCollapsed, profile, profileEnd, time, timeEnd, timeLog, timeStamp, Console, _times, _stdoutErrorHandler, _stderrErrorHandler;
+var _console;
+var _ignoreErrors;
+var _stderr;
+var _stdout;
+var log;
+var info;
+var trace;
+var debug;
+var table;
+var error;
+var warn;
+var createTask;
+var clear;
+var count;
+var countReset;
+var dir;
+var dirxml;
+var group;
+var groupEnd;
+var groupCollapsed;
+var profile;
+var profileEnd;
+var time;
+var timeEnd;
+var timeLog;
+var timeStamp;
+var Console;
+var _times;
+var _stdoutErrorHandler;
+var _stderrErrorHandler;
 var init_console = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/console.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -382,7 +1304,7 @@ var init_console = __esm({
     table = _console?.table ?? log;
     error = _console?.error ?? log;
     warn = _console?.warn ?? error;
-    createTask = _console?.createTask ?? /* @__PURE__ */ notImplemented("console.createTask");
+    createTask = _console?.createTask ?? /* @__PURE__ */ notImplemented2("console.createTask");
     clear = _console?.clear ?? noop_default;
     count = _console?.count ?? noop_default;
     countReset = _console?.countReset ?? noop_default;
@@ -403,19 +1325,42 @@ var init_console = __esm({
     _stderrErrorHandler = noop_default;
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/@cloudflare/unenv-preset/dist/runtime/node/console.mjs
-var workerdConsole, assert, clear2, context, count2, countReset2, createTask2, debug2, dir2, dirxml2, error2, group2, groupCollapsed2, groupEnd2, info2, log2, profile2, profileEnd2, table2, time2, timeEnd2, timeLog2, timeStamp2, trace2, warn2, console_default;
+var workerdConsole;
+var assert2;
+var clear2;
+var context;
+var count2;
+var countReset2;
+var createTask2;
+var debug2;
+var dir2;
+var dirxml2;
+var error2;
+var group2;
+var groupCollapsed2;
+var groupEnd2;
+var info2;
+var log2;
+var profile2;
+var profileEnd2;
+var table2;
+var time2;
+var timeEnd2;
+var timeLog2;
+var timeStamp2;
+var trace2;
+var warn2;
+var console_default;
 var init_console2 = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/@cloudflare/unenv-preset/dist/runtime/node/console.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     init_console();
     workerdConsole = globalThis["console"];
     ({
-      assert,
+      assert: assert2,
       clear: clear2,
       context: (
         // @ts-expect-error undocumented public API
@@ -458,24 +1403,20 @@ var init_console2 = __esm({
     console_default = workerdConsole;
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/_virtual_unenv_global_polyfill-@cloudflare-unenv-preset-node-console
 var init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/_virtual_unenv_global_polyfill-@cloudflare-unenv-preset-node-console"() {
     init_console2();
     globalThis.console = console_default;
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/process/hrtime.mjs
-var hrtime;
+var hrtime4;
 var init_hrtime = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/process/hrtime.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
-    hrtime = /* @__PURE__ */ Object.assign(/* @__PURE__ */ __name(function hrtime2(startTime) {
+    hrtime4 = /* @__PURE__ */ Object.assign(/* @__PURE__ */ __name2(/* @__PURE__ */ __name(function hrtime22(startTime) {
       const now = Date.now();
       const seconds = Math.trunc(now / 1e3);
       const nanos = now % 1e3 * 1e6;
@@ -489,23 +1430,24 @@ var init_hrtime = __esm({
         return [diffSeconds, diffNanos];
       }
       return [seconds, nanos];
-    }, "hrtime"), { bigint: /* @__PURE__ */ __name(function bigint() {
+    }, "hrtime2"), "hrtime"), { bigint: /* @__PURE__ */ __name2(/* @__PURE__ */ __name(function bigint2() {
       return BigInt(Date.now() * 1e6);
-    }, "bigint") });
+    }, "bigint"), "bigint") });
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/tty/read-stream.mjs
-var ReadStream;
+var ReadStream2;
 var init_read_stream = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/tty/read-stream.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
-    ReadStream = class {
+    ReadStream2 = class {
       static {
         __name(this, "ReadStream");
+      }
+      static {
+        __name2(this, "ReadStream");
       }
       fd;
       isRaw = false;
@@ -520,18 +1462,19 @@ var init_read_stream = __esm({
     };
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/tty/write-stream.mjs
-var WriteStream;
+var WriteStream2;
 var init_write_stream = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/tty/write-stream.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
-    WriteStream = class {
+    WriteStream2 = class {
       static {
         __name(this, "WriteStream");
+      }
+      static {
+        __name2(this, "WriteStream");
       }
       fd;
       columns = 80;
@@ -556,10 +1499,10 @@ var init_write_stream = __esm({
         callback && callback();
         return false;
       }
-      getColorDepth(env2) {
+      getColorDepth(env22) {
         return 1;
       }
-      hasColors(count3, env2) {
+      hasColors(count3, env22) {
         return false;
       }
       getWindowSize() {
@@ -579,11 +1522,9 @@ var init_write_stream = __esm({
     };
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/tty.mjs
 var init_tty = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/tty.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -591,34 +1532,32 @@ var init_tty = __esm({
     init_write_stream();
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/process/node-version.mjs
-var NODE_VERSION;
+var NODE_VERSION2;
 var init_node_version = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/process/node-version.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
-    NODE_VERSION = "22.14.0";
+    NODE_VERSION2 = "22.14.0";
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/process/process.mjs
-import { EventEmitter } from "node:events";
-var Process;
+var Process2;
 var init_process = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/process/process.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     init_tty();
     init_utils();
     init_node_version();
-    Process = class _Process extends EventEmitter {
+    Process2 = class _Process extends EventEmitter2 {
       static {
-        __name(this, "Process");
+        __name(this, "_Process");
+      }
+      static {
+        __name2(this, "Process");
       }
       env;
       hrtime;
@@ -628,7 +1567,7 @@ var init_process = __esm({
         this.env = impl.env;
         this.hrtime = impl.hrtime;
         this.nextTick = impl.nextTick;
-        for (const prop of [...Object.getOwnPropertyNames(_Process.prototype), ...Object.getOwnPropertyNames(EventEmitter.prototype)]) {
+        for (const prop of [...Object.getOwnPropertyNames(_Process.prototype), ...Object.getOwnPropertyNames(EventEmitter2.prototype)]) {
           const value = this[prop];
           if (typeof value === "function") {
             this[prop] = value.bind(this);
@@ -650,18 +1589,18 @@ var init_process = __esm({
       #stdout;
       #stderr;
       get stdin() {
-        return this.#stdin ??= new ReadStream(0);
+        return this.#stdin ??= new ReadStream2(0);
       }
       get stdout() {
-        return this.#stdout ??= new WriteStream(1);
+        return this.#stdout ??= new WriteStream2(1);
       }
       get stderr() {
-        return this.#stderr ??= new WriteStream(2);
+        return this.#stderr ??= new WriteStream2(2);
       }
       // --- cwd ---
       #cwd = "/";
-      chdir(cwd2) {
-        this.#cwd = cwd2;
+      chdir(cwd22) {
+        this.#cwd = cwd22;
       }
       cwd() {
         return this.#cwd;
@@ -677,10 +1616,10 @@ var init_process = __esm({
       pid = 200;
       ppid = 100;
       get version() {
-        return `v${NODE_VERSION}`;
+        return `v${NODE_VERSION2}`;
       }
       get versions() {
-        return { node: NODE_VERSION };
+        return { node: NODE_VERSION2 };
       }
       get allowedNodeEnvironmentFlags() {
         return /* @__PURE__ */ new Set();
@@ -731,61 +1670,61 @@ var init_process = __esm({
       }
       // --- unimplemented methods ---
       umask() {
-        throw createNotImplementedError("process.umask");
+        throw /* @__PURE__ */ createNotImplementedError2("process.umask");
       }
       getBuiltinModule() {
         return void 0;
       }
       getActiveResourcesInfo() {
-        throw createNotImplementedError("process.getActiveResourcesInfo");
+        throw /* @__PURE__ */ createNotImplementedError2("process.getActiveResourcesInfo");
       }
       exit() {
-        throw createNotImplementedError("process.exit");
+        throw /* @__PURE__ */ createNotImplementedError2("process.exit");
       }
       reallyExit() {
-        throw createNotImplementedError("process.reallyExit");
+        throw /* @__PURE__ */ createNotImplementedError2("process.reallyExit");
       }
       kill() {
-        throw createNotImplementedError("process.kill");
+        throw /* @__PURE__ */ createNotImplementedError2("process.kill");
       }
       abort() {
-        throw createNotImplementedError("process.abort");
+        throw /* @__PURE__ */ createNotImplementedError2("process.abort");
       }
       dlopen() {
-        throw createNotImplementedError("process.dlopen");
+        throw /* @__PURE__ */ createNotImplementedError2("process.dlopen");
       }
       setSourceMapsEnabled() {
-        throw createNotImplementedError("process.setSourceMapsEnabled");
+        throw /* @__PURE__ */ createNotImplementedError2("process.setSourceMapsEnabled");
       }
       loadEnvFile() {
-        throw createNotImplementedError("process.loadEnvFile");
+        throw /* @__PURE__ */ createNotImplementedError2("process.loadEnvFile");
       }
       disconnect() {
-        throw createNotImplementedError("process.disconnect");
+        throw /* @__PURE__ */ createNotImplementedError2("process.disconnect");
       }
       cpuUsage() {
-        throw createNotImplementedError("process.cpuUsage");
+        throw /* @__PURE__ */ createNotImplementedError2("process.cpuUsage");
       }
       setUncaughtExceptionCaptureCallback() {
-        throw createNotImplementedError("process.setUncaughtExceptionCaptureCallback");
+        throw /* @__PURE__ */ createNotImplementedError2("process.setUncaughtExceptionCaptureCallback");
       }
       hasUncaughtExceptionCaptureCallback() {
-        throw createNotImplementedError("process.hasUncaughtExceptionCaptureCallback");
+        throw /* @__PURE__ */ createNotImplementedError2("process.hasUncaughtExceptionCaptureCallback");
       }
       initgroups() {
-        throw createNotImplementedError("process.initgroups");
+        throw /* @__PURE__ */ createNotImplementedError2("process.initgroups");
       }
       openStdin() {
-        throw createNotImplementedError("process.openStdin");
+        throw /* @__PURE__ */ createNotImplementedError2("process.openStdin");
       }
       assert() {
-        throw createNotImplementedError("process.assert");
+        throw /* @__PURE__ */ createNotImplementedError2("process.assert");
       }
       binding() {
-        throw createNotImplementedError("process.binding");
+        throw /* @__PURE__ */ createNotImplementedError2("process.binding");
       }
       // --- attached interfaces ---
-      permission = { has: /* @__PURE__ */ notImplemented("process.permission.has") };
+      permission = { has: /* @__PURE__ */ notImplemented2("process.permission.has") };
       report = {
         directory: "",
         filename: "",
@@ -794,13 +1733,13 @@ var init_process = __esm({
         reportOnFatalError: false,
         reportOnSignal: false,
         reportOnUncaughtException: false,
-        getReport: /* @__PURE__ */ notImplemented("process.report.getReport"),
-        writeReport: /* @__PURE__ */ notImplemented("process.report.writeReport")
+        getReport: /* @__PURE__ */ notImplemented2("process.report.getReport"),
+        writeReport: /* @__PURE__ */ notImplemented2("process.report.writeReport")
       };
       finalization = {
-        register: /* @__PURE__ */ notImplemented("process.finalization.register"),
-        unregister: /* @__PURE__ */ notImplemented("process.finalization.unregister"),
-        registerBeforeExit: /* @__PURE__ */ notImplemented("process.finalization.registerBeforeExit")
+        register: /* @__PURE__ */ notImplemented2("process.finalization.register"),
+        unregister: /* @__PURE__ */ notImplemented2("process.finalization.unregister"),
+        registerBeforeExit: /* @__PURE__ */ notImplemented2("process.finalization.registerBeforeExit")
       };
       memoryUsage = Object.assign(() => ({
         arrayBuffers: 0,
@@ -808,7 +1747,7 @@ var init_process = __esm({
         external: 0,
         heapTotal: 0,
         heapUsed: 0
-      }), { rss: /* @__PURE__ */ __name(() => 0, "rss") });
+      }), { rss: /* @__PURE__ */ __name2(() => 0, "rss") });
       // --- undefined props ---
       mainModule = void 0;
       domain = void 0;
@@ -851,333 +1790,442 @@ var init_process = __esm({
     };
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/@cloudflare/unenv-preset/dist/runtime/node/process.mjs
-var globalProcess, getBuiltinModule, workerdProcess, isWorkerdProcessV2, unenvProcess, exit, features, platform, env, hrtime3, nextTick, _channel, _disconnect, _events, _eventsCount, _handleQueue, _maxListeners, _pendingMessage, _send, assert2, disconnect, mainModule, _debugEnd, _debugProcess, _exiting, _fatalException, _getActiveHandles, _getActiveRequests, _kill, _linkedBinding, _preload_modules, _rawDebug, _startProfilerIdleNotifier, _stopProfilerIdleNotifier, _tickCallback, abort, addListener, allowedNodeEnvironmentFlags, arch, argv, argv0, availableMemory, binding, channel, chdir, config, connected, constrainedMemory, cpuUsage, cwd, debugPort, dlopen, domain, emit, emitWarning, eventNames, execArgv, execPath, exitCode, finalization, getActiveResourcesInfo, getegid, geteuid, getgid, getgroups, getMaxListeners, getuid, hasUncaughtExceptionCaptureCallback, initgroups, kill, listenerCount, listeners, loadEnvFile, memoryUsage, moduleLoadList, off, on, once, openStdin, permission, pid, ppid, prependListener, prependOnceListener, rawListeners, reallyExit, ref, release, removeAllListeners, removeListener, report, resourceUsage, send, setegid, seteuid, setgid, setgroups, setMaxListeners, setSourceMapsEnabled, setuid, setUncaughtExceptionCaptureCallback, sourceMapsEnabled, stderr, stdin, stdout, throwDeprecation, title, traceDeprecation, umask, unref, uptime, version, versions, _process, process_default;
+var globalProcess2;
+var getBuiltinModule2;
+var workerdProcess2;
+var isWorkerdProcessV22;
+var unenvProcess2;
+var exit2;
+var features2;
+var platform2;
+var env2;
+var hrtime32;
+var nextTick2;
+var _channel2;
+var _disconnect2;
+var _events2;
+var _eventsCount2;
+var _handleQueue2;
+var _maxListeners2;
+var _pendingMessage2;
+var _send2;
+var assert22;
+var disconnect2;
+var mainModule2;
+var _debugEnd2;
+var _debugProcess2;
+var _exiting2;
+var _fatalException2;
+var _getActiveHandles2;
+var _getActiveRequests2;
+var _kill2;
+var _linkedBinding2;
+var _preload_modules2;
+var _rawDebug2;
+var _startProfilerIdleNotifier2;
+var _stopProfilerIdleNotifier2;
+var _tickCallback2;
+var abort2;
+var addListener2;
+var allowedNodeEnvironmentFlags2;
+var arch2;
+var argv2;
+var argv02;
+var availableMemory2;
+var binding2;
+var channel2;
+var chdir2;
+var config2;
+var connected2;
+var constrainedMemory2;
+var cpuUsage2;
+var cwd2;
+var debugPort2;
+var dlopen2;
+var domain2;
+var emit2;
+var emitWarning2;
+var eventNames2;
+var execArgv2;
+var execPath2;
+var exitCode2;
+var finalization2;
+var getActiveResourcesInfo2;
+var getegid2;
+var geteuid2;
+var getgid2;
+var getgroups2;
+var getMaxListeners2;
+var getuid2;
+var hasUncaughtExceptionCaptureCallback2;
+var initgroups2;
+var kill2;
+var listenerCount2;
+var listeners2;
+var loadEnvFile2;
+var memoryUsage2;
+var moduleLoadList2;
+var off2;
+var on2;
+var once2;
+var openStdin2;
+var permission2;
+var pid2;
+var ppid2;
+var prependListener2;
+var prependOnceListener2;
+var rawListeners2;
+var reallyExit2;
+var ref2;
+var release2;
+var removeAllListeners2;
+var removeListener2;
+var report2;
+var resourceUsage2;
+var send2;
+var setegid2;
+var seteuid2;
+var setgid2;
+var setgroups2;
+var setMaxListeners2;
+var setSourceMapsEnabled2;
+var setuid2;
+var setUncaughtExceptionCaptureCallback2;
+var sourceMapsEnabled2;
+var stderr2;
+var stdin2;
+var stdout2;
+var throwDeprecation2;
+var title2;
+var traceDeprecation2;
+var umask2;
+var unref2;
+var uptime2;
+var version2;
+var versions2;
+var _process2;
+var process_default2;
 var init_process2 = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/@cloudflare/unenv-preset/dist/runtime/node/process.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     init_hrtime();
     init_process();
-    globalProcess = globalThis["process"];
-    getBuiltinModule = globalProcess.getBuiltinModule;
-    workerdProcess = getBuiltinModule("node:process");
-    isWorkerdProcessV2 = globalThis.Cloudflare.compatibilityFlags.enable_nodejs_process_v2;
-    unenvProcess = new Process({
-      env: globalProcess.env,
+    globalProcess2 = globalThis["process"];
+    getBuiltinModule2 = globalProcess2.getBuiltinModule;
+    workerdProcess2 = getBuiltinModule2("node:process");
+    isWorkerdProcessV22 = globalThis.Cloudflare.compatibilityFlags.enable_nodejs_process_v2;
+    unenvProcess2 = new Process2({
+      env: globalProcess2.env,
       // `hrtime` is only available from workerd process v2
-      hrtime: isWorkerdProcessV2 ? workerdProcess.hrtime : hrtime,
+      hrtime: isWorkerdProcessV22 ? workerdProcess2.hrtime : hrtime4,
       // `nextTick` is available from workerd process v1
-      nextTick: workerdProcess.nextTick
+      nextTick: workerdProcess2.nextTick
     });
-    ({ exit, features, platform } = workerdProcess);
+    ({ exit: exit2, features: features2, platform: platform2 } = workerdProcess2);
     ({
       env: (
         // Always implemented by workerd
-        env
+        env2
       ),
       hrtime: (
         // Only implemented in workerd v2
-        hrtime3
+        hrtime32
       ),
       nextTick: (
         // Always implemented by workerd
-        nextTick
+        nextTick2
       )
-    } = unenvProcess);
+    } = unenvProcess2);
     ({
-      _channel,
-      _disconnect,
-      _events,
-      _eventsCount,
-      _handleQueue,
-      _maxListeners,
-      _pendingMessage,
-      _send,
-      assert: assert2,
-      disconnect,
-      mainModule
-    } = unenvProcess);
+      _channel: _channel2,
+      _disconnect: _disconnect2,
+      _events: _events2,
+      _eventsCount: _eventsCount2,
+      _handleQueue: _handleQueue2,
+      _maxListeners: _maxListeners2,
+      _pendingMessage: _pendingMessage2,
+      _send: _send2,
+      assert: assert22,
+      disconnect: disconnect2,
+      mainModule: mainModule2
+    } = unenvProcess2);
     ({
       _debugEnd: (
         // @ts-expect-error `_debugEnd` is missing typings
-        _debugEnd
+        _debugEnd2
       ),
       _debugProcess: (
         // @ts-expect-error `_debugProcess` is missing typings
-        _debugProcess
+        _debugProcess2
       ),
       _exiting: (
         // @ts-expect-error `_exiting` is missing typings
-        _exiting
+        _exiting2
       ),
       _fatalException: (
         // @ts-expect-error `_fatalException` is missing typings
-        _fatalException
+        _fatalException2
       ),
       _getActiveHandles: (
         // @ts-expect-error `_getActiveHandles` is missing typings
-        _getActiveHandles
+        _getActiveHandles2
       ),
       _getActiveRequests: (
         // @ts-expect-error `_getActiveRequests` is missing typings
-        _getActiveRequests
+        _getActiveRequests2
       ),
       _kill: (
         // @ts-expect-error `_kill` is missing typings
-        _kill
+        _kill2
       ),
       _linkedBinding: (
         // @ts-expect-error `_linkedBinding` is missing typings
-        _linkedBinding
+        _linkedBinding2
       ),
       _preload_modules: (
         // @ts-expect-error `_preload_modules` is missing typings
-        _preload_modules
+        _preload_modules2
       ),
       _rawDebug: (
         // @ts-expect-error `_rawDebug` is missing typings
-        _rawDebug
+        _rawDebug2
       ),
       _startProfilerIdleNotifier: (
         // @ts-expect-error `_startProfilerIdleNotifier` is missing typings
-        _startProfilerIdleNotifier
+        _startProfilerIdleNotifier2
       ),
       _stopProfilerIdleNotifier: (
         // @ts-expect-error `_stopProfilerIdleNotifier` is missing typings
-        _stopProfilerIdleNotifier
+        _stopProfilerIdleNotifier2
       ),
       _tickCallback: (
         // @ts-expect-error `_tickCallback` is missing typings
-        _tickCallback
+        _tickCallback2
       ),
-      abort,
-      addListener,
-      allowedNodeEnvironmentFlags,
-      arch,
-      argv,
-      argv0,
-      availableMemory,
+      abort: abort2,
+      addListener: addListener2,
+      allowedNodeEnvironmentFlags: allowedNodeEnvironmentFlags2,
+      arch: arch2,
+      argv: argv2,
+      argv0: argv02,
+      availableMemory: availableMemory2,
       binding: (
         // @ts-expect-error `binding` is missing typings
-        binding
+        binding2
       ),
-      channel,
-      chdir,
-      config,
-      connected,
-      constrainedMemory,
-      cpuUsage,
-      cwd,
-      debugPort,
-      dlopen,
+      channel: channel2,
+      chdir: chdir2,
+      config: config2,
+      connected: connected2,
+      constrainedMemory: constrainedMemory2,
+      cpuUsage: cpuUsage2,
+      cwd: cwd2,
+      debugPort: debugPort2,
+      dlopen: dlopen2,
       domain: (
         // @ts-expect-error `domain` is missing typings
-        domain
+        domain2
       ),
-      emit,
-      emitWarning,
-      eventNames,
-      execArgv,
-      execPath,
-      exitCode,
-      finalization,
-      getActiveResourcesInfo,
-      getegid,
-      geteuid,
-      getgid,
-      getgroups,
-      getMaxListeners,
-      getuid,
-      hasUncaughtExceptionCaptureCallback,
+      emit: emit2,
+      emitWarning: emitWarning2,
+      eventNames: eventNames2,
+      execArgv: execArgv2,
+      execPath: execPath2,
+      exitCode: exitCode2,
+      finalization: finalization2,
+      getActiveResourcesInfo: getActiveResourcesInfo2,
+      getegid: getegid2,
+      geteuid: geteuid2,
+      getgid: getgid2,
+      getgroups: getgroups2,
+      getMaxListeners: getMaxListeners2,
+      getuid: getuid2,
+      hasUncaughtExceptionCaptureCallback: hasUncaughtExceptionCaptureCallback2,
       initgroups: (
         // @ts-expect-error `initgroups` is missing typings
-        initgroups
+        initgroups2
       ),
-      kill,
-      listenerCount,
-      listeners,
-      loadEnvFile,
-      memoryUsage,
+      kill: kill2,
+      listenerCount: listenerCount2,
+      listeners: listeners2,
+      loadEnvFile: loadEnvFile2,
+      memoryUsage: memoryUsage2,
       moduleLoadList: (
         // @ts-expect-error `moduleLoadList` is missing typings
-        moduleLoadList
+        moduleLoadList2
       ),
-      off,
-      on,
-      once,
+      off: off2,
+      on: on2,
+      once: once2,
       openStdin: (
         // @ts-expect-error `openStdin` is missing typings
-        openStdin
+        openStdin2
       ),
-      permission,
-      pid,
-      ppid,
-      prependListener,
-      prependOnceListener,
-      rawListeners,
+      permission: permission2,
+      pid: pid2,
+      ppid: ppid2,
+      prependListener: prependListener2,
+      prependOnceListener: prependOnceListener2,
+      rawListeners: rawListeners2,
       reallyExit: (
         // @ts-expect-error `reallyExit` is missing typings
-        reallyExit
+        reallyExit2
       ),
-      ref,
-      release,
-      removeAllListeners,
-      removeListener,
-      report,
-      resourceUsage,
-      send,
-      setegid,
-      seteuid,
-      setgid,
-      setgroups,
-      setMaxListeners,
-      setSourceMapsEnabled,
-      setuid,
-      setUncaughtExceptionCaptureCallback,
-      sourceMapsEnabled,
-      stderr,
-      stdin,
-      stdout,
-      throwDeprecation,
-      title,
-      traceDeprecation,
-      umask,
-      unref,
-      uptime,
-      version,
-      versions
-    } = isWorkerdProcessV2 ? workerdProcess : unenvProcess);
-    _process = {
-      abort,
-      addListener,
-      allowedNodeEnvironmentFlags,
-      hasUncaughtExceptionCaptureCallback,
-      setUncaughtExceptionCaptureCallback,
-      loadEnvFile,
-      sourceMapsEnabled,
-      arch,
-      argv,
-      argv0,
-      chdir,
-      config,
-      connected,
-      constrainedMemory,
-      availableMemory,
-      cpuUsage,
-      cwd,
-      debugPort,
-      dlopen,
-      disconnect,
-      emit,
-      emitWarning,
-      env,
-      eventNames,
-      execArgv,
-      execPath,
-      exit,
-      finalization,
-      features,
-      getBuiltinModule,
-      getActiveResourcesInfo,
-      getMaxListeners,
-      hrtime: hrtime3,
-      kill,
-      listeners,
-      listenerCount,
-      memoryUsage,
-      nextTick,
-      on,
-      off,
-      once,
-      pid,
-      platform,
-      ppid,
-      prependListener,
-      prependOnceListener,
-      rawListeners,
-      release,
-      removeAllListeners,
-      removeListener,
-      report,
-      resourceUsage,
-      setMaxListeners,
-      setSourceMapsEnabled,
-      stderr,
-      stdin,
-      stdout,
-      title,
-      throwDeprecation,
-      traceDeprecation,
-      umask,
-      uptime,
-      version,
-      versions,
+      ref: ref2,
+      release: release2,
+      removeAllListeners: removeAllListeners2,
+      removeListener: removeListener2,
+      report: report2,
+      resourceUsage: resourceUsage2,
+      send: send2,
+      setegid: setegid2,
+      seteuid: seteuid2,
+      setgid: setgid2,
+      setgroups: setgroups2,
+      setMaxListeners: setMaxListeners2,
+      setSourceMapsEnabled: setSourceMapsEnabled2,
+      setuid: setuid2,
+      setUncaughtExceptionCaptureCallback: setUncaughtExceptionCaptureCallback2,
+      sourceMapsEnabled: sourceMapsEnabled2,
+      stderr: stderr2,
+      stdin: stdin2,
+      stdout: stdout2,
+      throwDeprecation: throwDeprecation2,
+      title: title2,
+      traceDeprecation: traceDeprecation2,
+      umask: umask2,
+      unref: unref2,
+      uptime: uptime2,
+      version: version2,
+      versions: versions2
+    } = isWorkerdProcessV22 ? workerdProcess2 : unenvProcess2);
+    _process2 = {
+      abort: abort2,
+      addListener: addListener2,
+      allowedNodeEnvironmentFlags: allowedNodeEnvironmentFlags2,
+      hasUncaughtExceptionCaptureCallback: hasUncaughtExceptionCaptureCallback2,
+      setUncaughtExceptionCaptureCallback: setUncaughtExceptionCaptureCallback2,
+      loadEnvFile: loadEnvFile2,
+      sourceMapsEnabled: sourceMapsEnabled2,
+      arch: arch2,
+      argv: argv2,
+      argv0: argv02,
+      chdir: chdir2,
+      config: config2,
+      connected: connected2,
+      constrainedMemory: constrainedMemory2,
+      availableMemory: availableMemory2,
+      cpuUsage: cpuUsage2,
+      cwd: cwd2,
+      debugPort: debugPort2,
+      dlopen: dlopen2,
+      disconnect: disconnect2,
+      emit: emit2,
+      emitWarning: emitWarning2,
+      env: env2,
+      eventNames: eventNames2,
+      execArgv: execArgv2,
+      execPath: execPath2,
+      exit: exit2,
+      finalization: finalization2,
+      features: features2,
+      getBuiltinModule: getBuiltinModule2,
+      getActiveResourcesInfo: getActiveResourcesInfo2,
+      getMaxListeners: getMaxListeners2,
+      hrtime: hrtime32,
+      kill: kill2,
+      listeners: listeners2,
+      listenerCount: listenerCount2,
+      memoryUsage: memoryUsage2,
+      nextTick: nextTick2,
+      on: on2,
+      off: off2,
+      once: once2,
+      pid: pid2,
+      platform: platform2,
+      ppid: ppid2,
+      prependListener: prependListener2,
+      prependOnceListener: prependOnceListener2,
+      rawListeners: rawListeners2,
+      release: release2,
+      removeAllListeners: removeAllListeners2,
+      removeListener: removeListener2,
+      report: report2,
+      resourceUsage: resourceUsage2,
+      setMaxListeners: setMaxListeners2,
+      setSourceMapsEnabled: setSourceMapsEnabled2,
+      stderr: stderr2,
+      stdin: stdin2,
+      stdout: stdout2,
+      title: title2,
+      throwDeprecation: throwDeprecation2,
+      traceDeprecation: traceDeprecation2,
+      umask: umask2,
+      uptime: uptime2,
+      version: version2,
+      versions: versions2,
       // @ts-expect-error old API
-      domain,
-      initgroups,
-      moduleLoadList,
-      reallyExit,
-      openStdin,
-      assert: assert2,
-      binding,
-      send,
-      exitCode,
-      channel,
-      getegid,
-      geteuid,
-      getgid,
-      getgroups,
-      getuid,
-      setegid,
-      seteuid,
-      setgid,
-      setgroups,
-      setuid,
-      permission,
-      mainModule,
-      _events,
-      _eventsCount,
-      _exiting,
-      _maxListeners,
-      _debugEnd,
-      _debugProcess,
-      _fatalException,
-      _getActiveHandles,
-      _getActiveRequests,
-      _kill,
-      _preload_modules,
-      _rawDebug,
-      _startProfilerIdleNotifier,
-      _stopProfilerIdleNotifier,
-      _tickCallback,
-      _disconnect,
-      _handleQueue,
-      _pendingMessage,
-      _channel,
-      _send,
-      _linkedBinding
+      domain: domain2,
+      initgroups: initgroups2,
+      moduleLoadList: moduleLoadList2,
+      reallyExit: reallyExit2,
+      openStdin: openStdin2,
+      assert: assert22,
+      binding: binding2,
+      send: send2,
+      exitCode: exitCode2,
+      channel: channel2,
+      getegid: getegid2,
+      geteuid: geteuid2,
+      getgid: getgid2,
+      getgroups: getgroups2,
+      getuid: getuid2,
+      setegid: setegid2,
+      seteuid: seteuid2,
+      setgid: setgid2,
+      setgroups: setgroups2,
+      setuid: setuid2,
+      permission: permission2,
+      mainModule: mainModule2,
+      _events: _events2,
+      _eventsCount: _eventsCount2,
+      _exiting: _exiting2,
+      _maxListeners: _maxListeners2,
+      _debugEnd: _debugEnd2,
+      _debugProcess: _debugProcess2,
+      _fatalException: _fatalException2,
+      _getActiveHandles: _getActiveHandles2,
+      _getActiveRequests: _getActiveRequests2,
+      _kill: _kill2,
+      _preload_modules: _preload_modules2,
+      _rawDebug: _rawDebug2,
+      _startProfilerIdleNotifier: _startProfilerIdleNotifier2,
+      _stopProfilerIdleNotifier: _stopProfilerIdleNotifier2,
+      _tickCallback: _tickCallback2,
+      _disconnect: _disconnect2,
+      _handleQueue: _handleQueue2,
+      _pendingMessage: _pendingMessage2,
+      _channel: _channel2,
+      _send: _send2,
+      _linkedBinding: _linkedBinding2
     };
-    process_default = _process;
+    process_default2 = _process2;
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/_virtual_unenv_global_polyfill-@cloudflare-unenv-preset-node-process
 var init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/_virtual_unenv_global_polyfill-@cloudflare-unenv-preset-node-process"() {
     init_process2();
-    globalThis.process = process_default;
+    globalThis.process = process_default2;
   }
 });
-
-// api/_lib/supabase.js
 function toSafeText(value, fallback = "") {
   if (typeof value === "string") return value;
   return fallback;
 }
+__name(toSafeText, "toSafeText");
 function readConfigText(value) {
   const raw = toSafeText(value).trim();
   if (!raw) return "";
@@ -1186,9 +2234,10 @@ function readConfigText(value) {
   }
   return raw;
 }
-function getSupabaseConfig(env2) {
-  const url = readConfigText(env2?.SUPABASE_URL);
-  const serviceRoleKey = readConfigText(env2?.SUPABASE_SERVICE_ROLE_KEY);
+__name(readConfigText, "readConfigText");
+function getSupabaseConfig(env22) {
+  const url = readConfigText(env22?.SUPABASE_URL);
+  const serviceRoleKey = readConfigText(env22?.SUPABASE_SERVICE_ROLE_KEY);
   if (!url || !serviceRoleKey) {
     const err = new Error("SUPABASE_CONFIG_MISSING");
     err.code = "SUPABASE_CONFIG_MISSING";
@@ -1196,6 +2245,7 @@ function getSupabaseConfig(env2) {
   }
   return { url, serviceRoleKey };
 }
+__name(getSupabaseConfig, "getSupabaseConfig");
 function buildSupabaseUrl(baseUrl, table3, query = {}) {
   const normalizedTable = String(table3 || "").replace(/^\/+/, "");
   const url = new URL(`/rest/v1/${normalizedTable}`, baseUrl);
@@ -1205,6 +2255,7 @@ function buildSupabaseUrl(baseUrl, table3, query = {}) {
   });
   return url.toString();
 }
+__name(buildSupabaseUrl, "buildSupabaseUrl");
 function buildSupabaseHeaders(serviceRoleKey, options = {}) {
   const headers = new Headers(options.headers || {});
   headers.set("apikey", serviceRoleKey);
@@ -1214,13 +2265,15 @@ function buildSupabaseHeaders(serviceRoleKey, options = {}) {
   }
   return headers;
 }
+__name(buildSupabaseHeaders, "buildSupabaseHeaders");
 function safePreview(value, maxLength = 700) {
   const text = toSafeText(value).replace(/\s+/g, " ").trim();
   if (!text) return "";
   return text.slice(0, maxLength);
 }
-async function supabaseRequest(env2, table3, options = {}) {
-  const { url, serviceRoleKey } = getSupabaseConfig(env2);
+__name(safePreview, "safePreview");
+async function supabaseRequest(env22, table3, options = {}) {
+  const { url, serviceRoleKey } = getSupabaseConfig(env22);
   const {
     method = "GET",
     query = {},
@@ -1249,28 +2302,27 @@ async function supabaseRequest(env2, table3, options = {}) {
   }
   return payload;
 }
+__name(supabaseRequest, "supabaseRequest");
 var init_supabase = __esm({
   "api/_lib/supabase.js"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
-    __name(toSafeText, "toSafeText");
-    __name(readConfigText, "readConfigText");
-    __name(getSupabaseConfig, "getSupabaseConfig");
-    __name(buildSupabaseUrl, "buildSupabaseUrl");
-    __name(buildSupabaseHeaders, "buildSupabaseHeaders");
-    __name(safePreview, "safePreview");
-    __name(supabaseRequest, "supabaseRequest");
+    __name2(toSafeText, "toSafeText");
+    __name2(readConfigText, "readConfigText");
+    __name2(getSupabaseConfig, "getSupabaseConfig");
+    __name2(buildSupabaseUrl, "buildSupabaseUrl");
+    __name2(buildSupabaseHeaders, "buildSupabaseHeaders");
+    __name2(safePreview, "safePreview");
+    __name2(supabaseRequest, "supabaseRequest");
   }
 });
-
-// api/_lib/auth.js
-import { Buffer as Buffer2 } from "node:buffer";
 function toSafeText2(value, fallback = "") {
   if (typeof value === "string") return value;
   return fallback;
 }
+__name(toSafeText2, "toSafeText2");
 function readConfigText2(value) {
   const raw = toSafeText2(value).trim();
   if (!raw) return "";
@@ -1279,6 +2331,7 @@ function readConfigText2(value) {
   }
   return raw;
 }
+__name(readConfigText2, "readConfigText2");
 function parseCookies(cookieHeader) {
   const result = {};
   if (!cookieHeader) return result;
@@ -1297,6 +2350,7 @@ function parseCookies(cookieHeader) {
   });
   return result;
 }
+__name(parseCookies, "parseCookies");
 function buildCookie(name, value, options = {}) {
   const safeName = String(name || "").trim();
   if (!safeName) return "";
@@ -1316,23 +2370,28 @@ function buildCookie(name, value, options = {}) {
   if (sameSite) parts.push(`SameSite=${sameSite}`);
   return parts.join("; ");
 }
+__name(buildCookie, "buildCookie");
 function buildClearedCookie(name, options = {}) {
   return buildCookie(name, "", { ...options, maxAge: 0 });
 }
+__name(buildClearedCookie, "buildClearedCookie");
 function toBase64Url(bufferLike) {
   const base64 = Buffer2.from(bufferLike).toString("base64");
   return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
+__name(toBase64Url, "toBase64Url");
 function createRandomToken(bytes = 32) {
   const chunk = new Uint8Array(bytes);
   crypto.getRandomValues(chunk);
   return toBase64Url(chunk);
 }
+__name(createRandomToken, "createRandomToken");
 async function sha256Hex(value) {
   const encoded = new TextEncoder().encode(String(value || ""));
   const digest = await crypto.subtle.digest("SHA-256", encoded);
   return Buffer2.from(digest).toString("hex");
 }
+__name(sha256Hex, "sha256Hex");
 function sanitizeReturnTo(input, fallback = "/") {
   const raw = toSafeText2(input, "").trim();
   if (!raw) return fallback;
@@ -1340,11 +2399,13 @@ function sanitizeReturnTo(input, fallback = "/") {
   if (raw.startsWith("//")) return fallback;
   return raw;
 }
+__name(sanitizeReturnTo, "sanitizeReturnTo");
 function trimForStorage(value, maxLength = 512) {
   const text = toSafeText2(value).trim();
   if (!text) return "";
   return text.slice(0, maxLength);
 }
+__name(trimForStorage, "trimForStorage");
 function readRequestMetadata(request) {
   return {
     userAgent: trimForStorage(request.headers.get("user-agent") || "", 1024),
@@ -1354,15 +2415,17 @@ function readRequestMetadata(request) {
     )
   };
 }
-function getGoogleRedirectUri(request, env2) {
-  const explicit = readConfigText2(env2?.GOOGLE_REDIRECT_URI);
+__name(readRequestMetadata, "readRequestMetadata");
+function getGoogleRedirectUri(request, env22) {
+  const explicit = readConfigText2(env22?.GOOGLE_REDIRECT_URI);
   if (explicit) return explicit;
   const requestUrl = new URL(request.url);
   return `${requestUrl.origin}/api/auth/google-callback`;
 }
-function getGoogleOAuthConfig(env2) {
-  const clientId = readConfigText2(env2?.GOOGLE_CLIENT_ID);
-  const clientSecret = readConfigText2(env2?.GOOGLE_CLIENT_SECRET);
+__name(getGoogleRedirectUri, "getGoogleRedirectUri");
+function getGoogleOAuthConfig(env22) {
+  const clientId = readConfigText2(env22?.GOOGLE_CLIENT_ID);
+  const clientSecret = readConfigText2(env22?.GOOGLE_CLIENT_SECRET);
   if (!clientId || !clientSecret) {
     const err = new Error("GOOGLE_OAUTH_CONFIG_MISSING");
     err.code = "GOOGLE_OAUTH_CONFIG_MISSING";
@@ -1370,9 +2433,10 @@ function getGoogleOAuthConfig(env2) {
   }
   return { clientId, clientSecret };
 }
-function buildGoogleOAuthStartUrl(request, env2, state, returnTo) {
-  const { clientId } = getGoogleOAuthConfig(env2);
-  const redirectUri = getGoogleRedirectUri(request, env2);
+__name(getGoogleOAuthConfig, "getGoogleOAuthConfig");
+function buildGoogleOAuthStartUrl(request, env22, state, returnTo) {
+  const { clientId } = getGoogleOAuthConfig(env22);
+  const redirectUri = getGoogleRedirectUri(request, env22);
   const normalizedReturnTo = sanitizeReturnTo(returnTo, "/");
   const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   url.searchParams.set("client_id", clientId);
@@ -1387,19 +2451,23 @@ function buildGoogleOAuthStartUrl(request, env2, state, returnTo) {
     returnTo: normalizedReturnTo
   };
 }
+__name(buildGoogleOAuthStartUrl, "buildGoogleOAuthStartUrl");
 function createOAuthState() {
   return createRandomToken(24);
 }
+__name(createOAuthState, "createOAuthState");
 function buildOAuthStateCookie(state) {
   return buildCookie(GOOGLE_OAUTH_STATE_COOKIE_NAME, state, {
     maxAge: GOOGLE_OAUTH_COOKIE_MAX_AGE_SECONDS
   });
 }
+__name(buildOAuthStateCookie, "buildOAuthStateCookie");
 function buildOAuthReturnToCookie(returnTo) {
   return buildCookie(GOOGLE_OAUTH_RETURN_TO_COOKIE_NAME, sanitizeReturnTo(returnTo, "/"), {
     maxAge: GOOGLE_OAUTH_COOKIE_MAX_AGE_SECONDS
   });
 }
+__name(buildOAuthReturnToCookie, "buildOAuthReturnToCookie");
 function readOAuthCookies(request) {
   const cookies = parseCookies(request.headers.get("cookie"));
   return {
@@ -1407,27 +2475,31 @@ function readOAuthCookies(request) {
     returnTo: sanitizeReturnTo(cookies[GOOGLE_OAUTH_RETURN_TO_COOKIE_NAME], "/")
   };
 }
+__name(readOAuthCookies, "readOAuthCookies");
 function buildClearedOAuthCookies() {
   return [
     buildClearedCookie(GOOGLE_OAUTH_STATE_COOKIE_NAME),
     buildClearedCookie(GOOGLE_OAUTH_RETURN_TO_COOKIE_NAME)
   ];
 }
+__name(buildClearedOAuthCookies, "buildClearedOAuthCookies");
 function buildAppSessionCookie(token) {
   return buildCookie(APP_SESSION_COOKIE_NAME, token, {
     maxAge: APP_SESSION_MAX_AGE_SECONDS
   });
 }
+__name(buildAppSessionCookie, "buildAppSessionCookie");
 function buildClearedAppSessionCookie() {
   return buildClearedCookie(APP_SESSION_COOKIE_NAME);
 }
-async function createAppSession(env2, userId, request) {
+__name(buildClearedAppSessionCookie, "buildClearedAppSessionCookie");
+async function createAppSession(env22, userId, request) {
   const token = createRandomToken(32);
   const tokenHash = await sha256Hex(token);
   const now = Date.now();
   const expiresAt = now + APP_SESSION_MAX_AGE_SECONDS * 1e3;
   const { userAgent, ip } = readRequestMetadata(request);
-  await supabaseRequest(env2, "app_sessions", {
+  await supabaseRequest(env22, "app_sessions", {
     method: "POST",
     body: {
       user_id: Number(userId),
@@ -1444,12 +2516,13 @@ async function createAppSession(env2, userId, request) {
   });
   return { token, expiresAt };
 }
-async function invalidateAppSession(request, env2) {
+__name(createAppSession, "createAppSession");
+async function invalidateAppSession(request, env22) {
   const cookies = parseCookies(request.headers.get("cookie"));
   const token = toSafeText2(cookies[APP_SESSION_COOKIE_NAME]);
   if (!token) return false;
   const tokenHash = await sha256Hex(token);
-  await supabaseRequest(env2, "app_sessions", {
+  await supabaseRequest(env22, "app_sessions", {
     method: "DELETE",
     query: {
       token_hash: `eq.${tokenHash}`
@@ -1460,13 +2533,14 @@ async function invalidateAppSession(request, env2) {
   });
   return true;
 }
-async function readAuthenticatedUser(request, env2) {
+__name(invalidateAppSession, "invalidateAppSession");
+async function readAuthenticatedUser(request, env22) {
   const cookies = parseCookies(request.headers.get("cookie"));
   const token = toSafeText2(cookies[APP_SESSION_COOKIE_NAME]);
   if (!token) return null;
   const tokenHash = await sha256Hex(token);
   const now = Date.now();
-  const sessions = await supabaseRequest(env2, "app_sessions", {
+  const sessions = await supabaseRequest(env22, "app_sessions", {
     query: {
       select: "user_id,expires_at",
       token_hash: `eq.${tokenHash}`,
@@ -1476,7 +2550,7 @@ async function readAuthenticatedUser(request, env2) {
   });
   const session = Array.isArray(sessions) ? sessions[0] : null;
   if (!session?.user_id) return null;
-  const users = await supabaseRequest(env2, "users", {
+  const users = await supabaseRequest(env22, "users", {
     query: {
       select: "id,google_sub,email,name,picture",
       id: `eq.${session.user_id}`,
@@ -1486,7 +2560,7 @@ async function readAuthenticatedUser(request, env2) {
   const user = Array.isArray(users) ? users[0] : null;
   if (!user?.id) return null;
   const { userAgent, ip } = readRequestMetadata(request);
-  await supabaseRequest(env2, "app_sessions", {
+  await supabaseRequest(env22, "app_sessions", {
     method: "PATCH",
     query: {
       token_hash: `eq.${tokenHash}`
@@ -1510,7 +2584,8 @@ async function readAuthenticatedUser(request, env2) {
     expiresAt: Number(session.expires_at) || 0
   };
 }
-async function upsertGoogleUser(env2, profile3) {
+__name(readAuthenticatedUser, "readAuthenticatedUser");
+async function upsertGoogleUser(env22, profile3) {
   const googleSub = trimForStorage(profile3?.sub || profile3?.googleSub || "", 255);
   if (!googleSub) {
     const err = new Error("GOOGLE_PROFILE_INVALID");
@@ -1521,7 +2596,7 @@ async function upsertGoogleUser(env2, profile3) {
   const name = trimForStorage(profile3?.name || "", 320);
   const picture = trimForStorage(profile3?.picture || "", 1024);
   const now = Date.now();
-  const inserted = await supabaseRequest(env2, "users", {
+  const inserted = await supabaseRequest(env22, "users", {
     method: "POST",
     query: {
       on_conflict: "google_sub",
@@ -1553,13 +2628,19 @@ async function upsertGoogleUser(env2, profile3) {
     picture: toSafeText2(user.picture)
   };
 }
+__name(upsertGoogleUser, "upsertGoogleUser");
 function toSafeReturnTo(input, fallback = "/") {
   return sanitizeReturnTo(input, fallback);
 }
-var APP_SESSION_COOKIE_NAME, APP_SESSION_MAX_AGE_SECONDS, GOOGLE_OAUTH_STATE_COOKIE_NAME, GOOGLE_OAUTH_RETURN_TO_COOKIE_NAME, GOOGLE_OAUTH_COOKIE_MAX_AGE_SECONDS;
+__name(toSafeReturnTo, "toSafeReturnTo");
+var APP_SESSION_COOKIE_NAME;
+var APP_SESSION_MAX_AGE_SECONDS;
+var GOOGLE_OAUTH_STATE_COOKIE_NAME;
+var GOOGLE_OAUTH_RETURN_TO_COOKIE_NAME;
+var GOOGLE_OAUTH_COOKIE_MAX_AGE_SECONDS;
 var init_auth = __esm({
   "api/_lib/auth.js"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -1569,36 +2650,34 @@ var init_auth = __esm({
     GOOGLE_OAUTH_STATE_COOKIE_NAME = "google_oauth_state";
     GOOGLE_OAUTH_RETURN_TO_COOKIE_NAME = "google_oauth_return_to";
     GOOGLE_OAUTH_COOKIE_MAX_AGE_SECONDS = 60 * 10;
-    __name(toSafeText2, "toSafeText");
-    __name(readConfigText2, "readConfigText");
-    __name(parseCookies, "parseCookies");
-    __name(buildCookie, "buildCookie");
-    __name(buildClearedCookie, "buildClearedCookie");
-    __name(toBase64Url, "toBase64Url");
-    __name(createRandomToken, "createRandomToken");
-    __name(sha256Hex, "sha256Hex");
-    __name(sanitizeReturnTo, "sanitizeReturnTo");
-    __name(trimForStorage, "trimForStorage");
-    __name(readRequestMetadata, "readRequestMetadata");
-    __name(getGoogleRedirectUri, "getGoogleRedirectUri");
-    __name(getGoogleOAuthConfig, "getGoogleOAuthConfig");
-    __name(buildGoogleOAuthStartUrl, "buildGoogleOAuthStartUrl");
-    __name(createOAuthState, "createOAuthState");
-    __name(buildOAuthStateCookie, "buildOAuthStateCookie");
-    __name(buildOAuthReturnToCookie, "buildOAuthReturnToCookie");
-    __name(readOAuthCookies, "readOAuthCookies");
-    __name(buildClearedOAuthCookies, "buildClearedOAuthCookies");
-    __name(buildAppSessionCookie, "buildAppSessionCookie");
-    __name(buildClearedAppSessionCookie, "buildClearedAppSessionCookie");
-    __name(createAppSession, "createAppSession");
-    __name(invalidateAppSession, "invalidateAppSession");
-    __name(readAuthenticatedUser, "readAuthenticatedUser");
-    __name(upsertGoogleUser, "upsertGoogleUser");
-    __name(toSafeReturnTo, "toSafeReturnTo");
+    __name2(toSafeText2, "toSafeText");
+    __name2(readConfigText2, "readConfigText");
+    __name2(parseCookies, "parseCookies");
+    __name2(buildCookie, "buildCookie");
+    __name2(buildClearedCookie, "buildClearedCookie");
+    __name2(toBase64Url, "toBase64Url");
+    __name2(createRandomToken, "createRandomToken");
+    __name2(sha256Hex, "sha256Hex");
+    __name2(sanitizeReturnTo, "sanitizeReturnTo");
+    __name2(trimForStorage, "trimForStorage");
+    __name2(readRequestMetadata, "readRequestMetadata");
+    __name2(getGoogleRedirectUri, "getGoogleRedirectUri");
+    __name2(getGoogleOAuthConfig, "getGoogleOAuthConfig");
+    __name2(buildGoogleOAuthStartUrl, "buildGoogleOAuthStartUrl");
+    __name2(createOAuthState, "createOAuthState");
+    __name2(buildOAuthStateCookie, "buildOAuthStateCookie");
+    __name2(buildOAuthReturnToCookie, "buildOAuthReturnToCookie");
+    __name2(readOAuthCookies, "readOAuthCookies");
+    __name2(buildClearedOAuthCookies, "buildClearedOAuthCookies");
+    __name2(buildAppSessionCookie, "buildAppSessionCookie");
+    __name2(buildClearedAppSessionCookie, "buildClearedAppSessionCookie");
+    __name2(createAppSession, "createAppSession");
+    __name2(invalidateAppSession, "invalidateAppSession");
+    __name2(readAuthenticatedUser, "readAuthenticatedUser");
+    __name2(upsertGoogleUser, "upsertGoogleUser");
+    __name2(toSafeReturnTo, "toSafeReturnTo");
   }
 });
-
-// api/auth/[action].js
 function json(payload, init = {}) {
   const headers = new Headers(init.headers || {});
   if (!headers.has("content-type")) {
@@ -1609,19 +2688,22 @@ function json(payload, init = {}) {
     headers
   });
 }
+__name(json, "json");
 function redirect(location, headers = new Headers()) {
   headers.set("location", location);
   return new Response(null, { status: 302, headers });
 }
+__name(redirect, "redirect");
 function appendQueryParam(path, key, value) {
   const url = new URL(path, "https://internal.local");
   url.searchParams.set(key, value);
   const query = url.searchParams.toString();
   return `${url.pathname}${query ? `?${query}` : ""}${url.hash || ""}`;
 }
-async function exchangeGoogleCodeForAccessToken({ code, request, env: env2 }) {
-  const { clientId, clientSecret } = getGoogleOAuthConfig(env2);
-  const redirectUri = getGoogleRedirectUri(request, env2);
+__name(appendQueryParam, "appendQueryParam");
+async function exchangeGoogleCodeForAccessToken({ code, request, env: env22 }) {
+  const { clientId, clientSecret } = getGoogleOAuthConfig(env22);
+  const redirectUri = getGoogleRedirectUri(request, env22);
   const payload = new URLSearchParams({
     code,
     client_id: clientId,
@@ -1653,6 +2735,7 @@ async function exchangeGoogleCodeForAccessToken({ code, request, env: env2 }) {
   }
   return accessToken;
 }
+__name(exchangeGoogleCodeForAccessToken, "exchangeGoogleCodeForAccessToken");
 async function fetchGoogleUserProfile(accessToken) {
   const response = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
     method: "GET",
@@ -1678,6 +2761,7 @@ async function fetchGoogleUserProfile(accessToken) {
     picture: String(parsed.picture || "").trim()
   };
 }
+__name(fetchGoogleUserProfile, "fetchGoogleUserProfile");
 function buildOAuthResultPath(returnTo, errorCode = "") {
   const base = toSafeReturnTo(returnTo, "/");
   if (!errorCode) return appendQueryParam(base, "openVoidLogin", "1");
@@ -1685,15 +2769,17 @@ function buildOAuthResultPath(returnTo, errorCode = "") {
   withFlag = appendQueryParam(withFlag, "authError", errorCode);
   return withFlag;
 }
+__name(buildOAuthResultPath, "buildOAuthResultPath");
 function validateOAuthState(requestState, cookieState) {
   const queryValue = String(requestState || "").trim();
   const cookieValue = String(cookieState || "").trim();
   if (!queryValue || !cookieValue) return false;
   return queryValue === cookieValue;
 }
-async function handleGoogleStart({ request, env: env2 }) {
+__name(validateOAuthState, "validateOAuthState");
+async function handleGoogleStart({ request, env: env22 }) {
   try {
-    getGoogleOAuthConfig(env2);
+    getGoogleOAuthConfig(env22);
   } catch (err) {
     return json(
       {
@@ -1709,13 +2795,14 @@ async function handleGoogleStart({ request, env: env2 }) {
   const requestUrl = new URL(request.url);
   const requestedReturnTo = toSafeReturnTo(requestUrl.searchParams.get("returnTo"), "/");
   const state = createOAuthState();
-  const { authUrl, returnTo } = buildGoogleOAuthStartUrl(request, env2, state, requestedReturnTo);
+  const { authUrl, returnTo } = buildGoogleOAuthStartUrl(request, env22, state, requestedReturnTo);
   const headers = new Headers();
   headers.append("set-cookie", buildOAuthStateCookie(state));
   headers.append("set-cookie", buildOAuthReturnToCookie(returnTo));
   return redirect(authUrl, headers);
 }
-async function handleGoogleCallback({ request, env: env2 }) {
+__name(handleGoogleStart, "handleGoogleStart");
+async function handleGoogleCallback({ request, env: env22 }) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const returnedState = requestUrl.searchParams.get("state");
@@ -1734,10 +2821,10 @@ async function handleGoogleCallback({ request, env: env2 }) {
     return redirect(buildOAuthResultPath(returnTo, "missing_code"), headers);
   }
   try {
-    const accessToken = await exchangeGoogleCodeForAccessToken({ code, request, env: env2 });
+    const accessToken = await exchangeGoogleCodeForAccessToken({ code, request, env: env22 });
     const profile3 = await fetchGoogleUserProfile(accessToken);
-    const user = await upsertGoogleUser(env2, profile3);
-    const { token } = await createAppSession(env2, user.id, request);
+    const user = await upsertGoogleUser(env22, profile3);
+    const { token } = await createAppSession(env22, user.id, request);
     headers.append("set-cookie", buildAppSessionCookie(token));
     return redirect(buildOAuthResultPath(returnTo), headers);
   } catch (err) {
@@ -1745,8 +2832,9 @@ async function handleGoogleCallback({ request, env: env2 }) {
     return redirect(buildOAuthResultPath(returnTo, "callback_failed"), headers);
   }
 }
-async function handleMe({ request, env: env2 }) {
-  const user = await readAuthenticatedUser(request, env2);
+__name(handleGoogleCallback, "handleGoogleCallback");
+async function handleMe({ request, env: env22 }) {
+  const user = await readAuthenticatedUser(request, env22);
   if (!user) {
     return json({ ok: true, data: { authenticated: false, user: null } }, { status: 200 });
   }
@@ -1767,9 +2855,10 @@ async function handleMe({ request, env: env2 }) {
     { status: 200 }
   );
 }
-async function handleLogout({ request, env: env2 }) {
+__name(handleMe, "handleMe");
+async function handleLogout({ request, env: env22 }) {
   try {
-    await invalidateAppSession(request, env2);
+    await invalidateAppSession(request, env22);
   } catch (err) {
     console.warn("[AUTH] logout failed to delete session:", err?.message || err);
   }
@@ -1783,6 +2872,7 @@ async function handleLogout({ request, env: env2 }) {
     }
   );
 }
+__name(handleLogout, "handleLogout");
 function routeNotFound() {
   return json(
     {
@@ -1795,22 +2885,23 @@ function routeNotFound() {
     { status: 404 }
   );
 }
+__name(routeNotFound, "routeNotFound");
 async function onRequest(context2) {
-  const { request, env: env2, params } = context2;
+  const { request, env: env22, params } = context2;
   const method = request.method.toUpperCase();
   const action = String(params?.action || "");
   try {
     if (method === "GET" && action === "google-start") {
-      return handleGoogleStart({ request, env: env2 });
+      return handleGoogleStart({ request, env: env22 });
     }
     if (method === "GET" && action === "google-callback") {
-      return handleGoogleCallback({ request, env: env2 });
+      return handleGoogleCallback({ request, env: env22 });
     }
     if (method === "GET" && action === "me") {
-      return handleMe({ request, env: env2 });
+      return handleMe({ request, env: env22 });
     }
     if (method === "POST" && action === "logout") {
-      return handleLogout({ request, env: env2 });
+      return handleLogout({ request, env: env22 });
     }
     return routeNotFound();
   } catch (err) {
@@ -1826,62 +2917,56 @@ async function onRequest(context2) {
     );
   }
 }
+__name(onRequest, "onRequest");
 var init_action = __esm({
   "api/auth/[action].js"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     init_auth();
-    __name(json, "json");
-    __name(redirect, "redirect");
-    __name(appendQueryParam, "appendQueryParam");
-    __name(exchangeGoogleCodeForAccessToken, "exchangeGoogleCodeForAccessToken");
-    __name(fetchGoogleUserProfile, "fetchGoogleUserProfile");
-    __name(buildOAuthResultPath, "buildOAuthResultPath");
-    __name(validateOAuthState, "validateOAuthState");
-    __name(handleGoogleStart, "handleGoogleStart");
-    __name(handleGoogleCallback, "handleGoogleCallback");
-    __name(handleMe, "handleMe");
-    __name(handleLogout, "handleLogout");
-    __name(routeNotFound, "routeNotFound");
-    __name(onRequest, "onRequest");
+    __name2(json, "json");
+    __name2(redirect, "redirect");
+    __name2(appendQueryParam, "appendQueryParam");
+    __name2(exchangeGoogleCodeForAccessToken, "exchangeGoogleCodeForAccessToken");
+    __name2(fetchGoogleUserProfile, "fetchGoogleUserProfile");
+    __name2(buildOAuthResultPath, "buildOAuthResultPath");
+    __name2(validateOAuthState, "validateOAuthState");
+    __name2(handleGoogleStart, "handleGoogleStart");
+    __name2(handleGoogleCallback, "handleGoogleCallback");
+    __name2(handleMe, "handleMe");
+    __name2(handleLogout, "handleLogout");
+    __name2(routeNotFound, "routeNotFound");
+    __name2(onRequest, "onRequest");
   }
 });
-
-// node-built-in-modules:util
-import libDefault from "util";
 var require_util = __commonJS({
   "node-built-in-modules:util"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     module.exports = libDefault;
   }
 });
-
-// ../node_modules/telegram/inspect.js
 var require_inspect = __commonJS({
   "../node_modules/telegram/inspect.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.inspect = void 0;
     var util_1 = require_util();
-    Object.defineProperty(exports, "inspect", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "inspect", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return util_1.inspect;
     }, "get") });
   }
 });
-
-// ../node_modules/big-integer/BigInteger.js
 var require_BigInteger = __commonJS({
   "../node_modules/big-integer/BigInteger.js"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -1895,12 +2980,14 @@ var require_BigInteger = __commonJS({
         return parseValue(v);
       }
       __name(Integer, "Integer");
+      __name2(Integer, "Integer");
       function BigInteger(value, sign) {
         this.value = value;
         this.sign = sign;
         this.isSmall = false;
       }
       __name(BigInteger, "BigInteger");
+      __name2(BigInteger, "BigInteger");
       BigInteger.prototype = Object.create(Integer.prototype);
       function SmallInteger(value) {
         this.value = value;
@@ -1908,16 +2995,19 @@ var require_BigInteger = __commonJS({
         this.isSmall = true;
       }
       __name(SmallInteger, "SmallInteger");
+      __name2(SmallInteger, "SmallInteger");
       SmallInteger.prototype = Object.create(Integer.prototype);
       function NativeBigInt(value) {
         this.value = value;
       }
       __name(NativeBigInt, "NativeBigInt");
+      __name2(NativeBigInt, "NativeBigInt");
       NativeBigInt.prototype = Object.create(Integer.prototype);
       function isPrecise(n) {
         return -MAX_INT < n && n < MAX_INT;
       }
       __name(isPrecise, "isPrecise");
+      __name2(isPrecise, "isPrecise");
       function smallToArray(n) {
         if (n < 1e7)
           return [n];
@@ -1926,6 +3016,7 @@ var require_BigInteger = __commonJS({
         return [n % 1e7, Math.floor(n / 1e7) % 1e7, Math.floor(n / 1e14)];
       }
       __name(smallToArray, "smallToArray");
+      __name2(smallToArray, "smallToArray");
       function arrayToSmall(arr) {
         trim(arr);
         var length = arr.length;
@@ -1944,12 +3035,14 @@ var require_BigInteger = __commonJS({
         return arr;
       }
       __name(arrayToSmall, "arrayToSmall");
+      __name2(arrayToSmall, "arrayToSmall");
       function trim(v) {
         var i2 = v.length;
         while (v[--i2] === 0) ;
         v.length = i2 + 1;
       }
       __name(trim, "trim");
+      __name2(trim, "trim");
       function createArray(length) {
         var x = new Array(length);
         var i2 = -1;
@@ -1959,11 +3052,13 @@ var require_BigInteger = __commonJS({
         return x;
       }
       __name(createArray, "createArray");
+      __name2(createArray, "createArray");
       function truncate3(n) {
         if (n > 0) return Math.floor(n);
         return Math.ceil(n);
       }
-      __name(truncate3, "truncate");
+      __name(truncate3, "truncate3");
+      __name2(truncate3, "truncate");
       function add(a, b) {
         var l_a = a.length, l_b = b.length, r = new Array(l_a), carry = 0, base = BASE, sum, i2;
         for (i2 = 0; i2 < l_b; i2++) {
@@ -1980,11 +3075,13 @@ var require_BigInteger = __commonJS({
         return r;
       }
       __name(add, "add");
+      __name2(add, "add");
       function addAny(a, b) {
         if (a.length >= b.length) return add(a, b);
         return add(b, a);
       }
       __name(addAny, "addAny");
+      __name2(addAny, "addAny");
       function addSmall(a, carry) {
         var l = a.length, r = new Array(l), base = BASE, sum, i2;
         for (i2 = 0; i2 < l; i2++) {
@@ -2000,6 +3097,7 @@ var require_BigInteger = __commonJS({
         return r;
       }
       __name(addSmall, "addSmall");
+      __name2(addSmall, "addSmall");
       BigInteger.prototype.add = function(v) {
         var n = parseValue(v);
         if (this.sign !== n.sign) {
@@ -2056,6 +3154,7 @@ var require_BigInteger = __commonJS({
         return r;
       }
       __name(subtract, "subtract");
+      __name2(subtract, "subtract");
       function subtractAny(a, b, sign) {
         var value;
         if (compareAbs(a, b) >= 0) {
@@ -2072,6 +3171,7 @@ var require_BigInteger = __commonJS({
         return new BigInteger(value, sign);
       }
       __name(subtractAny, "subtractAny");
+      __name2(subtractAny, "subtractAny");
       function subtractSmall(a, b, sign) {
         var l = a.length, r = new Array(l), carry = -b, base = BASE, i2, difference;
         for (i2 = 0; i2 < l; i2++) {
@@ -2088,6 +3188,7 @@ var require_BigInteger = __commonJS({
         return new BigInteger(r, sign);
       }
       __name(subtractSmall, "subtractSmall");
+      __name2(subtractSmall, "subtractSmall");
       BigInteger.prototype.subtract = function(v) {
         var n = parseValue(v);
         if (this.sign !== n.sign) {
@@ -2153,6 +3254,7 @@ var require_BigInteger = __commonJS({
         return r;
       }
       __name(multiplyLong, "multiplyLong");
+      __name2(multiplyLong, "multiplyLong");
       function multiplySmall(a, b) {
         var l = a.length, r = new Array(l), base = BASE, carry = 0, product, i2;
         for (i2 = 0; i2 < l; i2++) {
@@ -2167,12 +3269,14 @@ var require_BigInteger = __commonJS({
         return r;
       }
       __name(multiplySmall, "multiplySmall");
+      __name2(multiplySmall, "multiplySmall");
       function shiftLeft(x, n) {
         var r = [];
         while (n-- > 0) r.push(0);
         return r.concat(x);
       }
       __name(shiftLeft, "shiftLeft");
+      __name2(shiftLeft, "shiftLeft");
       function multiplyKaratsuba(x, y) {
         var n = Math.max(x.length, y.length);
         if (n <= 30) return multiplyLong(x, y);
@@ -2184,10 +3288,12 @@ var require_BigInteger = __commonJS({
         return product;
       }
       __name(multiplyKaratsuba, "multiplyKaratsuba");
+      __name2(multiplyKaratsuba, "multiplyKaratsuba");
       function useKaratsuba(l1, l2) {
         return -0.012 * l1 - 0.012 * l2 + 15e-6 * l1 * l2 > 0;
       }
       __name(useKaratsuba, "useKaratsuba");
+      __name2(useKaratsuba, "useKaratsuba");
       BigInteger.prototype.multiply = function(v) {
         var n = parseValue(v), a = this.value, b = n.value, sign = this.sign !== n.sign, abs;
         if (n.isSmall) {
@@ -2212,6 +3318,7 @@ var require_BigInteger = __commonJS({
         return new BigInteger(multiplyLong(b, smallToArray(a)), sign);
       }
       __name(multiplySmallAndArray, "multiplySmallAndArray");
+      __name2(multiplySmallAndArray, "multiplySmallAndArray");
       SmallInteger.prototype._multiplyBySmall = function(a) {
         if (isPrecise(a.value * this.value)) {
           return new SmallInteger(a.value * this.value);
@@ -2249,6 +3356,7 @@ var require_BigInteger = __commonJS({
         return r;
       }
       __name(square, "square");
+      __name2(square, "square");
       BigInteger.prototype.square = function() {
         return new BigInteger(square(this.value), false);
       };
@@ -2307,6 +3415,7 @@ var require_BigInteger = __commonJS({
         return [arrayToSmall(result), arrayToSmall(remainder)];
       }
       __name(divMod1, "divMod1");
+      __name2(divMod1, "divMod1");
       function divMod2(a, b) {
         var a_l = a.length, b_l = b.length, result = [], part = [], base = BASE, guess, xlen, highx, highy, check;
         while (a_l) {
@@ -2335,6 +3444,7 @@ var require_BigInteger = __commonJS({
         return [arrayToSmall(result), arrayToSmall(part)];
       }
       __name(divMod2, "divMod2");
+      __name2(divMod2, "divMod2");
       function divModSmall(value, lambda) {
         var length = value.length, quotient = createArray(length), base = BASE, i2, q, remainder, divisor;
         remainder = 0;
@@ -2347,6 +3457,7 @@ var require_BigInteger = __commonJS({
         return [quotient, remainder | 0];
       }
       __name(divModSmall, "divModSmall");
+      __name2(divModSmall, "divModSmall");
       function divModAny(self2, v) {
         var value, n = parseValue(v);
         if (supportsNativeBigInt) {
@@ -2397,6 +3508,7 @@ var require_BigInteger = __commonJS({
         return [quotient, mod];
       }
       __name(divModAny, "divModAny");
+      __name2(divModAny, "divModAny");
       BigInteger.prototype.divmod = function(v) {
         var result = divModAny(this, v);
         return {
@@ -2497,6 +3609,7 @@ var require_BigInteger = __commonJS({
         return 0;
       }
       __name(compareAbs, "compareAbs");
+      __name2(compareAbs, "compareAbs");
       BigInteger.prototype.compareAbs = function(v) {
         var n = parseValue(v), a = this.value, b = n.value;
         if (n.isSmall) return 1;
@@ -2653,6 +3766,7 @@ var require_BigInteger = __commonJS({
         if (n.lesser(49)) return true;
       }
       __name(isBasicPrime, "isBasicPrime");
+      __name2(isBasicPrime, "isBasicPrime");
       function millerRabinTest(n, a) {
         var nPrev = n.prev(), b = nPrev, r = 0, d, t, i2, x;
         while (b.isEven()) b = b.divide(2), r++;
@@ -2670,6 +3784,7 @@ var require_BigInteger = __commonJS({
         return true;
       }
       __name(millerRabinTest, "millerRabinTest");
+      __name2(millerRabinTest, "millerRabinTest");
       BigInteger.prototype.isPrime = function(strict) {
         var isPrime = isBasicPrime(this);
         if (isPrime !== undefined2) return isPrime;
@@ -2754,6 +3869,7 @@ var require_BigInteger = __commonJS({
         return Math.abs(n) <= BASE;
       }
       __name(shift_isSmall, "shift_isSmall");
+      __name2(shift_isSmall, "shift_isSmall");
       BigInteger.prototype.shiftLeft = function(v) {
         var n = parseValue(v).toJSNumber();
         if (!shift_isSmall(n)) {
@@ -2816,6 +3932,7 @@ var require_BigInteger = __commonJS({
         return sum;
       }
       __name(bitwise, "bitwise");
+      __name2(bitwise, "bitwise");
       BigInteger.prototype.not = function() {
         return this.negate().prev();
       };
@@ -2844,6 +3961,7 @@ var require_BigInteger = __commonJS({
         return x & -x;
       }
       __name(roughLOB, "roughLOB");
+      __name2(roughLOB, "roughLOB");
       function integerLogarithm(value, base) {
         if (base.compareTo(value) <= 0) {
           var tmp = integerLogarithm(value, base.square(base));
@@ -2855,6 +3973,7 @@ var require_BigInteger = __commonJS({
         return { p: bigInt(1), e: 0 };
       }
       __name(integerLogarithm, "integerLogarithm");
+      __name2(integerLogarithm, "integerLogarithm");
       BigInteger.prototype.bitLength = function() {
         var n = this;
         if (n.compareTo(bigInt(0)) < 0) {
@@ -2872,12 +3991,14 @@ var require_BigInteger = __commonJS({
         return a.greater(b) ? a : b;
       }
       __name(max, "max");
+      __name2(max, "max");
       function min(a, b) {
         a = parseValue(a);
         b = parseValue(b);
         return a.lesser(b) ? a : b;
       }
       __name(min, "min");
+      __name2(min, "min");
       function gcd(a, b) {
         a = parseValue(a).abs();
         b = parseValue(b).abs();
@@ -2908,12 +4029,14 @@ var require_BigInteger = __commonJS({
         return c.isUnit() ? a : a.multiply(c);
       }
       __name(gcd, "gcd");
+      __name2(gcd, "gcd");
       function lcm(a, b) {
         a = parseValue(a).abs();
         b = parseValue(b).abs();
         return a.divide(gcd(a, b)).multiply(b);
       }
       __name(lcm, "lcm");
+      __name2(lcm, "lcm");
       function randBetween(a, b, rng) {
         a = parseValue(a);
         b = parseValue(b);
@@ -2932,7 +4055,8 @@ var require_BigInteger = __commonJS({
         return low.add(Integer.fromArray(result, BASE, false));
       }
       __name(randBetween, "randBetween");
-      var parseBase = /* @__PURE__ */ __name(function(text, base, alphabet, caseSensitive) {
+      __name2(randBetween, "randBetween");
+      var parseBase = /* @__PURE__ */ __name2(function(text, base, alphabet, caseSensitive) {
         alphabet = alphabet || DEFAULT_ALPHABET;
         text = String(text);
         if (!caseSensitive) {
@@ -2981,6 +4105,7 @@ var require_BigInteger = __commonJS({
         return isNegative ? val.negate() : val;
       }
       __name(parseBaseFromArray, "parseBaseFromArray");
+      __name2(parseBaseFromArray, "parseBaseFromArray");
       function stringify(digit, alphabet) {
         alphabet = alphabet || DEFAULT_ALPHABET;
         if (digit < alphabet.length) {
@@ -2989,6 +4114,7 @@ var require_BigInteger = __commonJS({
         return "<" + digit + ">";
       }
       __name(stringify, "stringify");
+      __name2(stringify, "stringify");
       function toBase(n, base) {
         base = bigInt(base);
         if (base.isZero()) {
@@ -3040,6 +4166,7 @@ var require_BigInteger = __commonJS({
         return { value: out.reverse(), isNegative: neg };
       }
       __name(toBase, "toBase");
+      __name2(toBase, "toBase");
       function toBaseString(n, base, alphabet) {
         var arr = toBase(n, base);
         return (arr.isNegative ? "-" : "") + arr.value.map(function(x) {
@@ -3047,6 +4174,7 @@ var require_BigInteger = __commonJS({
         }).join("");
       }
       __name(toBaseString, "toBaseString");
+      __name2(toBaseString, "toBaseString");
       BigInteger.prototype.toArray = function(radix) {
         return toBase(this, radix);
       };
@@ -3129,6 +4257,7 @@ var require_BigInteger = __commonJS({
         return new BigInteger(r, sign);
       }
       __name(parseStringValue, "parseStringValue");
+      __name2(parseStringValue, "parseStringValue");
       function parseNumberValue(v) {
         if (supportsNativeBigInt) {
           return new NativeBigInt(BigInt(v));
@@ -3140,6 +4269,7 @@ var require_BigInteger = __commonJS({
         return parseStringValue(v.toString());
       }
       __name(parseNumberValue, "parseNumberValue");
+      __name2(parseNumberValue, "parseNumberValue");
       function parseValue(v) {
         if (typeof v === "number") {
           return parseNumberValue(v);
@@ -3153,6 +4283,7 @@ var require_BigInteger = __commonJS({
         return v;
       }
       __name(parseValue, "parseValue");
+      __name2(parseValue, "parseValue");
       for (var i = 0; i < 1e3; i++) {
         Integer[i] = parseValue(i);
         if (i > 0) Integer[-i] = parseValue(-i);
@@ -3183,24 +4314,19 @@ var require_BigInteger = __commonJS({
     }
   }
 });
-
-// node-built-in-modules:crypto
-import libDefault2 from "crypto";
 var require_crypto = __commonJS({
   "node-built-in-modules:crypto"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     module.exports = libDefault2;
   }
 });
-
-// ../node_modules/telegram/CryptoFile.js
 var require_CryptoFile = __commonJS({
   "../node_modules/telegram/CryptoFile.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -3208,7 +4334,7 @@ var require_CryptoFile = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -3236,12 +4362,10 @@ var require_CryptoFile = __commonJS({
     exports.default = crypto2;
   }
 });
-
-// ../node_modules/telegram/platform.js
 var require_platform = __commonJS({
   "../node_modules/telegram/platform.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -3252,12 +4376,10 @@ var require_platform = __commonJS({
     exports.isNode = !exports.isBrowser;
   }
 });
-
-// ../node_modules/telegram/Helpers.js
 var require_Helpers = __commonJS({
   "../node_modules/telegram/Helpers.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -3306,14 +4428,17 @@ var require_Helpers = __commonJS({
       return bigIntVar;
     }
     __name(readBigIntFromBuffer, "readBigIntFromBuffer");
+    __name2(readBigIntFromBuffer, "readBigIntFromBuffer");
     function generateRandomBigInt() {
       return readBigIntFromBuffer(generateRandomBytes(8), false);
     }
     __name(generateRandomBigInt, "generateRandomBigInt");
+    __name2(generateRandomBigInt, "generateRandomBigInt");
     function escapeRegex2(string) {
       return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
     }
-    __name(escapeRegex2, "escapeRegex");
+    __name(escapeRegex2, "escapeRegex2");
+    __name2(escapeRegex2, "escapeRegex");
     function groupBy(list, keyGetter) {
       const map = /* @__PURE__ */ new Map();
       list.forEach((item) => {
@@ -3328,6 +4453,7 @@ var require_Helpers = __commonJS({
       return map;
     }
     __name(groupBy, "groupBy");
+    __name2(groupBy, "groupBy");
     function betterConsoleLog(object) {
       const toPrint = {};
       for (const key in object) {
@@ -3340,7 +4466,8 @@ var require_Helpers = __commonJS({
       return toPrint;
     }
     __name(betterConsoleLog, "betterConsoleLog");
-    var isArrayLike = /* @__PURE__ */ __name((x) => x && typeof x.length === "number" && typeof x !== "function" && typeof x !== "string", "isArrayLike");
+    __name2(betterConsoleLog, "betterConsoleLog");
+    var isArrayLike = /* @__PURE__ */ __name2((x) => x && typeof x.length === "number" && typeof x !== "function" && typeof x !== "string", "isArrayLike");
     exports.isArrayLike = isArrayLike;
     function toSignedLittleBuffer(big, number = 8) {
       const bigNumber = returnBigInt(big);
@@ -3351,6 +4478,7 @@ var require_Helpers = __commonJS({
       return Buffer.from(byteArray);
     }
     __name(toSignedLittleBuffer, "toSignedLittleBuffer");
+    __name2(toSignedLittleBuffer, "toSignedLittleBuffer");
     function readBufferFromBigInt(bigIntVar, bytesNumber, little = true, signed = false) {
       bigIntVar = (0, big_integer_1.default)(bigIntVar);
       const bitLength = bigIntVar.bitLength().toJSNumber();
@@ -3372,22 +4500,27 @@ var require_Helpers = __commonJS({
       return buffer;
     }
     __name(readBufferFromBigInt, "readBufferFromBigInt");
+    __name2(readBufferFromBigInt, "readBufferFromBigInt");
     function generateRandomLong(signed = true) {
       return readBigIntFromBuffer(generateRandomBytes(8), true, signed);
     }
     __name(generateRandomLong, "generateRandomLong");
+    __name2(generateRandomLong, "generateRandomLong");
     function mod(n, m) {
       return (n % m + m) % m;
     }
     __name(mod, "mod");
+    __name2(mod, "mod");
     function bigIntMod(n, m) {
       return n.remainder(m).add(m).remainder(m);
     }
     __name(bigIntMod, "bigIntMod");
+    __name2(bigIntMod, "bigIntMod");
     function generateRandomBytes(count3) {
       return Buffer.from(CryptoFile_1.default.randomBytes(count3));
     }
     __name(generateRandomBytes, "generateRandomBytes");
+    __name2(generateRandomBytes, "generateRandomBytes");
     function stripText(text, entities) {
       if (!entities || !entities.length) {
         return text.trim();
@@ -3427,6 +4560,7 @@ var require_Helpers = __commonJS({
       return text;
     }
     __name(stripText, "stripText");
+    __name2(stripText, "stripText");
     async function generateKeyDataFromNonce(serverNonceBigInt, newNonceBigInt) {
       const serverNonce = toSignedLittleBuffer(serverNonceBigInt, 16);
       const newNonce = toSignedLittleBuffer(newNonceBigInt, 32);
@@ -3447,6 +4581,7 @@ var require_Helpers = __commonJS({
       };
     }
     __name(generateKeyDataFromNonce, "generateKeyDataFromNonce");
+    __name2(generateKeyDataFromNonce, "generateKeyDataFromNonce");
     function convertToLittle(buf) {
       const correct = Buffer.alloc(buf.length * 4);
       for (let i = 0; i < buf.length; i++) {
@@ -3455,18 +4590,21 @@ var require_Helpers = __commonJS({
       return correct;
     }
     __name(convertToLittle, "convertToLittle");
+    __name2(convertToLittle, "convertToLittle");
     function sha1(data) {
       const shaSum = CryptoFile_1.default.createHash("sha1");
       shaSum.update(data);
       return shaSum.digest();
     }
     __name(sha1, "sha1");
+    __name2(sha1, "sha1");
     function sha256(data) {
       const shaSum = CryptoFile_1.default.createHash("sha256");
       shaSum.update(data);
       return shaSum.digest();
     }
     __name(sha256, "sha256");
+    __name2(sha256, "sha256");
     function modExp(a, b, n) {
       a = a.remainder(n);
       let result = big_integer_1.default.one;
@@ -3484,12 +4622,14 @@ var require_Helpers = __commonJS({
       return result;
     }
     __name(modExp, "modExp");
+    __name2(modExp, "modExp");
     function getByteArray(integer, signed = false) {
       const bits = integer.toString(2).length;
       const byteLength = Math.floor((bits + 8 - 1) / 8);
       return readBufferFromBigInt(typeof integer == "number" ? (0, big_integer_1.default)(integer) : integer, byteLength, false, signed);
     }
     __name(getByteArray, "getByteArray");
+    __name2(getByteArray, "getByteArray");
     function returnBigInt(num) {
       if (big_integer_1.default.isInstance(num)) {
         return num;
@@ -3503,6 +4643,7 @@ var require_Helpers = __commonJS({
       return (0, big_integer_1.default)(num);
     }
     __name(returnBigInt, "returnBigInt");
+    __name2(returnBigInt, "returnBigInt");
     function getMinBigInt(arrayOfBigInts) {
       if (arrayOfBigInts.length == 0) {
         return big_integer_1.default.zero;
@@ -3519,13 +4660,15 @@ var require_Helpers = __commonJS({
       return smallest;
     }
     __name(getMinBigInt, "getMinBigInt");
+    __name2(getMinBigInt, "getMinBigInt");
     function getRandomInt(min, max) {
       min = Math.ceil(min);
       max = Math.floor(max);
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
     __name(getRandomInt, "getRandomInt");
-    var sleep = /* @__PURE__ */ __name((ms, isUnref = false) => new Promise((resolve) => isUnref && platform_1.isNode ? setTimeout(resolve, ms).unref() : setTimeout(resolve, ms)), "sleep");
+    __name2(getRandomInt, "getRandomInt");
+    var sleep = /* @__PURE__ */ __name2((ms, isUnref = false) => new Promise((resolve) => isUnref && platform_1.isNode ? setTimeout(resolve, ms).unref() : setTimeout(resolve, ms)), "sleep");
     exports.sleep = sleep;
     function bufferXor(a, b) {
       const res = [];
@@ -3535,6 +4678,7 @@ var require_Helpers = __commonJS({
       return Buffer.from(res);
     }
     __name(bufferXor, "bufferXor");
+    __name2(bufferXor, "bufferXor");
     function makeCRCTable() {
       let c;
       const crcTable2 = [];
@@ -3548,6 +4692,7 @@ var require_Helpers = __commonJS({
       return crcTable2;
     }
     __name(makeCRCTable, "makeCRCTable");
+    __name2(makeCRCTable, "makeCRCTable");
     var crcTable = void 0;
     function crc32(buf) {
       if (!crcTable) {
@@ -3564,9 +4709,13 @@ var require_Helpers = __commonJS({
       return (crc ^ -1) >>> 0;
     }
     __name(crc32, "crc32");
+    __name2(crc32, "crc32");
     var TotalList = class extends Array {
       static {
         __name(this, "TotalList");
+      }
+      static {
+        __name2(this, "TotalList");
       }
       constructor() {
         super();
@@ -3617,14 +4766,13 @@ var require_Helpers = __commonJS({
       throw new Error(`${entity} does not have any entity type`);
     }
     __name(_entityType, "_entityType");
+    __name2(_entityType, "_entityType");
   }
 });
-
-// ../node_modules/telegram/tl/apiTl.js
 var require_apiTl = __commonJS({
   "../node_modules/telegram/tl/apiTl.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -5723,12 +6871,10 @@ fragment.getCollectibleInfo#be1e85ba collectible:InputCollectible = fragment.Col
 `;
   }
 });
-
-// ../node_modules/telegram/tl/schemaTl.js
 var require_schemaTl = __commonJS({
   "../node_modules/telegram/tl/schemaTl.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -5798,12 +6944,10 @@ destroy_session#e7512126 session_id:long = DestroySessionRes;
 `;
   }
 });
-
-// ../node_modules/telegram/tl/generationHelpers.js
 var require_generationHelpers = __commonJS({
   "../node_modules/telegram/tl/generationHelpers.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -5813,12 +6957,12 @@ var require_generationHelpers = __commonJS({
     exports.serializeDate = serializeDate;
     exports.buildArgConfig = buildArgConfig;
     var Helpers_1 = require_Helpers();
-    var snakeToCamelCase = /* @__PURE__ */ __name((name) => {
+    var snakeToCamelCase = /* @__PURE__ */ __name2((name) => {
       const result = name.replace(/(?:^|_)([a-z])/g, (_, g) => g.toUpperCase());
       return result.replace(/_/g, "");
     }, "snakeToCamelCase");
     exports.snakeToCamelCase = snakeToCamelCase;
-    var variableSnakeToCamelCase = /* @__PURE__ */ __name((str) => str.replace(/([-_][a-z])/g, (group3) => group3.toUpperCase().replace("-", "").replace("_", "")), "variableSnakeToCamelCase");
+    var variableSnakeToCamelCase = /* @__PURE__ */ __name2((str) => str.replace(/([-_][a-z])/g, (group3) => group3.toUpperCase().replace("-", "").replace("_", "")), "variableSnakeToCamelCase");
     exports.variableSnakeToCamelCase = variableSnakeToCamelCase;
     var CORE_TYPES = /* @__PURE__ */ new Set([
       3162085175,
@@ -5857,7 +7001,7 @@ var require_generationHelpers = __commonJS({
       812830625
       // gzip_packed
     ]);
-    var fromLine = /* @__PURE__ */ __name((line, isFunction) => {
+    var fromLine = /* @__PURE__ */ __name2((line, isFunction) => {
       const match2 = line.match(/([\w.]+)(?:#([0-9a-fA-F]+))?(?:\s{?\w+:[\w\d<>#.?!]+}?)*\s=\s([\w\d<>#.?]+);$/);
       if (!match2) {
         throw new Error(`Cannot parse TLObject ${line}`);
@@ -5938,7 +7082,8 @@ var require_generationHelpers = __commonJS({
       return currentConfig;
     }
     __name(buildArgConfig, "buildArgConfig");
-    var parseTl = /* @__PURE__ */ __name(function* (content, layer, methods = [], ignoreIds = CORE_TYPES) {
+    __name2(buildArgConfig, "buildArgConfig");
+    var parseTl = /* @__PURE__ */ __name2(function* (content, layer, methods = [], ignoreIds = CORE_TYPES) {
       const methodInfo = (methods || []).reduce((o, m) => Object.assign(Object.assign({}, o), { [m.name]: m }), {});
       const objAll = [];
       const objByName = {};
@@ -5993,7 +7138,7 @@ var require_generationHelpers = __commonJS({
       }
     }, "parseTl");
     exports.parseTl = parseTl;
-    var findAll = /* @__PURE__ */ __name((regex, str, matches = []) => {
+    var findAll = /* @__PURE__ */ __name2((regex, str, matches = []) => {
       if (!regex.flags.includes("g")) {
         regex = new RegExp(regex.source, "g");
       }
@@ -6044,6 +7189,7 @@ var require_generationHelpers = __commonJS({
       return Buffer.concat(r);
     }
     __name(serializeBytes, "serializeBytes");
+    __name2(serializeBytes, "serializeBytes");
     function serializeDate(dt) {
       if (!dt) {
         return Buffer.alloc(4).fill(0);
@@ -6059,14 +7205,13 @@ var require_generationHelpers = __commonJS({
       throw Error(`Cannot interpret "${dt}" as a date`);
     }
     __name(serializeDate, "serializeDate");
+    __name2(serializeDate, "serializeDate");
   }
 });
-
-// ../node_modules/telegram/tl/api.js
 var require_api = __commonJS({
   "../node_modules/telegram/tl/api.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -6079,6 +7224,7 @@ var require_api = __commonJS({
       return readBigIntFromBuffer(generateRandomBytes(8), false, true);
     }
     __name(generateRandomBigInt, "generateRandomBigInt");
+    __name2(generateRandomBigInt, "generateRandomBigInt");
     var { parseTl, serializeBytes, serializeDate } = require_generationHelpers();
     var { toSignedLittleBuffer } = require_Helpers();
     var NAMED_AUTO_CASTS = /* @__PURE__ */ new Set(["chatId,int"]);
@@ -6096,7 +7242,10 @@ var require_api = __commonJS({
     ]);
     var CastError = class _CastError extends Error {
       static {
-        __name(this, "CastError");
+        __name(this, "_CastError");
+      }
+      static {
+        __name2(this, "CastError");
       }
       constructor(objectName, expected, actual, ...params) {
         const message = "Found wrong type for " + objectName + ". expected " + expected + " but received " + actual + ".If you think this is a mistake please report it.";
@@ -6123,11 +7272,13 @@ var require_api = __commonJS({
       return createClasses("all", definitions);
     }
     __name(buildApiFromTlSchema, "buildApiFromTlSchema");
+    __name2(buildApiFromTlSchema, "buildApiFromTlSchema");
     function loadFromCache() {
       const jsonCache = localStorage.getItem(CACHE_KEY);
       return jsonCache && JSON.parse(jsonCache);
     }
     __name(loadFromCache, "loadFromCache");
+    __name2(loadFromCache, "loadFromCache");
     function loadFromTlSchemas() {
       const [constructorParamsApi, functionParamsApi] = extractParams(tlContent);
       const [constructorParamsSchema, functionParamsSchema] = extractParams(schemeContent);
@@ -6136,6 +7287,7 @@ var require_api = __commonJS({
       return [].concat(constructors, requests);
     }
     __name(loadFromTlSchemas, "loadFromTlSchemas");
+    __name2(loadFromTlSchemas, "loadFromTlSchemas");
     function extractParams(fileContent) {
       const f = parseTl(fileContent, 109);
       const constructors = [];
@@ -6146,6 +7298,7 @@ var require_api = __commonJS({
       return [constructors, functions];
     }
     __name(extractParams, "extractParams");
+    __name2(extractParams, "extractParams");
     function argToBytes(x, type2, argName, requestName) {
       switch (type2) {
         case "int":
@@ -6180,6 +7333,7 @@ var require_api = __commonJS({
       }
     }
     __name(argToBytes, "argToBytes");
+    __name2(argToBytes, "argToBytes");
     async function getInputFromResolve(utils, client, peer, peerType) {
       switch (peerType) {
         case "InputPeer":
@@ -6209,6 +7363,7 @@ var require_api = __commonJS({
       }
     }
     __name(getInputFromResolve, "getInputFromResolve");
+    __name2(getInputFromResolve, "getInputFromResolve");
     function getArgFromReader(reader, arg) {
       if (arg.isVector) {
         if (arg.useVectorId) {
@@ -6256,6 +7411,7 @@ var require_api = __commonJS({
       }
     }
     __name(getArgFromReader, "getArgFromReader");
+    __name2(getArgFromReader, "getArgFromReader");
     function compareType(value, type2) {
       let correct = true;
       switch (type2) {
@@ -6283,6 +7439,7 @@ var require_api = __commonJS({
       return correct;
     }
     __name(compareType, "compareType");
+    __name2(compareType, "compareType");
     function createClasses(classesType, params) {
       const classes = {};
       for (const classParams of params) {
@@ -6291,6 +7448,9 @@ var require_api = __commonJS({
         class VirtualClass {
           static {
             __name(this, "VirtualClass");
+          }
+          static {
+            __name2(this, "VirtualClass");
           }
           constructor(args) {
             this.CONSTRUCTOR_ID = constructorId;
@@ -6535,16 +7695,15 @@ var require_api = __commonJS({
       return classes;
     }
     __name(createClasses, "createClasses");
+    __name2(createClasses, "createClasses");
     var api = buildApiFromTlSchema();
     module.exports = { Api: api };
   }
 });
-
-// ../node_modules/telegram/tl/custom/chatGetter.js
 var require_chatGetter = __commonJS({
   "../node_modules/telegram/tl/custom/chatGetter.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -6562,12 +7721,14 @@ var require_chatGetter = __commonJS({
         };
       }
       __name(verb, "verb");
+      __name2(verb, "verb");
       function settle(resolve, reject, d, v) {
         Promise.resolve(v).then(function(v2) {
           resolve({ value: v2, done: d });
         }, reject);
       }
       __name(settle, "settle");
+      __name2(settle, "settle");
     };
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ChatGetter = void 0;
@@ -6578,6 +7739,9 @@ var require_chatGetter = __commonJS({
     var ChatGetter = class {
       static {
         __name(this, "ChatGetter");
+      }
+      static {
+        __name2(this, "ChatGetter");
       }
       [inspect_1.inspect.custom]() {
         return (0, Helpers_1.betterConsoleLog)(this);
@@ -6675,12 +7839,10 @@ var require_chatGetter = __commonJS({
     exports.ChatGetter = ChatGetter;
   }
 });
-
-// ../node_modules/telegram/tl/custom/senderGetter.js
 var require_senderGetter = __commonJS({
   "../node_modules/telegram/tl/custom/senderGetter.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -6693,6 +7855,9 @@ var require_senderGetter = __commonJS({
     var SenderGetter = class extends chatGetter_1.ChatGetter {
       static {
         __name(this, "SenderGetter");
+      }
+      static {
+        __name2(this, "SenderGetter");
       }
       [inspect_1.inspect.custom]() {
         return (0, Helpers_1.betterConsoleLog)(this);
@@ -6740,12 +7905,10 @@ var require_senderGetter = __commonJS({
     exports.SenderGetter = SenderGetter;
   }
 });
-
-// ../node_modules/mime/Mime.js
 var require_Mime = __commonJS({
   "../node_modules/mime/Mime.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -6760,6 +7923,7 @@ var require_Mime = __commonJS({
       this.getExtension = this.getExtension.bind(this);
     }
     __name(Mime, "Mime");
+    __name2(Mime, "Mime");
     Mime.prototype.define = function(typeMap, force) {
       for (let type2 in typeMap) {
         let extensions = typeMap[type2].map(function(t) {
@@ -6799,34 +7963,28 @@ var require_Mime = __commonJS({
     module.exports = Mime;
   }
 });
-
-// ../node_modules/mime/types/standard.js
 var require_standard = __commonJS({
   "../node_modules/mime/types/standard.js"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     module.exports = { "application/andrew-inset": ["ez"], "application/applixware": ["aw"], "application/atom+xml": ["atom"], "application/atomcat+xml": ["atomcat"], "application/atomdeleted+xml": ["atomdeleted"], "application/atomsvc+xml": ["atomsvc"], "application/atsc-dwd+xml": ["dwd"], "application/atsc-held+xml": ["held"], "application/atsc-rsat+xml": ["rsat"], "application/bdoc": ["bdoc"], "application/calendar+xml": ["xcs"], "application/ccxml+xml": ["ccxml"], "application/cdfx+xml": ["cdfx"], "application/cdmi-capability": ["cdmia"], "application/cdmi-container": ["cdmic"], "application/cdmi-domain": ["cdmid"], "application/cdmi-object": ["cdmio"], "application/cdmi-queue": ["cdmiq"], "application/cu-seeme": ["cu"], "application/dash+xml": ["mpd"], "application/davmount+xml": ["davmount"], "application/docbook+xml": ["dbk"], "application/dssc+der": ["dssc"], "application/dssc+xml": ["xdssc"], "application/ecmascript": ["es", "ecma"], "application/emma+xml": ["emma"], "application/emotionml+xml": ["emotionml"], "application/epub+zip": ["epub"], "application/exi": ["exi"], "application/express": ["exp"], "application/fdt+xml": ["fdt"], "application/font-tdpfr": ["pfr"], "application/geo+json": ["geojson"], "application/gml+xml": ["gml"], "application/gpx+xml": ["gpx"], "application/gxf": ["gxf"], "application/gzip": ["gz"], "application/hjson": ["hjson"], "application/hyperstudio": ["stk"], "application/inkml+xml": ["ink", "inkml"], "application/ipfix": ["ipfix"], "application/its+xml": ["its"], "application/java-archive": ["jar", "war", "ear"], "application/java-serialized-object": ["ser"], "application/java-vm": ["class"], "application/javascript": ["js", "mjs"], "application/json": ["json", "map"], "application/json5": ["json5"], "application/jsonml+json": ["jsonml"], "application/ld+json": ["jsonld"], "application/lgr+xml": ["lgr"], "application/lost+xml": ["lostxml"], "application/mac-binhex40": ["hqx"], "application/mac-compactpro": ["cpt"], "application/mads+xml": ["mads"], "application/manifest+json": ["webmanifest"], "application/marc": ["mrc"], "application/marcxml+xml": ["mrcx"], "application/mathematica": ["ma", "nb", "mb"], "application/mathml+xml": ["mathml"], "application/mbox": ["mbox"], "application/mediaservercontrol+xml": ["mscml"], "application/metalink+xml": ["metalink"], "application/metalink4+xml": ["meta4"], "application/mets+xml": ["mets"], "application/mmt-aei+xml": ["maei"], "application/mmt-usd+xml": ["musd"], "application/mods+xml": ["mods"], "application/mp21": ["m21", "mp21"], "application/mp4": ["mp4s", "m4p"], "application/msword": ["doc", "dot"], "application/mxf": ["mxf"], "application/n-quads": ["nq"], "application/n-triples": ["nt"], "application/node": ["cjs"], "application/octet-stream": ["bin", "dms", "lrf", "mar", "so", "dist", "distz", "pkg", "bpk", "dump", "elc", "deploy", "exe", "dll", "deb", "dmg", "iso", "img", "msi", "msp", "msm", "buffer"], "application/oda": ["oda"], "application/oebps-package+xml": ["opf"], "application/ogg": ["ogx"], "application/omdoc+xml": ["omdoc"], "application/onenote": ["onetoc", "onetoc2", "onetmp", "onepkg"], "application/oxps": ["oxps"], "application/p2p-overlay+xml": ["relo"], "application/patch-ops-error+xml": ["xer"], "application/pdf": ["pdf"], "application/pgp-encrypted": ["pgp"], "application/pgp-signature": ["asc", "sig"], "application/pics-rules": ["prf"], "application/pkcs10": ["p10"], "application/pkcs7-mime": ["p7m", "p7c"], "application/pkcs7-signature": ["p7s"], "application/pkcs8": ["p8"], "application/pkix-attr-cert": ["ac"], "application/pkix-cert": ["cer"], "application/pkix-crl": ["crl"], "application/pkix-pkipath": ["pkipath"], "application/pkixcmp": ["pki"], "application/pls+xml": ["pls"], "application/postscript": ["ai", "eps", "ps"], "application/provenance+xml": ["provx"], "application/pskc+xml": ["pskcxml"], "application/raml+yaml": ["raml"], "application/rdf+xml": ["rdf", "owl"], "application/reginfo+xml": ["rif"], "application/relax-ng-compact-syntax": ["rnc"], "application/resource-lists+xml": ["rl"], "application/resource-lists-diff+xml": ["rld"], "application/rls-services+xml": ["rs"], "application/route-apd+xml": ["rapd"], "application/route-s-tsid+xml": ["sls"], "application/route-usd+xml": ["rusd"], "application/rpki-ghostbusters": ["gbr"], "application/rpki-manifest": ["mft"], "application/rpki-roa": ["roa"], "application/rsd+xml": ["rsd"], "application/rss+xml": ["rss"], "application/rtf": ["rtf"], "application/sbml+xml": ["sbml"], "application/scvp-cv-request": ["scq"], "application/scvp-cv-response": ["scs"], "application/scvp-vp-request": ["spq"], "application/scvp-vp-response": ["spp"], "application/sdp": ["sdp"], "application/senml+xml": ["senmlx"], "application/sensml+xml": ["sensmlx"], "application/set-payment-initiation": ["setpay"], "application/set-registration-initiation": ["setreg"], "application/shf+xml": ["shf"], "application/sieve": ["siv", "sieve"], "application/smil+xml": ["smi", "smil"], "application/sparql-query": ["rq"], "application/sparql-results+xml": ["srx"], "application/srgs": ["gram"], "application/srgs+xml": ["grxml"], "application/sru+xml": ["sru"], "application/ssdl+xml": ["ssdl"], "application/ssml+xml": ["ssml"], "application/swid+xml": ["swidtag"], "application/tei+xml": ["tei", "teicorpus"], "application/thraud+xml": ["tfi"], "application/timestamped-data": ["tsd"], "application/toml": ["toml"], "application/trig": ["trig"], "application/ttml+xml": ["ttml"], "application/ubjson": ["ubj"], "application/urc-ressheet+xml": ["rsheet"], "application/urc-targetdesc+xml": ["td"], "application/voicexml+xml": ["vxml"], "application/wasm": ["wasm"], "application/widget": ["wgt"], "application/winhlp": ["hlp"], "application/wsdl+xml": ["wsdl"], "application/wspolicy+xml": ["wspolicy"], "application/xaml+xml": ["xaml"], "application/xcap-att+xml": ["xav"], "application/xcap-caps+xml": ["xca"], "application/xcap-diff+xml": ["xdf"], "application/xcap-el+xml": ["xel"], "application/xcap-ns+xml": ["xns"], "application/xenc+xml": ["xenc"], "application/xhtml+xml": ["xhtml", "xht"], "application/xliff+xml": ["xlf"], "application/xml": ["xml", "xsl", "xsd", "rng"], "application/xml-dtd": ["dtd"], "application/xop+xml": ["xop"], "application/xproc+xml": ["xpl"], "application/xslt+xml": ["*xsl", "xslt"], "application/xspf+xml": ["xspf"], "application/xv+xml": ["mxml", "xhvml", "xvml", "xvm"], "application/yang": ["yang"], "application/yin+xml": ["yin"], "application/zip": ["zip"], "audio/3gpp": ["*3gpp"], "audio/adpcm": ["adp"], "audio/amr": ["amr"], "audio/basic": ["au", "snd"], "audio/midi": ["mid", "midi", "kar", "rmi"], "audio/mobile-xmf": ["mxmf"], "audio/mp3": ["*mp3"], "audio/mp4": ["m4a", "mp4a"], "audio/mpeg": ["mpga", "mp2", "mp2a", "mp3", "m2a", "m3a"], "audio/ogg": ["oga", "ogg", "spx", "opus"], "audio/s3m": ["s3m"], "audio/silk": ["sil"], "audio/wav": ["wav"], "audio/wave": ["*wav"], "audio/webm": ["weba"], "audio/xm": ["xm"], "font/collection": ["ttc"], "font/otf": ["otf"], "font/ttf": ["ttf"], "font/woff": ["woff"], "font/woff2": ["woff2"], "image/aces": ["exr"], "image/apng": ["apng"], "image/avif": ["avif"], "image/bmp": ["bmp"], "image/cgm": ["cgm"], "image/dicom-rle": ["drle"], "image/emf": ["emf"], "image/fits": ["fits"], "image/g3fax": ["g3"], "image/gif": ["gif"], "image/heic": ["heic"], "image/heic-sequence": ["heics"], "image/heif": ["heif"], "image/heif-sequence": ["heifs"], "image/hej2k": ["hej2"], "image/hsj2": ["hsj2"], "image/ief": ["ief"], "image/jls": ["jls"], "image/jp2": ["jp2", "jpg2"], "image/jpeg": ["jpeg", "jpg", "jpe"], "image/jph": ["jph"], "image/jphc": ["jhc"], "image/jpm": ["jpm"], "image/jpx": ["jpx", "jpf"], "image/jxr": ["jxr"], "image/jxra": ["jxra"], "image/jxrs": ["jxrs"], "image/jxs": ["jxs"], "image/jxsc": ["jxsc"], "image/jxsi": ["jxsi"], "image/jxss": ["jxss"], "image/ktx": ["ktx"], "image/ktx2": ["ktx2"], "image/png": ["png"], "image/sgi": ["sgi"], "image/svg+xml": ["svg", "svgz"], "image/t38": ["t38"], "image/tiff": ["tif", "tiff"], "image/tiff-fx": ["tfx"], "image/webp": ["webp"], "image/wmf": ["wmf"], "message/disposition-notification": ["disposition-notification"], "message/global": ["u8msg"], "message/global-delivery-status": ["u8dsn"], "message/global-disposition-notification": ["u8mdn"], "message/global-headers": ["u8hdr"], "message/rfc822": ["eml", "mime"], "model/3mf": ["3mf"], "model/gltf+json": ["gltf"], "model/gltf-binary": ["glb"], "model/iges": ["igs", "iges"], "model/mesh": ["msh", "mesh", "silo"], "model/mtl": ["mtl"], "model/obj": ["obj"], "model/step+xml": ["stpx"], "model/step+zip": ["stpz"], "model/step-xml+zip": ["stpxz"], "model/stl": ["stl"], "model/vrml": ["wrl", "vrml"], "model/x3d+binary": ["*x3db", "x3dbz"], "model/x3d+fastinfoset": ["x3db"], "model/x3d+vrml": ["*x3dv", "x3dvz"], "model/x3d+xml": ["x3d", "x3dz"], "model/x3d-vrml": ["x3dv"], "text/cache-manifest": ["appcache", "manifest"], "text/calendar": ["ics", "ifb"], "text/coffeescript": ["coffee", "litcoffee"], "text/css": ["css"], "text/csv": ["csv"], "text/html": ["html", "htm", "shtml"], "text/jade": ["jade"], "text/jsx": ["jsx"], "text/less": ["less"], "text/markdown": ["markdown", "md"], "text/mathml": ["mml"], "text/mdx": ["mdx"], "text/n3": ["n3"], "text/plain": ["txt", "text", "conf", "def", "list", "log", "in", "ini"], "text/richtext": ["rtx"], "text/rtf": ["*rtf"], "text/sgml": ["sgml", "sgm"], "text/shex": ["shex"], "text/slim": ["slim", "slm"], "text/spdx": ["spdx"], "text/stylus": ["stylus", "styl"], "text/tab-separated-values": ["tsv"], "text/troff": ["t", "tr", "roff", "man", "me", "ms"], "text/turtle": ["ttl"], "text/uri-list": ["uri", "uris", "urls"], "text/vcard": ["vcard"], "text/vtt": ["vtt"], "text/xml": ["*xml"], "text/yaml": ["yaml", "yml"], "video/3gpp": ["3gp", "3gpp"], "video/3gpp2": ["3g2"], "video/h261": ["h261"], "video/h263": ["h263"], "video/h264": ["h264"], "video/iso.segment": ["m4s"], "video/jpeg": ["jpgv"], "video/jpm": ["*jpm", "jpgm"], "video/mj2": ["mj2", "mjp2"], "video/mp2t": ["ts"], "video/mp4": ["mp4", "mp4v", "mpg4"], "video/mpeg": ["mpeg", "mpg", "mpe", "m1v", "m2v"], "video/ogg": ["ogv"], "video/quicktime": ["qt", "mov"], "video/webm": ["webm"] };
   }
 });
-
-// ../node_modules/mime/types/other.js
 var require_other = __commonJS({
   "../node_modules/mime/types/other.js"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     module.exports = { "application/prs.cww": ["cww"], "application/vnd.1000minds.decision-model+xml": ["1km"], "application/vnd.3gpp.pic-bw-large": ["plb"], "application/vnd.3gpp.pic-bw-small": ["psb"], "application/vnd.3gpp.pic-bw-var": ["pvb"], "application/vnd.3gpp2.tcap": ["tcap"], "application/vnd.3m.post-it-notes": ["pwn"], "application/vnd.accpac.simply.aso": ["aso"], "application/vnd.accpac.simply.imp": ["imp"], "application/vnd.acucobol": ["acu"], "application/vnd.acucorp": ["atc", "acutc"], "application/vnd.adobe.air-application-installer-package+zip": ["air"], "application/vnd.adobe.formscentral.fcdt": ["fcdt"], "application/vnd.adobe.fxp": ["fxp", "fxpl"], "application/vnd.adobe.xdp+xml": ["xdp"], "application/vnd.adobe.xfdf": ["xfdf"], "application/vnd.ahead.space": ["ahead"], "application/vnd.airzip.filesecure.azf": ["azf"], "application/vnd.airzip.filesecure.azs": ["azs"], "application/vnd.amazon.ebook": ["azw"], "application/vnd.americandynamics.acc": ["acc"], "application/vnd.amiga.ami": ["ami"], "application/vnd.android.package-archive": ["apk"], "application/vnd.anser-web-certificate-issue-initiation": ["cii"], "application/vnd.anser-web-funds-transfer-initiation": ["fti"], "application/vnd.antix.game-component": ["atx"], "application/vnd.apple.installer+xml": ["mpkg"], "application/vnd.apple.keynote": ["key"], "application/vnd.apple.mpegurl": ["m3u8"], "application/vnd.apple.numbers": ["numbers"], "application/vnd.apple.pages": ["pages"], "application/vnd.apple.pkpass": ["pkpass"], "application/vnd.aristanetworks.swi": ["swi"], "application/vnd.astraea-software.iota": ["iota"], "application/vnd.audiograph": ["aep"], "application/vnd.balsamiq.bmml+xml": ["bmml"], "application/vnd.blueice.multipass": ["mpm"], "application/vnd.bmi": ["bmi"], "application/vnd.businessobjects": ["rep"], "application/vnd.chemdraw+xml": ["cdxml"], "application/vnd.chipnuts.karaoke-mmd": ["mmd"], "application/vnd.cinderella": ["cdy"], "application/vnd.citationstyles.style+xml": ["csl"], "application/vnd.claymore": ["cla"], "application/vnd.cloanto.rp9": ["rp9"], "application/vnd.clonk.c4group": ["c4g", "c4d", "c4f", "c4p", "c4u"], "application/vnd.cluetrust.cartomobile-config": ["c11amc"], "application/vnd.cluetrust.cartomobile-config-pkg": ["c11amz"], "application/vnd.commonspace": ["csp"], "application/vnd.contact.cmsg": ["cdbcmsg"], "application/vnd.cosmocaller": ["cmc"], "application/vnd.crick.clicker": ["clkx"], "application/vnd.crick.clicker.keyboard": ["clkk"], "application/vnd.crick.clicker.palette": ["clkp"], "application/vnd.crick.clicker.template": ["clkt"], "application/vnd.crick.clicker.wordbank": ["clkw"], "application/vnd.criticaltools.wbs+xml": ["wbs"], "application/vnd.ctc-posml": ["pml"], "application/vnd.cups-ppd": ["ppd"], "application/vnd.curl.car": ["car"], "application/vnd.curl.pcurl": ["pcurl"], "application/vnd.dart": ["dart"], "application/vnd.data-vision.rdz": ["rdz"], "application/vnd.dbf": ["dbf"], "application/vnd.dece.data": ["uvf", "uvvf", "uvd", "uvvd"], "application/vnd.dece.ttml+xml": ["uvt", "uvvt"], "application/vnd.dece.unspecified": ["uvx", "uvvx"], "application/vnd.dece.zip": ["uvz", "uvvz"], "application/vnd.denovo.fcselayout-link": ["fe_launch"], "application/vnd.dna": ["dna"], "application/vnd.dolby.mlp": ["mlp"], "application/vnd.dpgraph": ["dpg"], "application/vnd.dreamfactory": ["dfac"], "application/vnd.ds-keypoint": ["kpxx"], "application/vnd.dvb.ait": ["ait"], "application/vnd.dvb.service": ["svc"], "application/vnd.dynageo": ["geo"], "application/vnd.ecowin.chart": ["mag"], "application/vnd.enliven": ["nml"], "application/vnd.epson.esf": ["esf"], "application/vnd.epson.msf": ["msf"], "application/vnd.epson.quickanime": ["qam"], "application/vnd.epson.salt": ["slt"], "application/vnd.epson.ssf": ["ssf"], "application/vnd.eszigno3+xml": ["es3", "et3"], "application/vnd.ezpix-album": ["ez2"], "application/vnd.ezpix-package": ["ez3"], "application/vnd.fdf": ["fdf"], "application/vnd.fdsn.mseed": ["mseed"], "application/vnd.fdsn.seed": ["seed", "dataless"], "application/vnd.flographit": ["gph"], "application/vnd.fluxtime.clip": ["ftc"], "application/vnd.framemaker": ["fm", "frame", "maker", "book"], "application/vnd.frogans.fnc": ["fnc"], "application/vnd.frogans.ltf": ["ltf"], "application/vnd.fsc.weblaunch": ["fsc"], "application/vnd.fujitsu.oasys": ["oas"], "application/vnd.fujitsu.oasys2": ["oa2"], "application/vnd.fujitsu.oasys3": ["oa3"], "application/vnd.fujitsu.oasysgp": ["fg5"], "application/vnd.fujitsu.oasysprs": ["bh2"], "application/vnd.fujixerox.ddd": ["ddd"], "application/vnd.fujixerox.docuworks": ["xdw"], "application/vnd.fujixerox.docuworks.binder": ["xbd"], "application/vnd.fuzzysheet": ["fzs"], "application/vnd.genomatix.tuxedo": ["txd"], "application/vnd.geogebra.file": ["ggb"], "application/vnd.geogebra.tool": ["ggt"], "application/vnd.geometry-explorer": ["gex", "gre"], "application/vnd.geonext": ["gxt"], "application/vnd.geoplan": ["g2w"], "application/vnd.geospace": ["g3w"], "application/vnd.gmx": ["gmx"], "application/vnd.google-apps.document": ["gdoc"], "application/vnd.google-apps.presentation": ["gslides"], "application/vnd.google-apps.spreadsheet": ["gsheet"], "application/vnd.google-earth.kml+xml": ["kml"], "application/vnd.google-earth.kmz": ["kmz"], "application/vnd.grafeq": ["gqf", "gqs"], "application/vnd.groove-account": ["gac"], "application/vnd.groove-help": ["ghf"], "application/vnd.groove-identity-message": ["gim"], "application/vnd.groove-injector": ["grv"], "application/vnd.groove-tool-message": ["gtm"], "application/vnd.groove-tool-template": ["tpl"], "application/vnd.groove-vcard": ["vcg"], "application/vnd.hal+xml": ["hal"], "application/vnd.handheld-entertainment+xml": ["zmm"], "application/vnd.hbci": ["hbci"], "application/vnd.hhe.lesson-player": ["les"], "application/vnd.hp-hpgl": ["hpgl"], "application/vnd.hp-hpid": ["hpid"], "application/vnd.hp-hps": ["hps"], "application/vnd.hp-jlyt": ["jlt"], "application/vnd.hp-pcl": ["pcl"], "application/vnd.hp-pclxl": ["pclxl"], "application/vnd.hydrostatix.sof-data": ["sfd-hdstx"], "application/vnd.ibm.minipay": ["mpy"], "application/vnd.ibm.modcap": ["afp", "listafp", "list3820"], "application/vnd.ibm.rights-management": ["irm"], "application/vnd.ibm.secure-container": ["sc"], "application/vnd.iccprofile": ["icc", "icm"], "application/vnd.igloader": ["igl"], "application/vnd.immervision-ivp": ["ivp"], "application/vnd.immervision-ivu": ["ivu"], "application/vnd.insors.igm": ["igm"], "application/vnd.intercon.formnet": ["xpw", "xpx"], "application/vnd.intergeo": ["i2g"], "application/vnd.intu.qbo": ["qbo"], "application/vnd.intu.qfx": ["qfx"], "application/vnd.ipunplugged.rcprofile": ["rcprofile"], "application/vnd.irepository.package+xml": ["irp"], "application/vnd.is-xpr": ["xpr"], "application/vnd.isac.fcs": ["fcs"], "application/vnd.jam": ["jam"], "application/vnd.jcp.javame.midlet-rms": ["rms"], "application/vnd.jisp": ["jisp"], "application/vnd.joost.joda-archive": ["joda"], "application/vnd.kahootz": ["ktz", "ktr"], "application/vnd.kde.karbon": ["karbon"], "application/vnd.kde.kchart": ["chrt"], "application/vnd.kde.kformula": ["kfo"], "application/vnd.kde.kivio": ["flw"], "application/vnd.kde.kontour": ["kon"], "application/vnd.kde.kpresenter": ["kpr", "kpt"], "application/vnd.kde.kspread": ["ksp"], "application/vnd.kde.kword": ["kwd", "kwt"], "application/vnd.kenameaapp": ["htke"], "application/vnd.kidspiration": ["kia"], "application/vnd.kinar": ["kne", "knp"], "application/vnd.koan": ["skp", "skd", "skt", "skm"], "application/vnd.kodak-descriptor": ["sse"], "application/vnd.las.las+xml": ["lasxml"], "application/vnd.llamagraphics.life-balance.desktop": ["lbd"], "application/vnd.llamagraphics.life-balance.exchange+xml": ["lbe"], "application/vnd.lotus-1-2-3": ["123"], "application/vnd.lotus-approach": ["apr"], "application/vnd.lotus-freelance": ["pre"], "application/vnd.lotus-notes": ["nsf"], "application/vnd.lotus-organizer": ["org"], "application/vnd.lotus-screencam": ["scm"], "application/vnd.lotus-wordpro": ["lwp"], "application/vnd.macports.portpkg": ["portpkg"], "application/vnd.mapbox-vector-tile": ["mvt"], "application/vnd.mcd": ["mcd"], "application/vnd.medcalcdata": ["mc1"], "application/vnd.mediastation.cdkey": ["cdkey"], "application/vnd.mfer": ["mwf"], "application/vnd.mfmp": ["mfm"], "application/vnd.micrografx.flo": ["flo"], "application/vnd.micrografx.igx": ["igx"], "application/vnd.mif": ["mif"], "application/vnd.mobius.daf": ["daf"], "application/vnd.mobius.dis": ["dis"], "application/vnd.mobius.mbk": ["mbk"], "application/vnd.mobius.mqy": ["mqy"], "application/vnd.mobius.msl": ["msl"], "application/vnd.mobius.plc": ["plc"], "application/vnd.mobius.txf": ["txf"], "application/vnd.mophun.application": ["mpn"], "application/vnd.mophun.certificate": ["mpc"], "application/vnd.mozilla.xul+xml": ["xul"], "application/vnd.ms-artgalry": ["cil"], "application/vnd.ms-cab-compressed": ["cab"], "application/vnd.ms-excel": ["xls", "xlm", "xla", "xlc", "xlt", "xlw"], "application/vnd.ms-excel.addin.macroenabled.12": ["xlam"], "application/vnd.ms-excel.sheet.binary.macroenabled.12": ["xlsb"], "application/vnd.ms-excel.sheet.macroenabled.12": ["xlsm"], "application/vnd.ms-excel.template.macroenabled.12": ["xltm"], "application/vnd.ms-fontobject": ["eot"], "application/vnd.ms-htmlhelp": ["chm"], "application/vnd.ms-ims": ["ims"], "application/vnd.ms-lrm": ["lrm"], "application/vnd.ms-officetheme": ["thmx"], "application/vnd.ms-outlook": ["msg"], "application/vnd.ms-pki.seccat": ["cat"], "application/vnd.ms-pki.stl": ["*stl"], "application/vnd.ms-powerpoint": ["ppt", "pps", "pot"], "application/vnd.ms-powerpoint.addin.macroenabled.12": ["ppam"], "application/vnd.ms-powerpoint.presentation.macroenabled.12": ["pptm"], "application/vnd.ms-powerpoint.slide.macroenabled.12": ["sldm"], "application/vnd.ms-powerpoint.slideshow.macroenabled.12": ["ppsm"], "application/vnd.ms-powerpoint.template.macroenabled.12": ["potm"], "application/vnd.ms-project": ["mpp", "mpt"], "application/vnd.ms-word.document.macroenabled.12": ["docm"], "application/vnd.ms-word.template.macroenabled.12": ["dotm"], "application/vnd.ms-works": ["wps", "wks", "wcm", "wdb"], "application/vnd.ms-wpl": ["wpl"], "application/vnd.ms-xpsdocument": ["xps"], "application/vnd.mseq": ["mseq"], "application/vnd.musician": ["mus"], "application/vnd.muvee.style": ["msty"], "application/vnd.mynfc": ["taglet"], "application/vnd.neurolanguage.nlu": ["nlu"], "application/vnd.nitf": ["ntf", "nitf"], "application/vnd.noblenet-directory": ["nnd"], "application/vnd.noblenet-sealer": ["nns"], "application/vnd.noblenet-web": ["nnw"], "application/vnd.nokia.n-gage.ac+xml": ["*ac"], "application/vnd.nokia.n-gage.data": ["ngdat"], "application/vnd.nokia.n-gage.symbian.install": ["n-gage"], "application/vnd.nokia.radio-preset": ["rpst"], "application/vnd.nokia.radio-presets": ["rpss"], "application/vnd.novadigm.edm": ["edm"], "application/vnd.novadigm.edx": ["edx"], "application/vnd.novadigm.ext": ["ext"], "application/vnd.oasis.opendocument.chart": ["odc"], "application/vnd.oasis.opendocument.chart-template": ["otc"], "application/vnd.oasis.opendocument.database": ["odb"], "application/vnd.oasis.opendocument.formula": ["odf"], "application/vnd.oasis.opendocument.formula-template": ["odft"], "application/vnd.oasis.opendocument.graphics": ["odg"], "application/vnd.oasis.opendocument.graphics-template": ["otg"], "application/vnd.oasis.opendocument.image": ["odi"], "application/vnd.oasis.opendocument.image-template": ["oti"], "application/vnd.oasis.opendocument.presentation": ["odp"], "application/vnd.oasis.opendocument.presentation-template": ["otp"], "application/vnd.oasis.opendocument.spreadsheet": ["ods"], "application/vnd.oasis.opendocument.spreadsheet-template": ["ots"], "application/vnd.oasis.opendocument.text": ["odt"], "application/vnd.oasis.opendocument.text-master": ["odm"], "application/vnd.oasis.opendocument.text-template": ["ott"], "application/vnd.oasis.opendocument.text-web": ["oth"], "application/vnd.olpc-sugar": ["xo"], "application/vnd.oma.dd2+xml": ["dd2"], "application/vnd.openblox.game+xml": ["obgx"], "application/vnd.openofficeorg.extension": ["oxt"], "application/vnd.openstreetmap.data+xml": ["osm"], "application/vnd.openxmlformats-officedocument.presentationml.presentation": ["pptx"], "application/vnd.openxmlformats-officedocument.presentationml.slide": ["sldx"], "application/vnd.openxmlformats-officedocument.presentationml.slideshow": ["ppsx"], "application/vnd.openxmlformats-officedocument.presentationml.template": ["potx"], "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ["xlsx"], "application/vnd.openxmlformats-officedocument.spreadsheetml.template": ["xltx"], "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ["docx"], "application/vnd.openxmlformats-officedocument.wordprocessingml.template": ["dotx"], "application/vnd.osgeo.mapguide.package": ["mgp"], "application/vnd.osgi.dp": ["dp"], "application/vnd.osgi.subsystem": ["esa"], "application/vnd.palm": ["pdb", "pqa", "oprc"], "application/vnd.pawaafile": ["paw"], "application/vnd.pg.format": ["str"], "application/vnd.pg.osasli": ["ei6"], "application/vnd.picsel": ["efif"], "application/vnd.pmi.widget": ["wg"], "application/vnd.pocketlearn": ["plf"], "application/vnd.powerbuilder6": ["pbd"], "application/vnd.previewsystems.box": ["box"], "application/vnd.proteus.magazine": ["mgz"], "application/vnd.publishare-delta-tree": ["qps"], "application/vnd.pvi.ptid1": ["ptid"], "application/vnd.quark.quarkxpress": ["qxd", "qxt", "qwd", "qwt", "qxl", "qxb"], "application/vnd.rar": ["rar"], "application/vnd.realvnc.bed": ["bed"], "application/vnd.recordare.musicxml": ["mxl"], "application/vnd.recordare.musicxml+xml": ["musicxml"], "application/vnd.rig.cryptonote": ["cryptonote"], "application/vnd.rim.cod": ["cod"], "application/vnd.rn-realmedia": ["rm"], "application/vnd.rn-realmedia-vbr": ["rmvb"], "application/vnd.route66.link66+xml": ["link66"], "application/vnd.sailingtracker.track": ["st"], "application/vnd.seemail": ["see"], "application/vnd.sema": ["sema"], "application/vnd.semd": ["semd"], "application/vnd.semf": ["semf"], "application/vnd.shana.informed.formdata": ["ifm"], "application/vnd.shana.informed.formtemplate": ["itp"], "application/vnd.shana.informed.interchange": ["iif"], "application/vnd.shana.informed.package": ["ipk"], "application/vnd.simtech-mindmapper": ["twd", "twds"], "application/vnd.smaf": ["mmf"], "application/vnd.smart.teacher": ["teacher"], "application/vnd.software602.filler.form+xml": ["fo"], "application/vnd.solent.sdkm+xml": ["sdkm", "sdkd"], "application/vnd.spotfire.dxp": ["dxp"], "application/vnd.spotfire.sfs": ["sfs"], "application/vnd.stardivision.calc": ["sdc"], "application/vnd.stardivision.draw": ["sda"], "application/vnd.stardivision.impress": ["sdd"], "application/vnd.stardivision.math": ["smf"], "application/vnd.stardivision.writer": ["sdw", "vor"], "application/vnd.stardivision.writer-global": ["sgl"], "application/vnd.stepmania.package": ["smzip"], "application/vnd.stepmania.stepchart": ["sm"], "application/vnd.sun.wadl+xml": ["wadl"], "application/vnd.sun.xml.calc": ["sxc"], "application/vnd.sun.xml.calc.template": ["stc"], "application/vnd.sun.xml.draw": ["sxd"], "application/vnd.sun.xml.draw.template": ["std"], "application/vnd.sun.xml.impress": ["sxi"], "application/vnd.sun.xml.impress.template": ["sti"], "application/vnd.sun.xml.math": ["sxm"], "application/vnd.sun.xml.writer": ["sxw"], "application/vnd.sun.xml.writer.global": ["sxg"], "application/vnd.sun.xml.writer.template": ["stw"], "application/vnd.sus-calendar": ["sus", "susp"], "application/vnd.svd": ["svd"], "application/vnd.symbian.install": ["sis", "sisx"], "application/vnd.syncml+xml": ["xsm"], "application/vnd.syncml.dm+wbxml": ["bdm"], "application/vnd.syncml.dm+xml": ["xdm"], "application/vnd.syncml.dmddf+xml": ["ddf"], "application/vnd.tao.intent-module-archive": ["tao"], "application/vnd.tcpdump.pcap": ["pcap", "cap", "dmp"], "application/vnd.tmobile-livetv": ["tmo"], "application/vnd.trid.tpt": ["tpt"], "application/vnd.triscape.mxs": ["mxs"], "application/vnd.trueapp": ["tra"], "application/vnd.ufdl": ["ufd", "ufdl"], "application/vnd.uiq.theme": ["utz"], "application/vnd.umajin": ["umj"], "application/vnd.unity": ["unityweb"], "application/vnd.uoml+xml": ["uoml"], "application/vnd.vcx": ["vcx"], "application/vnd.visio": ["vsd", "vst", "vss", "vsw"], "application/vnd.visionary": ["vis"], "application/vnd.vsf": ["vsf"], "application/vnd.wap.wbxml": ["wbxml"], "application/vnd.wap.wmlc": ["wmlc"], "application/vnd.wap.wmlscriptc": ["wmlsc"], "application/vnd.webturbo": ["wtb"], "application/vnd.wolfram.player": ["nbp"], "application/vnd.wordperfect": ["wpd"], "application/vnd.wqd": ["wqd"], "application/vnd.wt.stf": ["stf"], "application/vnd.xara": ["xar"], "application/vnd.xfdl": ["xfdl"], "application/vnd.yamaha.hv-dic": ["hvd"], "application/vnd.yamaha.hv-script": ["hvs"], "application/vnd.yamaha.hv-voice": ["hvp"], "application/vnd.yamaha.openscoreformat": ["osf"], "application/vnd.yamaha.openscoreformat.osfpvg+xml": ["osfpvg"], "application/vnd.yamaha.smaf-audio": ["saf"], "application/vnd.yamaha.smaf-phrase": ["spf"], "application/vnd.yellowriver-custom-menu": ["cmp"], "application/vnd.zul": ["zir", "zirz"], "application/vnd.zzazz.deck+xml": ["zaz"], "application/x-7z-compressed": ["7z"], "application/x-abiword": ["abw"], "application/x-ace-compressed": ["ace"], "application/x-apple-diskimage": ["*dmg"], "application/x-arj": ["arj"], "application/x-authorware-bin": ["aab", "x32", "u32", "vox"], "application/x-authorware-map": ["aam"], "application/x-authorware-seg": ["aas"], "application/x-bcpio": ["bcpio"], "application/x-bdoc": ["*bdoc"], "application/x-bittorrent": ["torrent"], "application/x-blorb": ["blb", "blorb"], "application/x-bzip": ["bz"], "application/x-bzip2": ["bz2", "boz"], "application/x-cbr": ["cbr", "cba", "cbt", "cbz", "cb7"], "application/x-cdlink": ["vcd"], "application/x-cfs-compressed": ["cfs"], "application/x-chat": ["chat"], "application/x-chess-pgn": ["pgn"], "application/x-chrome-extension": ["crx"], "application/x-cocoa": ["cco"], "application/x-conference": ["nsc"], "application/x-cpio": ["cpio"], "application/x-csh": ["csh"], "application/x-debian-package": ["*deb", "udeb"], "application/x-dgc-compressed": ["dgc"], "application/x-director": ["dir", "dcr", "dxr", "cst", "cct", "cxt", "w3d", "fgd", "swa"], "application/x-doom": ["wad"], "application/x-dtbncx+xml": ["ncx"], "application/x-dtbook+xml": ["dtb"], "application/x-dtbresource+xml": ["res"], "application/x-dvi": ["dvi"], "application/x-envoy": ["evy"], "application/x-eva": ["eva"], "application/x-font-bdf": ["bdf"], "application/x-font-ghostscript": ["gsf"], "application/x-font-linux-psf": ["psf"], "application/x-font-pcf": ["pcf"], "application/x-font-snf": ["snf"], "application/x-font-type1": ["pfa", "pfb", "pfm", "afm"], "application/x-freearc": ["arc"], "application/x-futuresplash": ["spl"], "application/x-gca-compressed": ["gca"], "application/x-glulx": ["ulx"], "application/x-gnumeric": ["gnumeric"], "application/x-gramps-xml": ["gramps"], "application/x-gtar": ["gtar"], "application/x-hdf": ["hdf"], "application/x-httpd-php": ["php"], "application/x-install-instructions": ["install"], "application/x-iso9660-image": ["*iso"], "application/x-iwork-keynote-sffkey": ["*key"], "application/x-iwork-numbers-sffnumbers": ["*numbers"], "application/x-iwork-pages-sffpages": ["*pages"], "application/x-java-archive-diff": ["jardiff"], "application/x-java-jnlp-file": ["jnlp"], "application/x-keepass2": ["kdbx"], "application/x-latex": ["latex"], "application/x-lua-bytecode": ["luac"], "application/x-lzh-compressed": ["lzh", "lha"], "application/x-makeself": ["run"], "application/x-mie": ["mie"], "application/x-mobipocket-ebook": ["prc", "mobi"], "application/x-ms-application": ["application"], "application/x-ms-shortcut": ["lnk"], "application/x-ms-wmd": ["wmd"], "application/x-ms-wmz": ["wmz"], "application/x-ms-xbap": ["xbap"], "application/x-msaccess": ["mdb"], "application/x-msbinder": ["obd"], "application/x-mscardfile": ["crd"], "application/x-msclip": ["clp"], "application/x-msdos-program": ["*exe"], "application/x-msdownload": ["*exe", "*dll", "com", "bat", "*msi"], "application/x-msmediaview": ["mvb", "m13", "m14"], "application/x-msmetafile": ["*wmf", "*wmz", "*emf", "emz"], "application/x-msmoney": ["mny"], "application/x-mspublisher": ["pub"], "application/x-msschedule": ["scd"], "application/x-msterminal": ["trm"], "application/x-mswrite": ["wri"], "application/x-netcdf": ["nc", "cdf"], "application/x-ns-proxy-autoconfig": ["pac"], "application/x-nzb": ["nzb"], "application/x-perl": ["pl", "pm"], "application/x-pilot": ["*prc", "*pdb"], "application/x-pkcs12": ["p12", "pfx"], "application/x-pkcs7-certificates": ["p7b", "spc"], "application/x-pkcs7-certreqresp": ["p7r"], "application/x-rar-compressed": ["*rar"], "application/x-redhat-package-manager": ["rpm"], "application/x-research-info-systems": ["ris"], "application/x-sea": ["sea"], "application/x-sh": ["sh"], "application/x-shar": ["shar"], "application/x-shockwave-flash": ["swf"], "application/x-silverlight-app": ["xap"], "application/x-sql": ["sql"], "application/x-stuffit": ["sit"], "application/x-stuffitx": ["sitx"], "application/x-subrip": ["srt"], "application/x-sv4cpio": ["sv4cpio"], "application/x-sv4crc": ["sv4crc"], "application/x-t3vm-image": ["t3"], "application/x-tads": ["gam"], "application/x-tar": ["tar"], "application/x-tcl": ["tcl", "tk"], "application/x-tex": ["tex"], "application/x-tex-tfm": ["tfm"], "application/x-texinfo": ["texinfo", "texi"], "application/x-tgif": ["*obj"], "application/x-ustar": ["ustar"], "application/x-virtualbox-hdd": ["hdd"], "application/x-virtualbox-ova": ["ova"], "application/x-virtualbox-ovf": ["ovf"], "application/x-virtualbox-vbox": ["vbox"], "application/x-virtualbox-vbox-extpack": ["vbox-extpack"], "application/x-virtualbox-vdi": ["vdi"], "application/x-virtualbox-vhd": ["vhd"], "application/x-virtualbox-vmdk": ["vmdk"], "application/x-wais-source": ["src"], "application/x-web-app-manifest+json": ["webapp"], "application/x-x509-ca-cert": ["der", "crt", "pem"], "application/x-xfig": ["fig"], "application/x-xliff+xml": ["*xlf"], "application/x-xpinstall": ["xpi"], "application/x-xz": ["xz"], "application/x-zmachine": ["z1", "z2", "z3", "z4", "z5", "z6", "z7", "z8"], "audio/vnd.dece.audio": ["uva", "uvva"], "audio/vnd.digital-winds": ["eol"], "audio/vnd.dra": ["dra"], "audio/vnd.dts": ["dts"], "audio/vnd.dts.hd": ["dtshd"], "audio/vnd.lucent.voice": ["lvp"], "audio/vnd.ms-playready.media.pya": ["pya"], "audio/vnd.nuera.ecelp4800": ["ecelp4800"], "audio/vnd.nuera.ecelp7470": ["ecelp7470"], "audio/vnd.nuera.ecelp9600": ["ecelp9600"], "audio/vnd.rip": ["rip"], "audio/x-aac": ["aac"], "audio/x-aiff": ["aif", "aiff", "aifc"], "audio/x-caf": ["caf"], "audio/x-flac": ["flac"], "audio/x-m4a": ["*m4a"], "audio/x-matroska": ["mka"], "audio/x-mpegurl": ["m3u"], "audio/x-ms-wax": ["wax"], "audio/x-ms-wma": ["wma"], "audio/x-pn-realaudio": ["ram", "ra"], "audio/x-pn-realaudio-plugin": ["rmp"], "audio/x-realaudio": ["*ra"], "audio/x-wav": ["*wav"], "chemical/x-cdx": ["cdx"], "chemical/x-cif": ["cif"], "chemical/x-cmdf": ["cmdf"], "chemical/x-cml": ["cml"], "chemical/x-csml": ["csml"], "chemical/x-xyz": ["xyz"], "image/prs.btif": ["btif"], "image/prs.pti": ["pti"], "image/vnd.adobe.photoshop": ["psd"], "image/vnd.airzip.accelerator.azv": ["azv"], "image/vnd.dece.graphic": ["uvi", "uvvi", "uvg", "uvvg"], "image/vnd.djvu": ["djvu", "djv"], "image/vnd.dvb.subtitle": ["*sub"], "image/vnd.dwg": ["dwg"], "image/vnd.dxf": ["dxf"], "image/vnd.fastbidsheet": ["fbs"], "image/vnd.fpx": ["fpx"], "image/vnd.fst": ["fst"], "image/vnd.fujixerox.edmics-mmr": ["mmr"], "image/vnd.fujixerox.edmics-rlc": ["rlc"], "image/vnd.microsoft.icon": ["ico"], "image/vnd.ms-dds": ["dds"], "image/vnd.ms-modi": ["mdi"], "image/vnd.ms-photo": ["wdp"], "image/vnd.net-fpx": ["npx"], "image/vnd.pco.b16": ["b16"], "image/vnd.tencent.tap": ["tap"], "image/vnd.valve.source.texture": ["vtf"], "image/vnd.wap.wbmp": ["wbmp"], "image/vnd.xiff": ["xif"], "image/vnd.zbrush.pcx": ["pcx"], "image/x-3ds": ["3ds"], "image/x-cmu-raster": ["ras"], "image/x-cmx": ["cmx"], "image/x-freehand": ["fh", "fhc", "fh4", "fh5", "fh7"], "image/x-icon": ["*ico"], "image/x-jng": ["jng"], "image/x-mrsid-image": ["sid"], "image/x-ms-bmp": ["*bmp"], "image/x-pcx": ["*pcx"], "image/x-pict": ["pic", "pct"], "image/x-portable-anymap": ["pnm"], "image/x-portable-bitmap": ["pbm"], "image/x-portable-graymap": ["pgm"], "image/x-portable-pixmap": ["ppm"], "image/x-rgb": ["rgb"], "image/x-tga": ["tga"], "image/x-xbitmap": ["xbm"], "image/x-xpixmap": ["xpm"], "image/x-xwindowdump": ["xwd"], "message/vnd.wfa.wsc": ["wsc"], "model/vnd.collada+xml": ["dae"], "model/vnd.dwf": ["dwf"], "model/vnd.gdl": ["gdl"], "model/vnd.gtw": ["gtw"], "model/vnd.mts": ["mts"], "model/vnd.opengex": ["ogex"], "model/vnd.parasolid.transmit.binary": ["x_b"], "model/vnd.parasolid.transmit.text": ["x_t"], "model/vnd.sap.vds": ["vds"], "model/vnd.usdz+zip": ["usdz"], "model/vnd.valve.source.compiled-map": ["bsp"], "model/vnd.vtu": ["vtu"], "text/prs.lines.tag": ["dsc"], "text/vnd.curl": ["curl"], "text/vnd.curl.dcurl": ["dcurl"], "text/vnd.curl.mcurl": ["mcurl"], "text/vnd.curl.scurl": ["scurl"], "text/vnd.dvb.subtitle": ["sub"], "text/vnd.fly": ["fly"], "text/vnd.fmi.flexstor": ["flx"], "text/vnd.graphviz": ["gv"], "text/vnd.in3d.3dml": ["3dml"], "text/vnd.in3d.spot": ["spot"], "text/vnd.sun.j2me.app-descriptor": ["jad"], "text/vnd.wap.wml": ["wml"], "text/vnd.wap.wmlscript": ["wmls"], "text/x-asm": ["s", "asm"], "text/x-c": ["c", "cc", "cxx", "cpp", "h", "hh", "dic"], "text/x-component": ["htc"], "text/x-fortran": ["f", "for", "f77", "f90"], "text/x-handlebars-template": ["hbs"], "text/x-java-source": ["java"], "text/x-lua": ["lua"], "text/x-markdown": ["mkd"], "text/x-nfo": ["nfo"], "text/x-opml": ["opml"], "text/x-org": ["*org"], "text/x-pascal": ["p", "pas"], "text/x-processing": ["pde"], "text/x-sass": ["sass"], "text/x-scss": ["scss"], "text/x-setext": ["etx"], "text/x-sfv": ["sfv"], "text/x-suse-ymp": ["ymp"], "text/x-uuencode": ["uu"], "text/x-vcalendar": ["vcs"], "text/x-vcard": ["vcf"], "video/vnd.dece.hd": ["uvh", "uvvh"], "video/vnd.dece.mobile": ["uvm", "uvvm"], "video/vnd.dece.pd": ["uvp", "uvvp"], "video/vnd.dece.sd": ["uvs", "uvvs"], "video/vnd.dece.video": ["uvv", "uvvv"], "video/vnd.dvb.file": ["dvb"], "video/vnd.fvt": ["fvt"], "video/vnd.mpegurl": ["mxu", "m4u"], "video/vnd.ms-playready.media.pyv": ["pyv"], "video/vnd.uvvu.mp4": ["uvu", "uvvu"], "video/vnd.vivo": ["viv"], "video/x-f4v": ["f4v"], "video/x-fli": ["fli"], "video/x-flv": ["flv"], "video/x-m4v": ["m4v"], "video/x-matroska": ["mkv", "mk3d", "mks"], "video/x-mng": ["mng"], "video/x-ms-asf": ["asf", "asx"], "video/x-ms-vob": ["vob"], "video/x-ms-wm": ["wm"], "video/x-ms-wmv": ["wmv"], "video/x-ms-wmx": ["wmx"], "video/x-ms-wvx": ["wvx"], "video/x-msvideo": ["avi"], "video/x-sgi-movie": ["movie"], "video/x-smv": ["smv"], "x-conference/x-cooltalk": ["ice"] };
   }
 });
-
-// ../node_modules/mime/index.js
 var require_mime = __commonJS({
   "../node_modules/mime/index.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -6834,19 +7992,15 @@ var require_mime = __commonJS({
     module.exports = new Mime(require_standard(), require_other());
   }
 });
-
-// ../node_modules/entities/lib/maps/decode.json
 var require_decode = __commonJS({
   "../node_modules/entities/lib/maps/decode.json"(exports, module) {
     module.exports = { "0": 65533, "128": 8364, "130": 8218, "131": 402, "132": 8222, "133": 8230, "134": 8224, "135": 8225, "136": 710, "137": 8240, "138": 352, "139": 8249, "140": 338, "142": 381, "145": 8216, "146": 8217, "147": 8220, "148": 8221, "149": 8226, "150": 8211, "151": 8212, "152": 732, "153": 8482, "154": 353, "155": 8250, "156": 339, "158": 382, "159": 376 };
   }
 });
-
-// ../node_modules/entities/lib/decode_codepoint.js
 var require_decode_codepoint = __commonJS({
   "../node_modules/entities/lib/decode_codepoint.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -6878,36 +8032,29 @@ var require_decode_codepoint = __commonJS({
       return fromCodePoint(codePoint);
     }
     __name(decodeCodePoint, "decodeCodePoint");
+    __name2(decodeCodePoint, "decodeCodePoint");
     exports.default = decodeCodePoint;
   }
 });
-
-// ../node_modules/entities/lib/maps/entities.json
 var require_entities = __commonJS({
   "../node_modules/entities/lib/maps/entities.json"(exports, module) {
     module.exports = { Aacute: "\xC1", aacute: "\xE1", Abreve: "\u0102", abreve: "\u0103", ac: "\u223E", acd: "\u223F", acE: "\u223E\u0333", Acirc: "\xC2", acirc: "\xE2", acute: "\xB4", Acy: "\u0410", acy: "\u0430", AElig: "\xC6", aelig: "\xE6", af: "\u2061", Afr: "\u{1D504}", afr: "\u{1D51E}", Agrave: "\xC0", agrave: "\xE0", alefsym: "\u2135", aleph: "\u2135", Alpha: "\u0391", alpha: "\u03B1", Amacr: "\u0100", amacr: "\u0101", amalg: "\u2A3F", amp: "&", AMP: "&", andand: "\u2A55", And: "\u2A53", and: "\u2227", andd: "\u2A5C", andslope: "\u2A58", andv: "\u2A5A", ang: "\u2220", ange: "\u29A4", angle: "\u2220", angmsdaa: "\u29A8", angmsdab: "\u29A9", angmsdac: "\u29AA", angmsdad: "\u29AB", angmsdae: "\u29AC", angmsdaf: "\u29AD", angmsdag: "\u29AE", angmsdah: "\u29AF", angmsd: "\u2221", angrt: "\u221F", angrtvb: "\u22BE", angrtvbd: "\u299D", angsph: "\u2222", angst: "\xC5", angzarr: "\u237C", Aogon: "\u0104", aogon: "\u0105", Aopf: "\u{1D538}", aopf: "\u{1D552}", apacir: "\u2A6F", ap: "\u2248", apE: "\u2A70", ape: "\u224A", apid: "\u224B", apos: "'", ApplyFunction: "\u2061", approx: "\u2248", approxeq: "\u224A", Aring: "\xC5", aring: "\xE5", Ascr: "\u{1D49C}", ascr: "\u{1D4B6}", Assign: "\u2254", ast: "*", asymp: "\u2248", asympeq: "\u224D", Atilde: "\xC3", atilde: "\xE3", Auml: "\xC4", auml: "\xE4", awconint: "\u2233", awint: "\u2A11", backcong: "\u224C", backepsilon: "\u03F6", backprime: "\u2035", backsim: "\u223D", backsimeq: "\u22CD", Backslash: "\u2216", Barv: "\u2AE7", barvee: "\u22BD", barwed: "\u2305", Barwed: "\u2306", barwedge: "\u2305", bbrk: "\u23B5", bbrktbrk: "\u23B6", bcong: "\u224C", Bcy: "\u0411", bcy: "\u0431", bdquo: "\u201E", becaus: "\u2235", because: "\u2235", Because: "\u2235", bemptyv: "\u29B0", bepsi: "\u03F6", bernou: "\u212C", Bernoullis: "\u212C", Beta: "\u0392", beta: "\u03B2", beth: "\u2136", between: "\u226C", Bfr: "\u{1D505}", bfr: "\u{1D51F}", bigcap: "\u22C2", bigcirc: "\u25EF", bigcup: "\u22C3", bigodot: "\u2A00", bigoplus: "\u2A01", bigotimes: "\u2A02", bigsqcup: "\u2A06", bigstar: "\u2605", bigtriangledown: "\u25BD", bigtriangleup: "\u25B3", biguplus: "\u2A04", bigvee: "\u22C1", bigwedge: "\u22C0", bkarow: "\u290D", blacklozenge: "\u29EB", blacksquare: "\u25AA", blacktriangle: "\u25B4", blacktriangledown: "\u25BE", blacktriangleleft: "\u25C2", blacktriangleright: "\u25B8", blank: "\u2423", blk12: "\u2592", blk14: "\u2591", blk34: "\u2593", block: "\u2588", bne: "=\u20E5", bnequiv: "\u2261\u20E5", bNot: "\u2AED", bnot: "\u2310", Bopf: "\u{1D539}", bopf: "\u{1D553}", bot: "\u22A5", bottom: "\u22A5", bowtie: "\u22C8", boxbox: "\u29C9", boxdl: "\u2510", boxdL: "\u2555", boxDl: "\u2556", boxDL: "\u2557", boxdr: "\u250C", boxdR: "\u2552", boxDr: "\u2553", boxDR: "\u2554", boxh: "\u2500", boxH: "\u2550", boxhd: "\u252C", boxHd: "\u2564", boxhD: "\u2565", boxHD: "\u2566", boxhu: "\u2534", boxHu: "\u2567", boxhU: "\u2568", boxHU: "\u2569", boxminus: "\u229F", boxplus: "\u229E", boxtimes: "\u22A0", boxul: "\u2518", boxuL: "\u255B", boxUl: "\u255C", boxUL: "\u255D", boxur: "\u2514", boxuR: "\u2558", boxUr: "\u2559", boxUR: "\u255A", boxv: "\u2502", boxV: "\u2551", boxvh: "\u253C", boxvH: "\u256A", boxVh: "\u256B", boxVH: "\u256C", boxvl: "\u2524", boxvL: "\u2561", boxVl: "\u2562", boxVL: "\u2563", boxvr: "\u251C", boxvR: "\u255E", boxVr: "\u255F", boxVR: "\u2560", bprime: "\u2035", breve: "\u02D8", Breve: "\u02D8", brvbar: "\xA6", bscr: "\u{1D4B7}", Bscr: "\u212C", bsemi: "\u204F", bsim: "\u223D", bsime: "\u22CD", bsolb: "\u29C5", bsol: "\\", bsolhsub: "\u27C8", bull: "\u2022", bullet: "\u2022", bump: "\u224E", bumpE: "\u2AAE", bumpe: "\u224F", Bumpeq: "\u224E", bumpeq: "\u224F", Cacute: "\u0106", cacute: "\u0107", capand: "\u2A44", capbrcup: "\u2A49", capcap: "\u2A4B", cap: "\u2229", Cap: "\u22D2", capcup: "\u2A47", capdot: "\u2A40", CapitalDifferentialD: "\u2145", caps: "\u2229\uFE00", caret: "\u2041", caron: "\u02C7", Cayleys: "\u212D", ccaps: "\u2A4D", Ccaron: "\u010C", ccaron: "\u010D", Ccedil: "\xC7", ccedil: "\xE7", Ccirc: "\u0108", ccirc: "\u0109", Cconint: "\u2230", ccups: "\u2A4C", ccupssm: "\u2A50", Cdot: "\u010A", cdot: "\u010B", cedil: "\xB8", Cedilla: "\xB8", cemptyv: "\u29B2", cent: "\xA2", centerdot: "\xB7", CenterDot: "\xB7", cfr: "\u{1D520}", Cfr: "\u212D", CHcy: "\u0427", chcy: "\u0447", check: "\u2713", checkmark: "\u2713", Chi: "\u03A7", chi: "\u03C7", circ: "\u02C6", circeq: "\u2257", circlearrowleft: "\u21BA", circlearrowright: "\u21BB", circledast: "\u229B", circledcirc: "\u229A", circleddash: "\u229D", CircleDot: "\u2299", circledR: "\xAE", circledS: "\u24C8", CircleMinus: "\u2296", CirclePlus: "\u2295", CircleTimes: "\u2297", cir: "\u25CB", cirE: "\u29C3", cire: "\u2257", cirfnint: "\u2A10", cirmid: "\u2AEF", cirscir: "\u29C2", ClockwiseContourIntegral: "\u2232", CloseCurlyDoubleQuote: "\u201D", CloseCurlyQuote: "\u2019", clubs: "\u2663", clubsuit: "\u2663", colon: ":", Colon: "\u2237", Colone: "\u2A74", colone: "\u2254", coloneq: "\u2254", comma: ",", commat: "@", comp: "\u2201", compfn: "\u2218", complement: "\u2201", complexes: "\u2102", cong: "\u2245", congdot: "\u2A6D", Congruent: "\u2261", conint: "\u222E", Conint: "\u222F", ContourIntegral: "\u222E", copf: "\u{1D554}", Copf: "\u2102", coprod: "\u2210", Coproduct: "\u2210", copy: "\xA9", COPY: "\xA9", copysr: "\u2117", CounterClockwiseContourIntegral: "\u2233", crarr: "\u21B5", cross: "\u2717", Cross: "\u2A2F", Cscr: "\u{1D49E}", cscr: "\u{1D4B8}", csub: "\u2ACF", csube: "\u2AD1", csup: "\u2AD0", csupe: "\u2AD2", ctdot: "\u22EF", cudarrl: "\u2938", cudarrr: "\u2935", cuepr: "\u22DE", cuesc: "\u22DF", cularr: "\u21B6", cularrp: "\u293D", cupbrcap: "\u2A48", cupcap: "\u2A46", CupCap: "\u224D", cup: "\u222A", Cup: "\u22D3", cupcup: "\u2A4A", cupdot: "\u228D", cupor: "\u2A45", cups: "\u222A\uFE00", curarr: "\u21B7", curarrm: "\u293C", curlyeqprec: "\u22DE", curlyeqsucc: "\u22DF", curlyvee: "\u22CE", curlywedge: "\u22CF", curren: "\xA4", curvearrowleft: "\u21B6", curvearrowright: "\u21B7", cuvee: "\u22CE", cuwed: "\u22CF", cwconint: "\u2232", cwint: "\u2231", cylcty: "\u232D", dagger: "\u2020", Dagger: "\u2021", daleth: "\u2138", darr: "\u2193", Darr: "\u21A1", dArr: "\u21D3", dash: "\u2010", Dashv: "\u2AE4", dashv: "\u22A3", dbkarow: "\u290F", dblac: "\u02DD", Dcaron: "\u010E", dcaron: "\u010F", Dcy: "\u0414", dcy: "\u0434", ddagger: "\u2021", ddarr: "\u21CA", DD: "\u2145", dd: "\u2146", DDotrahd: "\u2911", ddotseq: "\u2A77", deg: "\xB0", Del: "\u2207", Delta: "\u0394", delta: "\u03B4", demptyv: "\u29B1", dfisht: "\u297F", Dfr: "\u{1D507}", dfr: "\u{1D521}", dHar: "\u2965", dharl: "\u21C3", dharr: "\u21C2", DiacriticalAcute: "\xB4", DiacriticalDot: "\u02D9", DiacriticalDoubleAcute: "\u02DD", DiacriticalGrave: "`", DiacriticalTilde: "\u02DC", diam: "\u22C4", diamond: "\u22C4", Diamond: "\u22C4", diamondsuit: "\u2666", diams: "\u2666", die: "\xA8", DifferentialD: "\u2146", digamma: "\u03DD", disin: "\u22F2", div: "\xF7", divide: "\xF7", divideontimes: "\u22C7", divonx: "\u22C7", DJcy: "\u0402", djcy: "\u0452", dlcorn: "\u231E", dlcrop: "\u230D", dollar: "$", Dopf: "\u{1D53B}", dopf: "\u{1D555}", Dot: "\xA8", dot: "\u02D9", DotDot: "\u20DC", doteq: "\u2250", doteqdot: "\u2251", DotEqual: "\u2250", dotminus: "\u2238", dotplus: "\u2214", dotsquare: "\u22A1", doublebarwedge: "\u2306", DoubleContourIntegral: "\u222F", DoubleDot: "\xA8", DoubleDownArrow: "\u21D3", DoubleLeftArrow: "\u21D0", DoubleLeftRightArrow: "\u21D4", DoubleLeftTee: "\u2AE4", DoubleLongLeftArrow: "\u27F8", DoubleLongLeftRightArrow: "\u27FA", DoubleLongRightArrow: "\u27F9", DoubleRightArrow: "\u21D2", DoubleRightTee: "\u22A8", DoubleUpArrow: "\u21D1", DoubleUpDownArrow: "\u21D5", DoubleVerticalBar: "\u2225", DownArrowBar: "\u2913", downarrow: "\u2193", DownArrow: "\u2193", Downarrow: "\u21D3", DownArrowUpArrow: "\u21F5", DownBreve: "\u0311", downdownarrows: "\u21CA", downharpoonleft: "\u21C3", downharpoonright: "\u21C2", DownLeftRightVector: "\u2950", DownLeftTeeVector: "\u295E", DownLeftVectorBar: "\u2956", DownLeftVector: "\u21BD", DownRightTeeVector: "\u295F", DownRightVectorBar: "\u2957", DownRightVector: "\u21C1", DownTeeArrow: "\u21A7", DownTee: "\u22A4", drbkarow: "\u2910", drcorn: "\u231F", drcrop: "\u230C", Dscr: "\u{1D49F}", dscr: "\u{1D4B9}", DScy: "\u0405", dscy: "\u0455", dsol: "\u29F6", Dstrok: "\u0110", dstrok: "\u0111", dtdot: "\u22F1", dtri: "\u25BF", dtrif: "\u25BE", duarr: "\u21F5", duhar: "\u296F", dwangle: "\u29A6", DZcy: "\u040F", dzcy: "\u045F", dzigrarr: "\u27FF", Eacute: "\xC9", eacute: "\xE9", easter: "\u2A6E", Ecaron: "\u011A", ecaron: "\u011B", Ecirc: "\xCA", ecirc: "\xEA", ecir: "\u2256", ecolon: "\u2255", Ecy: "\u042D", ecy: "\u044D", eDDot: "\u2A77", Edot: "\u0116", edot: "\u0117", eDot: "\u2251", ee: "\u2147", efDot: "\u2252", Efr: "\u{1D508}", efr: "\u{1D522}", eg: "\u2A9A", Egrave: "\xC8", egrave: "\xE8", egs: "\u2A96", egsdot: "\u2A98", el: "\u2A99", Element: "\u2208", elinters: "\u23E7", ell: "\u2113", els: "\u2A95", elsdot: "\u2A97", Emacr: "\u0112", emacr: "\u0113", empty: "\u2205", emptyset: "\u2205", EmptySmallSquare: "\u25FB", emptyv: "\u2205", EmptyVerySmallSquare: "\u25AB", emsp13: "\u2004", emsp14: "\u2005", emsp: "\u2003", ENG: "\u014A", eng: "\u014B", ensp: "\u2002", Eogon: "\u0118", eogon: "\u0119", Eopf: "\u{1D53C}", eopf: "\u{1D556}", epar: "\u22D5", eparsl: "\u29E3", eplus: "\u2A71", epsi: "\u03B5", Epsilon: "\u0395", epsilon: "\u03B5", epsiv: "\u03F5", eqcirc: "\u2256", eqcolon: "\u2255", eqsim: "\u2242", eqslantgtr: "\u2A96", eqslantless: "\u2A95", Equal: "\u2A75", equals: "=", EqualTilde: "\u2242", equest: "\u225F", Equilibrium: "\u21CC", equiv: "\u2261", equivDD: "\u2A78", eqvparsl: "\u29E5", erarr: "\u2971", erDot: "\u2253", escr: "\u212F", Escr: "\u2130", esdot: "\u2250", Esim: "\u2A73", esim: "\u2242", Eta: "\u0397", eta: "\u03B7", ETH: "\xD0", eth: "\xF0", Euml: "\xCB", euml: "\xEB", euro: "\u20AC", excl: "!", exist: "\u2203", Exists: "\u2203", expectation: "\u2130", exponentiale: "\u2147", ExponentialE: "\u2147", fallingdotseq: "\u2252", Fcy: "\u0424", fcy: "\u0444", female: "\u2640", ffilig: "\uFB03", fflig: "\uFB00", ffllig: "\uFB04", Ffr: "\u{1D509}", ffr: "\u{1D523}", filig: "\uFB01", FilledSmallSquare: "\u25FC", FilledVerySmallSquare: "\u25AA", fjlig: "fj", flat: "\u266D", fllig: "\uFB02", fltns: "\u25B1", fnof: "\u0192", Fopf: "\u{1D53D}", fopf: "\u{1D557}", forall: "\u2200", ForAll: "\u2200", fork: "\u22D4", forkv: "\u2AD9", Fouriertrf: "\u2131", fpartint: "\u2A0D", frac12: "\xBD", frac13: "\u2153", frac14: "\xBC", frac15: "\u2155", frac16: "\u2159", frac18: "\u215B", frac23: "\u2154", frac25: "\u2156", frac34: "\xBE", frac35: "\u2157", frac38: "\u215C", frac45: "\u2158", frac56: "\u215A", frac58: "\u215D", frac78: "\u215E", frasl: "\u2044", frown: "\u2322", fscr: "\u{1D4BB}", Fscr: "\u2131", gacute: "\u01F5", Gamma: "\u0393", gamma: "\u03B3", Gammad: "\u03DC", gammad: "\u03DD", gap: "\u2A86", Gbreve: "\u011E", gbreve: "\u011F", Gcedil: "\u0122", Gcirc: "\u011C", gcirc: "\u011D", Gcy: "\u0413", gcy: "\u0433", Gdot: "\u0120", gdot: "\u0121", ge: "\u2265", gE: "\u2267", gEl: "\u2A8C", gel: "\u22DB", geq: "\u2265", geqq: "\u2267", geqslant: "\u2A7E", gescc: "\u2AA9", ges: "\u2A7E", gesdot: "\u2A80", gesdoto: "\u2A82", gesdotol: "\u2A84", gesl: "\u22DB\uFE00", gesles: "\u2A94", Gfr: "\u{1D50A}", gfr: "\u{1D524}", gg: "\u226B", Gg: "\u22D9", ggg: "\u22D9", gimel: "\u2137", GJcy: "\u0403", gjcy: "\u0453", gla: "\u2AA5", gl: "\u2277", glE: "\u2A92", glj: "\u2AA4", gnap: "\u2A8A", gnapprox: "\u2A8A", gne: "\u2A88", gnE: "\u2269", gneq: "\u2A88", gneqq: "\u2269", gnsim: "\u22E7", Gopf: "\u{1D53E}", gopf: "\u{1D558}", grave: "`", GreaterEqual: "\u2265", GreaterEqualLess: "\u22DB", GreaterFullEqual: "\u2267", GreaterGreater: "\u2AA2", GreaterLess: "\u2277", GreaterSlantEqual: "\u2A7E", GreaterTilde: "\u2273", Gscr: "\u{1D4A2}", gscr: "\u210A", gsim: "\u2273", gsime: "\u2A8E", gsiml: "\u2A90", gtcc: "\u2AA7", gtcir: "\u2A7A", gt: ">", GT: ">", Gt: "\u226B", gtdot: "\u22D7", gtlPar: "\u2995", gtquest: "\u2A7C", gtrapprox: "\u2A86", gtrarr: "\u2978", gtrdot: "\u22D7", gtreqless: "\u22DB", gtreqqless: "\u2A8C", gtrless: "\u2277", gtrsim: "\u2273", gvertneqq: "\u2269\uFE00", gvnE: "\u2269\uFE00", Hacek: "\u02C7", hairsp: "\u200A", half: "\xBD", hamilt: "\u210B", HARDcy: "\u042A", hardcy: "\u044A", harrcir: "\u2948", harr: "\u2194", hArr: "\u21D4", harrw: "\u21AD", Hat: "^", hbar: "\u210F", Hcirc: "\u0124", hcirc: "\u0125", hearts: "\u2665", heartsuit: "\u2665", hellip: "\u2026", hercon: "\u22B9", hfr: "\u{1D525}", Hfr: "\u210C", HilbertSpace: "\u210B", hksearow: "\u2925", hkswarow: "\u2926", hoarr: "\u21FF", homtht: "\u223B", hookleftarrow: "\u21A9", hookrightarrow: "\u21AA", hopf: "\u{1D559}", Hopf: "\u210D", horbar: "\u2015", HorizontalLine: "\u2500", hscr: "\u{1D4BD}", Hscr: "\u210B", hslash: "\u210F", Hstrok: "\u0126", hstrok: "\u0127", HumpDownHump: "\u224E", HumpEqual: "\u224F", hybull: "\u2043", hyphen: "\u2010", Iacute: "\xCD", iacute: "\xED", ic: "\u2063", Icirc: "\xCE", icirc: "\xEE", Icy: "\u0418", icy: "\u0438", Idot: "\u0130", IEcy: "\u0415", iecy: "\u0435", iexcl: "\xA1", iff: "\u21D4", ifr: "\u{1D526}", Ifr: "\u2111", Igrave: "\xCC", igrave: "\xEC", ii: "\u2148", iiiint: "\u2A0C", iiint: "\u222D", iinfin: "\u29DC", iiota: "\u2129", IJlig: "\u0132", ijlig: "\u0133", Imacr: "\u012A", imacr: "\u012B", image: "\u2111", ImaginaryI: "\u2148", imagline: "\u2110", imagpart: "\u2111", imath: "\u0131", Im: "\u2111", imof: "\u22B7", imped: "\u01B5", Implies: "\u21D2", incare: "\u2105", in: "\u2208", infin: "\u221E", infintie: "\u29DD", inodot: "\u0131", intcal: "\u22BA", int: "\u222B", Int: "\u222C", integers: "\u2124", Integral: "\u222B", intercal: "\u22BA", Intersection: "\u22C2", intlarhk: "\u2A17", intprod: "\u2A3C", InvisibleComma: "\u2063", InvisibleTimes: "\u2062", IOcy: "\u0401", iocy: "\u0451", Iogon: "\u012E", iogon: "\u012F", Iopf: "\u{1D540}", iopf: "\u{1D55A}", Iota: "\u0399", iota: "\u03B9", iprod: "\u2A3C", iquest: "\xBF", iscr: "\u{1D4BE}", Iscr: "\u2110", isin: "\u2208", isindot: "\u22F5", isinE: "\u22F9", isins: "\u22F4", isinsv: "\u22F3", isinv: "\u2208", it: "\u2062", Itilde: "\u0128", itilde: "\u0129", Iukcy: "\u0406", iukcy: "\u0456", Iuml: "\xCF", iuml: "\xEF", Jcirc: "\u0134", jcirc: "\u0135", Jcy: "\u0419", jcy: "\u0439", Jfr: "\u{1D50D}", jfr: "\u{1D527}", jmath: "\u0237", Jopf: "\u{1D541}", jopf: "\u{1D55B}", Jscr: "\u{1D4A5}", jscr: "\u{1D4BF}", Jsercy: "\u0408", jsercy: "\u0458", Jukcy: "\u0404", jukcy: "\u0454", Kappa: "\u039A", kappa: "\u03BA", kappav: "\u03F0", Kcedil: "\u0136", kcedil: "\u0137", Kcy: "\u041A", kcy: "\u043A", Kfr: "\u{1D50E}", kfr: "\u{1D528}", kgreen: "\u0138", KHcy: "\u0425", khcy: "\u0445", KJcy: "\u040C", kjcy: "\u045C", Kopf: "\u{1D542}", kopf: "\u{1D55C}", Kscr: "\u{1D4A6}", kscr: "\u{1D4C0}", lAarr: "\u21DA", Lacute: "\u0139", lacute: "\u013A", laemptyv: "\u29B4", lagran: "\u2112", Lambda: "\u039B", lambda: "\u03BB", lang: "\u27E8", Lang: "\u27EA", langd: "\u2991", langle: "\u27E8", lap: "\u2A85", Laplacetrf: "\u2112", laquo: "\xAB", larrb: "\u21E4", larrbfs: "\u291F", larr: "\u2190", Larr: "\u219E", lArr: "\u21D0", larrfs: "\u291D", larrhk: "\u21A9", larrlp: "\u21AB", larrpl: "\u2939", larrsim: "\u2973", larrtl: "\u21A2", latail: "\u2919", lAtail: "\u291B", lat: "\u2AAB", late: "\u2AAD", lates: "\u2AAD\uFE00", lbarr: "\u290C", lBarr: "\u290E", lbbrk: "\u2772", lbrace: "{", lbrack: "[", lbrke: "\u298B", lbrksld: "\u298F", lbrkslu: "\u298D", Lcaron: "\u013D", lcaron: "\u013E", Lcedil: "\u013B", lcedil: "\u013C", lceil: "\u2308", lcub: "{", Lcy: "\u041B", lcy: "\u043B", ldca: "\u2936", ldquo: "\u201C", ldquor: "\u201E", ldrdhar: "\u2967", ldrushar: "\u294B", ldsh: "\u21B2", le: "\u2264", lE: "\u2266", LeftAngleBracket: "\u27E8", LeftArrowBar: "\u21E4", leftarrow: "\u2190", LeftArrow: "\u2190", Leftarrow: "\u21D0", LeftArrowRightArrow: "\u21C6", leftarrowtail: "\u21A2", LeftCeiling: "\u2308", LeftDoubleBracket: "\u27E6", LeftDownTeeVector: "\u2961", LeftDownVectorBar: "\u2959", LeftDownVector: "\u21C3", LeftFloor: "\u230A", leftharpoondown: "\u21BD", leftharpoonup: "\u21BC", leftleftarrows: "\u21C7", leftrightarrow: "\u2194", LeftRightArrow: "\u2194", Leftrightarrow: "\u21D4", leftrightarrows: "\u21C6", leftrightharpoons: "\u21CB", leftrightsquigarrow: "\u21AD", LeftRightVector: "\u294E", LeftTeeArrow: "\u21A4", LeftTee: "\u22A3", LeftTeeVector: "\u295A", leftthreetimes: "\u22CB", LeftTriangleBar: "\u29CF", LeftTriangle: "\u22B2", LeftTriangleEqual: "\u22B4", LeftUpDownVector: "\u2951", LeftUpTeeVector: "\u2960", LeftUpVectorBar: "\u2958", LeftUpVector: "\u21BF", LeftVectorBar: "\u2952", LeftVector: "\u21BC", lEg: "\u2A8B", leg: "\u22DA", leq: "\u2264", leqq: "\u2266", leqslant: "\u2A7D", lescc: "\u2AA8", les: "\u2A7D", lesdot: "\u2A7F", lesdoto: "\u2A81", lesdotor: "\u2A83", lesg: "\u22DA\uFE00", lesges: "\u2A93", lessapprox: "\u2A85", lessdot: "\u22D6", lesseqgtr: "\u22DA", lesseqqgtr: "\u2A8B", LessEqualGreater: "\u22DA", LessFullEqual: "\u2266", LessGreater: "\u2276", lessgtr: "\u2276", LessLess: "\u2AA1", lesssim: "\u2272", LessSlantEqual: "\u2A7D", LessTilde: "\u2272", lfisht: "\u297C", lfloor: "\u230A", Lfr: "\u{1D50F}", lfr: "\u{1D529}", lg: "\u2276", lgE: "\u2A91", lHar: "\u2962", lhard: "\u21BD", lharu: "\u21BC", lharul: "\u296A", lhblk: "\u2584", LJcy: "\u0409", ljcy: "\u0459", llarr: "\u21C7", ll: "\u226A", Ll: "\u22D8", llcorner: "\u231E", Lleftarrow: "\u21DA", llhard: "\u296B", lltri: "\u25FA", Lmidot: "\u013F", lmidot: "\u0140", lmoustache: "\u23B0", lmoust: "\u23B0", lnap: "\u2A89", lnapprox: "\u2A89", lne: "\u2A87", lnE: "\u2268", lneq: "\u2A87", lneqq: "\u2268", lnsim: "\u22E6", loang: "\u27EC", loarr: "\u21FD", lobrk: "\u27E6", longleftarrow: "\u27F5", LongLeftArrow: "\u27F5", Longleftarrow: "\u27F8", longleftrightarrow: "\u27F7", LongLeftRightArrow: "\u27F7", Longleftrightarrow: "\u27FA", longmapsto: "\u27FC", longrightarrow: "\u27F6", LongRightArrow: "\u27F6", Longrightarrow: "\u27F9", looparrowleft: "\u21AB", looparrowright: "\u21AC", lopar: "\u2985", Lopf: "\u{1D543}", lopf: "\u{1D55D}", loplus: "\u2A2D", lotimes: "\u2A34", lowast: "\u2217", lowbar: "_", LowerLeftArrow: "\u2199", LowerRightArrow: "\u2198", loz: "\u25CA", lozenge: "\u25CA", lozf: "\u29EB", lpar: "(", lparlt: "\u2993", lrarr: "\u21C6", lrcorner: "\u231F", lrhar: "\u21CB", lrhard: "\u296D", lrm: "\u200E", lrtri: "\u22BF", lsaquo: "\u2039", lscr: "\u{1D4C1}", Lscr: "\u2112", lsh: "\u21B0", Lsh: "\u21B0", lsim: "\u2272", lsime: "\u2A8D", lsimg: "\u2A8F", lsqb: "[", lsquo: "\u2018", lsquor: "\u201A", Lstrok: "\u0141", lstrok: "\u0142", ltcc: "\u2AA6", ltcir: "\u2A79", lt: "<", LT: "<", Lt: "\u226A", ltdot: "\u22D6", lthree: "\u22CB", ltimes: "\u22C9", ltlarr: "\u2976", ltquest: "\u2A7B", ltri: "\u25C3", ltrie: "\u22B4", ltrif: "\u25C2", ltrPar: "\u2996", lurdshar: "\u294A", luruhar: "\u2966", lvertneqq: "\u2268\uFE00", lvnE: "\u2268\uFE00", macr: "\xAF", male: "\u2642", malt: "\u2720", maltese: "\u2720", Map: "\u2905", map: "\u21A6", mapsto: "\u21A6", mapstodown: "\u21A7", mapstoleft: "\u21A4", mapstoup: "\u21A5", marker: "\u25AE", mcomma: "\u2A29", Mcy: "\u041C", mcy: "\u043C", mdash: "\u2014", mDDot: "\u223A", measuredangle: "\u2221", MediumSpace: "\u205F", Mellintrf: "\u2133", Mfr: "\u{1D510}", mfr: "\u{1D52A}", mho: "\u2127", micro: "\xB5", midast: "*", midcir: "\u2AF0", mid: "\u2223", middot: "\xB7", minusb: "\u229F", minus: "\u2212", minusd: "\u2238", minusdu: "\u2A2A", MinusPlus: "\u2213", mlcp: "\u2ADB", mldr: "\u2026", mnplus: "\u2213", models: "\u22A7", Mopf: "\u{1D544}", mopf: "\u{1D55E}", mp: "\u2213", mscr: "\u{1D4C2}", Mscr: "\u2133", mstpos: "\u223E", Mu: "\u039C", mu: "\u03BC", multimap: "\u22B8", mumap: "\u22B8", nabla: "\u2207", Nacute: "\u0143", nacute: "\u0144", nang: "\u2220\u20D2", nap: "\u2249", napE: "\u2A70\u0338", napid: "\u224B\u0338", napos: "\u0149", napprox: "\u2249", natural: "\u266E", naturals: "\u2115", natur: "\u266E", nbsp: "\xA0", nbump: "\u224E\u0338", nbumpe: "\u224F\u0338", ncap: "\u2A43", Ncaron: "\u0147", ncaron: "\u0148", Ncedil: "\u0145", ncedil: "\u0146", ncong: "\u2247", ncongdot: "\u2A6D\u0338", ncup: "\u2A42", Ncy: "\u041D", ncy: "\u043D", ndash: "\u2013", nearhk: "\u2924", nearr: "\u2197", neArr: "\u21D7", nearrow: "\u2197", ne: "\u2260", nedot: "\u2250\u0338", NegativeMediumSpace: "\u200B", NegativeThickSpace: "\u200B", NegativeThinSpace: "\u200B", NegativeVeryThinSpace: "\u200B", nequiv: "\u2262", nesear: "\u2928", nesim: "\u2242\u0338", NestedGreaterGreater: "\u226B", NestedLessLess: "\u226A", NewLine: "\n", nexist: "\u2204", nexists: "\u2204", Nfr: "\u{1D511}", nfr: "\u{1D52B}", ngE: "\u2267\u0338", nge: "\u2271", ngeq: "\u2271", ngeqq: "\u2267\u0338", ngeqslant: "\u2A7E\u0338", nges: "\u2A7E\u0338", nGg: "\u22D9\u0338", ngsim: "\u2275", nGt: "\u226B\u20D2", ngt: "\u226F", ngtr: "\u226F", nGtv: "\u226B\u0338", nharr: "\u21AE", nhArr: "\u21CE", nhpar: "\u2AF2", ni: "\u220B", nis: "\u22FC", nisd: "\u22FA", niv: "\u220B", NJcy: "\u040A", njcy: "\u045A", nlarr: "\u219A", nlArr: "\u21CD", nldr: "\u2025", nlE: "\u2266\u0338", nle: "\u2270", nleftarrow: "\u219A", nLeftarrow: "\u21CD", nleftrightarrow: "\u21AE", nLeftrightarrow: "\u21CE", nleq: "\u2270", nleqq: "\u2266\u0338", nleqslant: "\u2A7D\u0338", nles: "\u2A7D\u0338", nless: "\u226E", nLl: "\u22D8\u0338", nlsim: "\u2274", nLt: "\u226A\u20D2", nlt: "\u226E", nltri: "\u22EA", nltrie: "\u22EC", nLtv: "\u226A\u0338", nmid: "\u2224", NoBreak: "\u2060", NonBreakingSpace: "\xA0", nopf: "\u{1D55F}", Nopf: "\u2115", Not: "\u2AEC", not: "\xAC", NotCongruent: "\u2262", NotCupCap: "\u226D", NotDoubleVerticalBar: "\u2226", NotElement: "\u2209", NotEqual: "\u2260", NotEqualTilde: "\u2242\u0338", NotExists: "\u2204", NotGreater: "\u226F", NotGreaterEqual: "\u2271", NotGreaterFullEqual: "\u2267\u0338", NotGreaterGreater: "\u226B\u0338", NotGreaterLess: "\u2279", NotGreaterSlantEqual: "\u2A7E\u0338", NotGreaterTilde: "\u2275", NotHumpDownHump: "\u224E\u0338", NotHumpEqual: "\u224F\u0338", notin: "\u2209", notindot: "\u22F5\u0338", notinE: "\u22F9\u0338", notinva: "\u2209", notinvb: "\u22F7", notinvc: "\u22F6", NotLeftTriangleBar: "\u29CF\u0338", NotLeftTriangle: "\u22EA", NotLeftTriangleEqual: "\u22EC", NotLess: "\u226E", NotLessEqual: "\u2270", NotLessGreater: "\u2278", NotLessLess: "\u226A\u0338", NotLessSlantEqual: "\u2A7D\u0338", NotLessTilde: "\u2274", NotNestedGreaterGreater: "\u2AA2\u0338", NotNestedLessLess: "\u2AA1\u0338", notni: "\u220C", notniva: "\u220C", notnivb: "\u22FE", notnivc: "\u22FD", NotPrecedes: "\u2280", NotPrecedesEqual: "\u2AAF\u0338", NotPrecedesSlantEqual: "\u22E0", NotReverseElement: "\u220C", NotRightTriangleBar: "\u29D0\u0338", NotRightTriangle: "\u22EB", NotRightTriangleEqual: "\u22ED", NotSquareSubset: "\u228F\u0338", NotSquareSubsetEqual: "\u22E2", NotSquareSuperset: "\u2290\u0338", NotSquareSupersetEqual: "\u22E3", NotSubset: "\u2282\u20D2", NotSubsetEqual: "\u2288", NotSucceeds: "\u2281", NotSucceedsEqual: "\u2AB0\u0338", NotSucceedsSlantEqual: "\u22E1", NotSucceedsTilde: "\u227F\u0338", NotSuperset: "\u2283\u20D2", NotSupersetEqual: "\u2289", NotTilde: "\u2241", NotTildeEqual: "\u2244", NotTildeFullEqual: "\u2247", NotTildeTilde: "\u2249", NotVerticalBar: "\u2224", nparallel: "\u2226", npar: "\u2226", nparsl: "\u2AFD\u20E5", npart: "\u2202\u0338", npolint: "\u2A14", npr: "\u2280", nprcue: "\u22E0", nprec: "\u2280", npreceq: "\u2AAF\u0338", npre: "\u2AAF\u0338", nrarrc: "\u2933\u0338", nrarr: "\u219B", nrArr: "\u21CF", nrarrw: "\u219D\u0338", nrightarrow: "\u219B", nRightarrow: "\u21CF", nrtri: "\u22EB", nrtrie: "\u22ED", nsc: "\u2281", nsccue: "\u22E1", nsce: "\u2AB0\u0338", Nscr: "\u{1D4A9}", nscr: "\u{1D4C3}", nshortmid: "\u2224", nshortparallel: "\u2226", nsim: "\u2241", nsime: "\u2244", nsimeq: "\u2244", nsmid: "\u2224", nspar: "\u2226", nsqsube: "\u22E2", nsqsupe: "\u22E3", nsub: "\u2284", nsubE: "\u2AC5\u0338", nsube: "\u2288", nsubset: "\u2282\u20D2", nsubseteq: "\u2288", nsubseteqq: "\u2AC5\u0338", nsucc: "\u2281", nsucceq: "\u2AB0\u0338", nsup: "\u2285", nsupE: "\u2AC6\u0338", nsupe: "\u2289", nsupset: "\u2283\u20D2", nsupseteq: "\u2289", nsupseteqq: "\u2AC6\u0338", ntgl: "\u2279", Ntilde: "\xD1", ntilde: "\xF1", ntlg: "\u2278", ntriangleleft: "\u22EA", ntrianglelefteq: "\u22EC", ntriangleright: "\u22EB", ntrianglerighteq: "\u22ED", Nu: "\u039D", nu: "\u03BD", num: "#", numero: "\u2116", numsp: "\u2007", nvap: "\u224D\u20D2", nvdash: "\u22AC", nvDash: "\u22AD", nVdash: "\u22AE", nVDash: "\u22AF", nvge: "\u2265\u20D2", nvgt: ">\u20D2", nvHarr: "\u2904", nvinfin: "\u29DE", nvlArr: "\u2902", nvle: "\u2264\u20D2", nvlt: "<\u20D2", nvltrie: "\u22B4\u20D2", nvrArr: "\u2903", nvrtrie: "\u22B5\u20D2", nvsim: "\u223C\u20D2", nwarhk: "\u2923", nwarr: "\u2196", nwArr: "\u21D6", nwarrow: "\u2196", nwnear: "\u2927", Oacute: "\xD3", oacute: "\xF3", oast: "\u229B", Ocirc: "\xD4", ocirc: "\xF4", ocir: "\u229A", Ocy: "\u041E", ocy: "\u043E", odash: "\u229D", Odblac: "\u0150", odblac: "\u0151", odiv: "\u2A38", odot: "\u2299", odsold: "\u29BC", OElig: "\u0152", oelig: "\u0153", ofcir: "\u29BF", Ofr: "\u{1D512}", ofr: "\u{1D52C}", ogon: "\u02DB", Ograve: "\xD2", ograve: "\xF2", ogt: "\u29C1", ohbar: "\u29B5", ohm: "\u03A9", oint: "\u222E", olarr: "\u21BA", olcir: "\u29BE", olcross: "\u29BB", oline: "\u203E", olt: "\u29C0", Omacr: "\u014C", omacr: "\u014D", Omega: "\u03A9", omega: "\u03C9", Omicron: "\u039F", omicron: "\u03BF", omid: "\u29B6", ominus: "\u2296", Oopf: "\u{1D546}", oopf: "\u{1D560}", opar: "\u29B7", OpenCurlyDoubleQuote: "\u201C", OpenCurlyQuote: "\u2018", operp: "\u29B9", oplus: "\u2295", orarr: "\u21BB", Or: "\u2A54", or: "\u2228", ord: "\u2A5D", order: "\u2134", orderof: "\u2134", ordf: "\xAA", ordm: "\xBA", origof: "\u22B6", oror: "\u2A56", orslope: "\u2A57", orv: "\u2A5B", oS: "\u24C8", Oscr: "\u{1D4AA}", oscr: "\u2134", Oslash: "\xD8", oslash: "\xF8", osol: "\u2298", Otilde: "\xD5", otilde: "\xF5", otimesas: "\u2A36", Otimes: "\u2A37", otimes: "\u2297", Ouml: "\xD6", ouml: "\xF6", ovbar: "\u233D", OverBar: "\u203E", OverBrace: "\u23DE", OverBracket: "\u23B4", OverParenthesis: "\u23DC", para: "\xB6", parallel: "\u2225", par: "\u2225", parsim: "\u2AF3", parsl: "\u2AFD", part: "\u2202", PartialD: "\u2202", Pcy: "\u041F", pcy: "\u043F", percnt: "%", period: ".", permil: "\u2030", perp: "\u22A5", pertenk: "\u2031", Pfr: "\u{1D513}", pfr: "\u{1D52D}", Phi: "\u03A6", phi: "\u03C6", phiv: "\u03D5", phmmat: "\u2133", phone: "\u260E", Pi: "\u03A0", pi: "\u03C0", pitchfork: "\u22D4", piv: "\u03D6", planck: "\u210F", planckh: "\u210E", plankv: "\u210F", plusacir: "\u2A23", plusb: "\u229E", pluscir: "\u2A22", plus: "+", plusdo: "\u2214", plusdu: "\u2A25", pluse: "\u2A72", PlusMinus: "\xB1", plusmn: "\xB1", plussim: "\u2A26", plustwo: "\u2A27", pm: "\xB1", Poincareplane: "\u210C", pointint: "\u2A15", popf: "\u{1D561}", Popf: "\u2119", pound: "\xA3", prap: "\u2AB7", Pr: "\u2ABB", pr: "\u227A", prcue: "\u227C", precapprox: "\u2AB7", prec: "\u227A", preccurlyeq: "\u227C", Precedes: "\u227A", PrecedesEqual: "\u2AAF", PrecedesSlantEqual: "\u227C", PrecedesTilde: "\u227E", preceq: "\u2AAF", precnapprox: "\u2AB9", precneqq: "\u2AB5", precnsim: "\u22E8", pre: "\u2AAF", prE: "\u2AB3", precsim: "\u227E", prime: "\u2032", Prime: "\u2033", primes: "\u2119", prnap: "\u2AB9", prnE: "\u2AB5", prnsim: "\u22E8", prod: "\u220F", Product: "\u220F", profalar: "\u232E", profline: "\u2312", profsurf: "\u2313", prop: "\u221D", Proportional: "\u221D", Proportion: "\u2237", propto: "\u221D", prsim: "\u227E", prurel: "\u22B0", Pscr: "\u{1D4AB}", pscr: "\u{1D4C5}", Psi: "\u03A8", psi: "\u03C8", puncsp: "\u2008", Qfr: "\u{1D514}", qfr: "\u{1D52E}", qint: "\u2A0C", qopf: "\u{1D562}", Qopf: "\u211A", qprime: "\u2057", Qscr: "\u{1D4AC}", qscr: "\u{1D4C6}", quaternions: "\u210D", quatint: "\u2A16", quest: "?", questeq: "\u225F", quot: '"', QUOT: '"', rAarr: "\u21DB", race: "\u223D\u0331", Racute: "\u0154", racute: "\u0155", radic: "\u221A", raemptyv: "\u29B3", rang: "\u27E9", Rang: "\u27EB", rangd: "\u2992", range: "\u29A5", rangle: "\u27E9", raquo: "\xBB", rarrap: "\u2975", rarrb: "\u21E5", rarrbfs: "\u2920", rarrc: "\u2933", rarr: "\u2192", Rarr: "\u21A0", rArr: "\u21D2", rarrfs: "\u291E", rarrhk: "\u21AA", rarrlp: "\u21AC", rarrpl: "\u2945", rarrsim: "\u2974", Rarrtl: "\u2916", rarrtl: "\u21A3", rarrw: "\u219D", ratail: "\u291A", rAtail: "\u291C", ratio: "\u2236", rationals: "\u211A", rbarr: "\u290D", rBarr: "\u290F", RBarr: "\u2910", rbbrk: "\u2773", rbrace: "}", rbrack: "]", rbrke: "\u298C", rbrksld: "\u298E", rbrkslu: "\u2990", Rcaron: "\u0158", rcaron: "\u0159", Rcedil: "\u0156", rcedil: "\u0157", rceil: "\u2309", rcub: "}", Rcy: "\u0420", rcy: "\u0440", rdca: "\u2937", rdldhar: "\u2969", rdquo: "\u201D", rdquor: "\u201D", rdsh: "\u21B3", real: "\u211C", realine: "\u211B", realpart: "\u211C", reals: "\u211D", Re: "\u211C", rect: "\u25AD", reg: "\xAE", REG: "\xAE", ReverseElement: "\u220B", ReverseEquilibrium: "\u21CB", ReverseUpEquilibrium: "\u296F", rfisht: "\u297D", rfloor: "\u230B", rfr: "\u{1D52F}", Rfr: "\u211C", rHar: "\u2964", rhard: "\u21C1", rharu: "\u21C0", rharul: "\u296C", Rho: "\u03A1", rho: "\u03C1", rhov: "\u03F1", RightAngleBracket: "\u27E9", RightArrowBar: "\u21E5", rightarrow: "\u2192", RightArrow: "\u2192", Rightarrow: "\u21D2", RightArrowLeftArrow: "\u21C4", rightarrowtail: "\u21A3", RightCeiling: "\u2309", RightDoubleBracket: "\u27E7", RightDownTeeVector: "\u295D", RightDownVectorBar: "\u2955", RightDownVector: "\u21C2", RightFloor: "\u230B", rightharpoondown: "\u21C1", rightharpoonup: "\u21C0", rightleftarrows: "\u21C4", rightleftharpoons: "\u21CC", rightrightarrows: "\u21C9", rightsquigarrow: "\u219D", RightTeeArrow: "\u21A6", RightTee: "\u22A2", RightTeeVector: "\u295B", rightthreetimes: "\u22CC", RightTriangleBar: "\u29D0", RightTriangle: "\u22B3", RightTriangleEqual: "\u22B5", RightUpDownVector: "\u294F", RightUpTeeVector: "\u295C", RightUpVectorBar: "\u2954", RightUpVector: "\u21BE", RightVectorBar: "\u2953", RightVector: "\u21C0", ring: "\u02DA", risingdotseq: "\u2253", rlarr: "\u21C4", rlhar: "\u21CC", rlm: "\u200F", rmoustache: "\u23B1", rmoust: "\u23B1", rnmid: "\u2AEE", roang: "\u27ED", roarr: "\u21FE", robrk: "\u27E7", ropar: "\u2986", ropf: "\u{1D563}", Ropf: "\u211D", roplus: "\u2A2E", rotimes: "\u2A35", RoundImplies: "\u2970", rpar: ")", rpargt: "\u2994", rppolint: "\u2A12", rrarr: "\u21C9", Rrightarrow: "\u21DB", rsaquo: "\u203A", rscr: "\u{1D4C7}", Rscr: "\u211B", rsh: "\u21B1", Rsh: "\u21B1", rsqb: "]", rsquo: "\u2019", rsquor: "\u2019", rthree: "\u22CC", rtimes: "\u22CA", rtri: "\u25B9", rtrie: "\u22B5", rtrif: "\u25B8", rtriltri: "\u29CE", RuleDelayed: "\u29F4", ruluhar: "\u2968", rx: "\u211E", Sacute: "\u015A", sacute: "\u015B", sbquo: "\u201A", scap: "\u2AB8", Scaron: "\u0160", scaron: "\u0161", Sc: "\u2ABC", sc: "\u227B", sccue: "\u227D", sce: "\u2AB0", scE: "\u2AB4", Scedil: "\u015E", scedil: "\u015F", Scirc: "\u015C", scirc: "\u015D", scnap: "\u2ABA", scnE: "\u2AB6", scnsim: "\u22E9", scpolint: "\u2A13", scsim: "\u227F", Scy: "\u0421", scy: "\u0441", sdotb: "\u22A1", sdot: "\u22C5", sdote: "\u2A66", searhk: "\u2925", searr: "\u2198", seArr: "\u21D8", searrow: "\u2198", sect: "\xA7", semi: ";", seswar: "\u2929", setminus: "\u2216", setmn: "\u2216", sext: "\u2736", Sfr: "\u{1D516}", sfr: "\u{1D530}", sfrown: "\u2322", sharp: "\u266F", SHCHcy: "\u0429", shchcy: "\u0449", SHcy: "\u0428", shcy: "\u0448", ShortDownArrow: "\u2193", ShortLeftArrow: "\u2190", shortmid: "\u2223", shortparallel: "\u2225", ShortRightArrow: "\u2192", ShortUpArrow: "\u2191", shy: "\xAD", Sigma: "\u03A3", sigma: "\u03C3", sigmaf: "\u03C2", sigmav: "\u03C2", sim: "\u223C", simdot: "\u2A6A", sime: "\u2243", simeq: "\u2243", simg: "\u2A9E", simgE: "\u2AA0", siml: "\u2A9D", simlE: "\u2A9F", simne: "\u2246", simplus: "\u2A24", simrarr: "\u2972", slarr: "\u2190", SmallCircle: "\u2218", smallsetminus: "\u2216", smashp: "\u2A33", smeparsl: "\u29E4", smid: "\u2223", smile: "\u2323", smt: "\u2AAA", smte: "\u2AAC", smtes: "\u2AAC\uFE00", SOFTcy: "\u042C", softcy: "\u044C", solbar: "\u233F", solb: "\u29C4", sol: "/", Sopf: "\u{1D54A}", sopf: "\u{1D564}", spades: "\u2660", spadesuit: "\u2660", spar: "\u2225", sqcap: "\u2293", sqcaps: "\u2293\uFE00", sqcup: "\u2294", sqcups: "\u2294\uFE00", Sqrt: "\u221A", sqsub: "\u228F", sqsube: "\u2291", sqsubset: "\u228F", sqsubseteq: "\u2291", sqsup: "\u2290", sqsupe: "\u2292", sqsupset: "\u2290", sqsupseteq: "\u2292", square: "\u25A1", Square: "\u25A1", SquareIntersection: "\u2293", SquareSubset: "\u228F", SquareSubsetEqual: "\u2291", SquareSuperset: "\u2290", SquareSupersetEqual: "\u2292", SquareUnion: "\u2294", squarf: "\u25AA", squ: "\u25A1", squf: "\u25AA", srarr: "\u2192", Sscr: "\u{1D4AE}", sscr: "\u{1D4C8}", ssetmn: "\u2216", ssmile: "\u2323", sstarf: "\u22C6", Star: "\u22C6", star: "\u2606", starf: "\u2605", straightepsilon: "\u03F5", straightphi: "\u03D5", strns: "\xAF", sub: "\u2282", Sub: "\u22D0", subdot: "\u2ABD", subE: "\u2AC5", sube: "\u2286", subedot: "\u2AC3", submult: "\u2AC1", subnE: "\u2ACB", subne: "\u228A", subplus: "\u2ABF", subrarr: "\u2979", subset: "\u2282", Subset: "\u22D0", subseteq: "\u2286", subseteqq: "\u2AC5", SubsetEqual: "\u2286", subsetneq: "\u228A", subsetneqq: "\u2ACB", subsim: "\u2AC7", subsub: "\u2AD5", subsup: "\u2AD3", succapprox: "\u2AB8", succ: "\u227B", succcurlyeq: "\u227D", Succeeds: "\u227B", SucceedsEqual: "\u2AB0", SucceedsSlantEqual: "\u227D", SucceedsTilde: "\u227F", succeq: "\u2AB0", succnapprox: "\u2ABA", succneqq: "\u2AB6", succnsim: "\u22E9", succsim: "\u227F", SuchThat: "\u220B", sum: "\u2211", Sum: "\u2211", sung: "\u266A", sup1: "\xB9", sup2: "\xB2", sup3: "\xB3", sup: "\u2283", Sup: "\u22D1", supdot: "\u2ABE", supdsub: "\u2AD8", supE: "\u2AC6", supe: "\u2287", supedot: "\u2AC4", Superset: "\u2283", SupersetEqual: "\u2287", suphsol: "\u27C9", suphsub: "\u2AD7", suplarr: "\u297B", supmult: "\u2AC2", supnE: "\u2ACC", supne: "\u228B", supplus: "\u2AC0", supset: "\u2283", Supset: "\u22D1", supseteq: "\u2287", supseteqq: "\u2AC6", supsetneq: "\u228B", supsetneqq: "\u2ACC", supsim: "\u2AC8", supsub: "\u2AD4", supsup: "\u2AD6", swarhk: "\u2926", swarr: "\u2199", swArr: "\u21D9", swarrow: "\u2199", swnwar: "\u292A", szlig: "\xDF", Tab: "	", target: "\u2316", Tau: "\u03A4", tau: "\u03C4", tbrk: "\u23B4", Tcaron: "\u0164", tcaron: "\u0165", Tcedil: "\u0162", tcedil: "\u0163", Tcy: "\u0422", tcy: "\u0442", tdot: "\u20DB", telrec: "\u2315", Tfr: "\u{1D517}", tfr: "\u{1D531}", there4: "\u2234", therefore: "\u2234", Therefore: "\u2234", Theta: "\u0398", theta: "\u03B8", thetasym: "\u03D1", thetav: "\u03D1", thickapprox: "\u2248", thicksim: "\u223C", ThickSpace: "\u205F\u200A", ThinSpace: "\u2009", thinsp: "\u2009", thkap: "\u2248", thksim: "\u223C", THORN: "\xDE", thorn: "\xFE", tilde: "\u02DC", Tilde: "\u223C", TildeEqual: "\u2243", TildeFullEqual: "\u2245", TildeTilde: "\u2248", timesbar: "\u2A31", timesb: "\u22A0", times: "\xD7", timesd: "\u2A30", tint: "\u222D", toea: "\u2928", topbot: "\u2336", topcir: "\u2AF1", top: "\u22A4", Topf: "\u{1D54B}", topf: "\u{1D565}", topfork: "\u2ADA", tosa: "\u2929", tprime: "\u2034", trade: "\u2122", TRADE: "\u2122", triangle: "\u25B5", triangledown: "\u25BF", triangleleft: "\u25C3", trianglelefteq: "\u22B4", triangleq: "\u225C", triangleright: "\u25B9", trianglerighteq: "\u22B5", tridot: "\u25EC", trie: "\u225C", triminus: "\u2A3A", TripleDot: "\u20DB", triplus: "\u2A39", trisb: "\u29CD", tritime: "\u2A3B", trpezium: "\u23E2", Tscr: "\u{1D4AF}", tscr: "\u{1D4C9}", TScy: "\u0426", tscy: "\u0446", TSHcy: "\u040B", tshcy: "\u045B", Tstrok: "\u0166", tstrok: "\u0167", twixt: "\u226C", twoheadleftarrow: "\u219E", twoheadrightarrow: "\u21A0", Uacute: "\xDA", uacute: "\xFA", uarr: "\u2191", Uarr: "\u219F", uArr: "\u21D1", Uarrocir: "\u2949", Ubrcy: "\u040E", ubrcy: "\u045E", Ubreve: "\u016C", ubreve: "\u016D", Ucirc: "\xDB", ucirc: "\xFB", Ucy: "\u0423", ucy: "\u0443", udarr: "\u21C5", Udblac: "\u0170", udblac: "\u0171", udhar: "\u296E", ufisht: "\u297E", Ufr: "\u{1D518}", ufr: "\u{1D532}", Ugrave: "\xD9", ugrave: "\xF9", uHar: "\u2963", uharl: "\u21BF", uharr: "\u21BE", uhblk: "\u2580", ulcorn: "\u231C", ulcorner: "\u231C", ulcrop: "\u230F", ultri: "\u25F8", Umacr: "\u016A", umacr: "\u016B", uml: "\xA8", UnderBar: "_", UnderBrace: "\u23DF", UnderBracket: "\u23B5", UnderParenthesis: "\u23DD", Union: "\u22C3", UnionPlus: "\u228E", Uogon: "\u0172", uogon: "\u0173", Uopf: "\u{1D54C}", uopf: "\u{1D566}", UpArrowBar: "\u2912", uparrow: "\u2191", UpArrow: "\u2191", Uparrow: "\u21D1", UpArrowDownArrow: "\u21C5", updownarrow: "\u2195", UpDownArrow: "\u2195", Updownarrow: "\u21D5", UpEquilibrium: "\u296E", upharpoonleft: "\u21BF", upharpoonright: "\u21BE", uplus: "\u228E", UpperLeftArrow: "\u2196", UpperRightArrow: "\u2197", upsi: "\u03C5", Upsi: "\u03D2", upsih: "\u03D2", Upsilon: "\u03A5", upsilon: "\u03C5", UpTeeArrow: "\u21A5", UpTee: "\u22A5", upuparrows: "\u21C8", urcorn: "\u231D", urcorner: "\u231D", urcrop: "\u230E", Uring: "\u016E", uring: "\u016F", urtri: "\u25F9", Uscr: "\u{1D4B0}", uscr: "\u{1D4CA}", utdot: "\u22F0", Utilde: "\u0168", utilde: "\u0169", utri: "\u25B5", utrif: "\u25B4", uuarr: "\u21C8", Uuml: "\xDC", uuml: "\xFC", uwangle: "\u29A7", vangrt: "\u299C", varepsilon: "\u03F5", varkappa: "\u03F0", varnothing: "\u2205", varphi: "\u03D5", varpi: "\u03D6", varpropto: "\u221D", varr: "\u2195", vArr: "\u21D5", varrho: "\u03F1", varsigma: "\u03C2", varsubsetneq: "\u228A\uFE00", varsubsetneqq: "\u2ACB\uFE00", varsupsetneq: "\u228B\uFE00", varsupsetneqq: "\u2ACC\uFE00", vartheta: "\u03D1", vartriangleleft: "\u22B2", vartriangleright: "\u22B3", vBar: "\u2AE8", Vbar: "\u2AEB", vBarv: "\u2AE9", Vcy: "\u0412", vcy: "\u0432", vdash: "\u22A2", vDash: "\u22A8", Vdash: "\u22A9", VDash: "\u22AB", Vdashl: "\u2AE6", veebar: "\u22BB", vee: "\u2228", Vee: "\u22C1", veeeq: "\u225A", vellip: "\u22EE", verbar: "|", Verbar: "\u2016", vert: "|", Vert: "\u2016", VerticalBar: "\u2223", VerticalLine: "|", VerticalSeparator: "\u2758", VerticalTilde: "\u2240", VeryThinSpace: "\u200A", Vfr: "\u{1D519}", vfr: "\u{1D533}", vltri: "\u22B2", vnsub: "\u2282\u20D2", vnsup: "\u2283\u20D2", Vopf: "\u{1D54D}", vopf: "\u{1D567}", vprop: "\u221D", vrtri: "\u22B3", Vscr: "\u{1D4B1}", vscr: "\u{1D4CB}", vsubnE: "\u2ACB\uFE00", vsubne: "\u228A\uFE00", vsupnE: "\u2ACC\uFE00", vsupne: "\u228B\uFE00", Vvdash: "\u22AA", vzigzag: "\u299A", Wcirc: "\u0174", wcirc: "\u0175", wedbar: "\u2A5F", wedge: "\u2227", Wedge: "\u22C0", wedgeq: "\u2259", weierp: "\u2118", Wfr: "\u{1D51A}", wfr: "\u{1D534}", Wopf: "\u{1D54E}", wopf: "\u{1D568}", wp: "\u2118", wr: "\u2240", wreath: "\u2240", Wscr: "\u{1D4B2}", wscr: "\u{1D4CC}", xcap: "\u22C2", xcirc: "\u25EF", xcup: "\u22C3", xdtri: "\u25BD", Xfr: "\u{1D51B}", xfr: "\u{1D535}", xharr: "\u27F7", xhArr: "\u27FA", Xi: "\u039E", xi: "\u03BE", xlarr: "\u27F5", xlArr: "\u27F8", xmap: "\u27FC", xnis: "\u22FB", xodot: "\u2A00", Xopf: "\u{1D54F}", xopf: "\u{1D569}", xoplus: "\u2A01", xotime: "\u2A02", xrarr: "\u27F6", xrArr: "\u27F9", Xscr: "\u{1D4B3}", xscr: "\u{1D4CD}", xsqcup: "\u2A06", xuplus: "\u2A04", xutri: "\u25B3", xvee: "\u22C1", xwedge: "\u22C0", Yacute: "\xDD", yacute: "\xFD", YAcy: "\u042F", yacy: "\u044F", Ycirc: "\u0176", ycirc: "\u0177", Ycy: "\u042B", ycy: "\u044B", yen: "\xA5", Yfr: "\u{1D51C}", yfr: "\u{1D536}", YIcy: "\u0407", yicy: "\u0457", Yopf: "\u{1D550}", yopf: "\u{1D56A}", Yscr: "\u{1D4B4}", yscr: "\u{1D4CE}", YUcy: "\u042E", yucy: "\u044E", yuml: "\xFF", Yuml: "\u0178", Zacute: "\u0179", zacute: "\u017A", Zcaron: "\u017D", zcaron: "\u017E", Zcy: "\u0417", zcy: "\u0437", Zdot: "\u017B", zdot: "\u017C", zeetrf: "\u2128", ZeroWidthSpace: "\u200B", Zeta: "\u0396", zeta: "\u03B6", zfr: "\u{1D537}", Zfr: "\u2128", ZHcy: "\u0416", zhcy: "\u0436", zigrarr: "\u21DD", zopf: "\u{1D56B}", Zopf: "\u2124", Zscr: "\u{1D4B5}", zscr: "\u{1D4CF}", zwj: "\u200D", zwnj: "\u200C" };
   }
 });
-
-// ../node_modules/entities/lib/maps/legacy.json
 var require_legacy = __commonJS({
   "../node_modules/entities/lib/maps/legacy.json"(exports, module) {
     module.exports = { Aacute: "\xC1", aacute: "\xE1", Acirc: "\xC2", acirc: "\xE2", acute: "\xB4", AElig: "\xC6", aelig: "\xE6", Agrave: "\xC0", agrave: "\xE0", amp: "&", AMP: "&", Aring: "\xC5", aring: "\xE5", Atilde: "\xC3", atilde: "\xE3", Auml: "\xC4", auml: "\xE4", brvbar: "\xA6", Ccedil: "\xC7", ccedil: "\xE7", cedil: "\xB8", cent: "\xA2", copy: "\xA9", COPY: "\xA9", curren: "\xA4", deg: "\xB0", divide: "\xF7", Eacute: "\xC9", eacute: "\xE9", Ecirc: "\xCA", ecirc: "\xEA", Egrave: "\xC8", egrave: "\xE8", ETH: "\xD0", eth: "\xF0", Euml: "\xCB", euml: "\xEB", frac12: "\xBD", frac14: "\xBC", frac34: "\xBE", gt: ">", GT: ">", Iacute: "\xCD", iacute: "\xED", Icirc: "\xCE", icirc: "\xEE", iexcl: "\xA1", Igrave: "\xCC", igrave: "\xEC", iquest: "\xBF", Iuml: "\xCF", iuml: "\xEF", laquo: "\xAB", lt: "<", LT: "<", macr: "\xAF", micro: "\xB5", middot: "\xB7", nbsp: "\xA0", not: "\xAC", Ntilde: "\xD1", ntilde: "\xF1", Oacute: "\xD3", oacute: "\xF3", Ocirc: "\xD4", ocirc: "\xF4", Ograve: "\xD2", ograve: "\xF2", ordf: "\xAA", ordm: "\xBA", Oslash: "\xD8", oslash: "\xF8", Otilde: "\xD5", otilde: "\xF5", Ouml: "\xD6", ouml: "\xF6", para: "\xB6", plusmn: "\xB1", pound: "\xA3", quot: '"', QUOT: '"', raquo: "\xBB", reg: "\xAE", REG: "\xAE", sect: "\xA7", shy: "\xAD", sup1: "\xB9", sup2: "\xB2", sup3: "\xB3", szlig: "\xDF", THORN: "\xDE", thorn: "\xFE", times: "\xD7", Uacute: "\xDA", uacute: "\xFA", Ucirc: "\xDB", ucirc: "\xFB", Ugrave: "\xD9", ugrave: "\xF9", uml: "\xA8", Uuml: "\xDC", uuml: "\xFC", Yacute: "\xDD", yacute: "\xFD", yen: "\xA5", yuml: "\xFF" };
   }
 });
-
-// ../node_modules/entities/lib/maps/xml.json
 var require_xml = __commonJS({
   "../node_modules/entities/lib/maps/xml.json"(exports, module) {
     module.exports = { amp: "&", apos: "'", gt: ">", lt: "<", quot: '"' };
   }
 });
-
-// ../node_modules/htmlparser2/lib/Tokenizer.js
 var require_Tokenizer = __commonJS({
   "../node_modules/htmlparser2/lib/Tokenizer.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -6923,10 +8070,12 @@ var require_Tokenizer = __commonJS({
       return c === " " || c === "\n" || c === "	" || c === "\f" || c === "\r";
     }
     __name(whitespace, "whitespace");
+    __name2(whitespace, "whitespace");
     function isASCIIAlpha(c) {
       return c >= "a" && c <= "z" || c >= "A" && c <= "Z";
     }
     __name(isASCIIAlpha, "isASCIIAlpha");
+    __name2(isASCIIAlpha, "isASCIIAlpha");
     function ifElseState(upper, SUCCESS, FAILURE) {
       var lower = upper.toLowerCase();
       if (upper === lower) {
@@ -6949,6 +8098,7 @@ var require_Tokenizer = __commonJS({
       };
     }
     __name(ifElseState, "ifElseState");
+    __name2(ifElseState, "ifElseState");
     function consumeSpecialNameChar(upper, NEXT_STATE) {
       var lower = upper.toLowerCase();
       return function(t, c) {
@@ -6961,6 +8111,7 @@ var require_Tokenizer = __commonJS({
       };
     }
     __name(consumeSpecialNameChar, "consumeSpecialNameChar");
+    __name2(consumeSpecialNameChar, "consumeSpecialNameChar");
     var stateBeforeCdata1 = ifElseState(
       "C",
       24,
@@ -7142,7 +8293,8 @@ var require_Tokenizer = __commonJS({
           this.xmlMode = !!(options === null || options === void 0 ? void 0 : options.xmlMode);
           this.decodeEntities = (_a = options === null || options === void 0 ? void 0 : options.decodeEntities) !== null && _a !== void 0 ? _a : true;
         }
-        __name(Tokenizer2, "Tokenizer");
+        __name(Tokenizer2, "Tokenizer2");
+        __name2(Tokenizer2, "Tokenizer");
         Tokenizer2.prototype.reset = function() {
           this._state = 1;
           this.buffer = "";
@@ -7779,12 +8931,10 @@ var require_Tokenizer = __commonJS({
     exports.default = Tokenizer;
   }
 });
-
-// ../node_modules/htmlparser2/lib/Parser.js
 var require_Parser = __commonJS({
   "../node_modules/htmlparser2/lib/Parser.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -7910,7 +9060,8 @@ var require_Parser = __commonJS({
           this.tokenizer = new ((_c = options.Tokenizer) !== null && _c !== void 0 ? _c : Tokenizer_1.default)(this.options, this);
           (_e = (_d = this.cbs).onparserinit) === null || _e === void 0 ? void 0 : _e.call(_d, this);
         }
-        __name(Parser2, "Parser");
+        __name(Parser2, "Parser2");
+        __name2(Parser2, "Parser");
         Parser2.prototype.updatePosition = function(initialOffset) {
           if (this.endIndex === null) {
             if (this.tokenizer.sectionStart <= initialOffset) {
@@ -8113,12 +9264,10 @@ var require_Parser = __commonJS({
     exports.Parser = Parser;
   }
 });
-
-// ../node_modules/domelementtype/lib/index.js
 var require_lib = __commonJS({
   "../node_modules/domelementtype/lib/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -8140,6 +9289,7 @@ var require_lib = __commonJS({
       return elem.type === ElementType.Tag || elem.type === ElementType.Script || elem.type === ElementType.Style;
     }
     __name(isTag, "isTag");
+    __name2(isTag, "isTag");
     exports.isTag = isTag;
     exports.Root = ElementType.Root;
     exports.Text = ElementType.Text;
@@ -8152,17 +9302,15 @@ var require_lib = __commonJS({
     exports.Doctype = ElementType.Doctype;
   }
 });
-
-// ../node_modules/domhandler/lib/node.js
 var require_node = __commonJS({
   "../node_modules/domhandler/lib/node.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     var __extends = exports && exports.__extends || /* @__PURE__ */ (function() {
-      var extendStatics = /* @__PURE__ */ __name(function(d, b) {
+      var extendStatics = /* @__PURE__ */ __name2(function(d, b) {
         extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
           d2.__proto__ = b2;
         } || function(d2, b2) {
@@ -8178,6 +9326,7 @@ var require_node = __commonJS({
           this.constructor = d;
         }
         __name(__, "__");
+        __name2(__, "__");
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
       };
     })();
@@ -8216,14 +9365,15 @@ var require_node = __commonJS({
           this.startIndex = null;
           this.endIndex = null;
         }
-        __name(Node2, "Node");
+        __name(Node2, "Node2");
+        __name2(Node2, "Node");
         Object.defineProperty(Node2.prototype, "nodeType", {
           // Read-only aliases
           /**
            * [DOM spec](https://dom.spec.whatwg.org/#dom-node-nodetype)-compatible
            * node {@link type}.
            */
-          get: /* @__PURE__ */ __name(function() {
+          get: /* @__PURE__ */ __name2(function() {
             var _a;
             return (_a = nodeTypes.get(this.type)) !== null && _a !== void 0 ? _a : 1;
           }, "get"),
@@ -8236,10 +9386,10 @@ var require_node = __commonJS({
            * Same as {@link parent}.
            * [DOM spec](https://dom.spec.whatwg.org)-compatible alias.
            */
-          get: /* @__PURE__ */ __name(function() {
+          get: /* @__PURE__ */ __name2(function() {
             return this.parent;
           }, "get"),
-          set: /* @__PURE__ */ __name(function(parent) {
+          set: /* @__PURE__ */ __name2(function(parent) {
             this.parent = parent;
           }, "set"),
           enumerable: false,
@@ -8250,10 +9400,10 @@ var require_node = __commonJS({
            * Same as {@link prev}.
            * [DOM spec](https://dom.spec.whatwg.org)-compatible alias.
            */
-          get: /* @__PURE__ */ __name(function() {
+          get: /* @__PURE__ */ __name2(function() {
             return this.prev;
           }, "get"),
-          set: /* @__PURE__ */ __name(function(prev) {
+          set: /* @__PURE__ */ __name2(function(prev) {
             this.prev = prev;
           }, "set"),
           enumerable: false,
@@ -8264,10 +9414,10 @@ var require_node = __commonJS({
            * Same as {@link next}.
            * [DOM spec](https://dom.spec.whatwg.org)-compatible alias.
            */
-          get: /* @__PURE__ */ __name(function() {
+          get: /* @__PURE__ */ __name2(function() {
             return this.next;
           }, "get"),
-          set: /* @__PURE__ */ __name(function(next) {
+          set: /* @__PURE__ */ __name2(function(next) {
             this.next = next;
           }, "set"),
           enumerable: false,
@@ -8292,16 +9442,17 @@ var require_node = __commonJS({
           _this.data = data;
           return _this;
         }
-        __name(DataNode2, "DataNode");
+        __name(DataNode2, "DataNode2");
+        __name2(DataNode2, "DataNode");
         Object.defineProperty(DataNode2.prototype, "nodeValue", {
           /**
            * Same as {@link data}.
            * [DOM spec](https://dom.spec.whatwg.org)-compatible alias.
            */
-          get: /* @__PURE__ */ __name(function() {
+          get: /* @__PURE__ */ __name2(function() {
             return this.data;
           }, "get"),
-          set: /* @__PURE__ */ __name(function(data) {
+          set: /* @__PURE__ */ __name2(function(data) {
             this.data = data;
           }, "set"),
           enumerable: false,
@@ -8318,7 +9469,8 @@ var require_node = __commonJS({
         function Text2(data) {
           return _super.call(this, domelementtype_1.ElementType.Text, data) || this;
         }
-        __name(Text2, "Text");
+        __name(Text2, "Text2");
+        __name2(Text2, "Text");
         return Text2;
       })(DataNode)
     );
@@ -8330,7 +9482,8 @@ var require_node = __commonJS({
         function Comment2(data) {
           return _super.call(this, domelementtype_1.ElementType.Comment, data) || this;
         }
-        __name(Comment2, "Comment");
+        __name(Comment2, "Comment2");
+        __name2(Comment2, "Comment");
         return Comment2;
       })(DataNode)
     );
@@ -8344,7 +9497,8 @@ var require_node = __commonJS({
           _this.name = name;
           return _this;
         }
-        __name(ProcessingInstruction2, "ProcessingInstruction");
+        __name(ProcessingInstruction2, "ProcessingInstruction2");
+        __name2(ProcessingInstruction2, "ProcessingInstruction");
         return ProcessingInstruction2;
       })(DataNode)
     );
@@ -8358,11 +9512,12 @@ var require_node = __commonJS({
           _this.children = children;
           return _this;
         }
-        __name(NodeWithChildren2, "NodeWithChildren");
+        __name(NodeWithChildren2, "NodeWithChildren2");
+        __name2(NodeWithChildren2, "NodeWithChildren");
         Object.defineProperty(NodeWithChildren2.prototype, "firstChild", {
           // Aliases
           /** First child of the node. */
-          get: /* @__PURE__ */ __name(function() {
+          get: /* @__PURE__ */ __name2(function() {
             var _a;
             return (_a = this.children[0]) !== null && _a !== void 0 ? _a : null;
           }, "get"),
@@ -8371,7 +9526,7 @@ var require_node = __commonJS({
         });
         Object.defineProperty(NodeWithChildren2.prototype, "lastChild", {
           /** Last child of the node. */
-          get: /* @__PURE__ */ __name(function() {
+          get: /* @__PURE__ */ __name2(function() {
             return this.children.length > 0 ? this.children[this.children.length - 1] : null;
           }, "get"),
           enumerable: false,
@@ -8382,10 +9537,10 @@ var require_node = __commonJS({
            * Same as {@link children}.
            * [DOM spec](https://dom.spec.whatwg.org)-compatible alias.
            */
-          get: /* @__PURE__ */ __name(function() {
+          get: /* @__PURE__ */ __name2(function() {
             return this.children;
           }, "get"),
-          set: /* @__PURE__ */ __name(function(children) {
+          set: /* @__PURE__ */ __name2(function(children) {
             this.children = children;
           }, "set"),
           enumerable: false,
@@ -8402,7 +9557,8 @@ var require_node = __commonJS({
         function Document2(children) {
           return _super.call(this, domelementtype_1.ElementType.Root, children) || this;
         }
-        __name(Document2, "Document");
+        __name(Document2, "Document2");
+        __name2(Document2, "Document");
         return Document2;
       })(NodeWithChildren)
     );
@@ -8423,24 +9579,25 @@ var require_node = __commonJS({
           _this.attribs = attribs;
           return _this;
         }
-        __name(Element2, "Element");
+        __name(Element2, "Element2");
+        __name2(Element2, "Element");
         Object.defineProperty(Element2.prototype, "tagName", {
           // DOM Level 1 aliases
           /**
            * Same as {@link name}.
            * [DOM spec](https://dom.spec.whatwg.org)-compatible alias.
            */
-          get: /* @__PURE__ */ __name(function() {
+          get: /* @__PURE__ */ __name2(function() {
             return this.name;
           }, "get"),
-          set: /* @__PURE__ */ __name(function(name) {
+          set: /* @__PURE__ */ __name2(function(name) {
             this.name = name;
           }, "set"),
           enumerable: false,
           configurable: true
         });
         Object.defineProperty(Element2.prototype, "attributes", {
-          get: /* @__PURE__ */ __name(function() {
+          get: /* @__PURE__ */ __name2(function() {
             var _this = this;
             return Object.keys(this.attribs).map(function(name) {
               var _a, _b;
@@ -8463,36 +9620,43 @@ var require_node = __commonJS({
       return (0, domelementtype_1.isTag)(node);
     }
     __name(isTag, "isTag");
+    __name2(isTag, "isTag");
     exports.isTag = isTag;
     function isCDATA(node) {
       return node.type === domelementtype_1.ElementType.CDATA;
     }
     __name(isCDATA, "isCDATA");
+    __name2(isCDATA, "isCDATA");
     exports.isCDATA = isCDATA;
     function isText(node) {
       return node.type === domelementtype_1.ElementType.Text;
     }
     __name(isText, "isText");
+    __name2(isText, "isText");
     exports.isText = isText;
     function isComment(node) {
       return node.type === domelementtype_1.ElementType.Comment;
     }
     __name(isComment, "isComment");
+    __name2(isComment, "isComment");
     exports.isComment = isComment;
     function isDirective(node) {
       return node.type === domelementtype_1.ElementType.Directive;
     }
     __name(isDirective, "isDirective");
+    __name2(isDirective, "isDirective");
     exports.isDirective = isDirective;
     function isDocument(node) {
       return node.type === domelementtype_1.ElementType.Root;
     }
     __name(isDocument, "isDocument");
+    __name2(isDocument, "isDocument");
     exports.isDocument = isDocument;
     function hasChildren(node) {
       return Object.prototype.hasOwnProperty.call(node, "children");
     }
     __name(hasChildren, "hasChildren");
+    __name2(hasChildren, "hasChildren");
     exports.hasChildren = hasChildren;
     function cloneNode(node, recursive) {
       if (recursive === void 0) {
@@ -8555,6 +9719,7 @@ var require_node = __commonJS({
       return result;
     }
     __name(cloneNode, "cloneNode");
+    __name2(cloneNode, "cloneNode");
     exports.cloneNode = cloneNode;
     function cloneChildren(childs) {
       var children = childs.map(function(child) {
@@ -8567,14 +9732,13 @@ var require_node = __commonJS({
       return children;
     }
     __name(cloneChildren, "cloneChildren");
+    __name2(cloneChildren, "cloneChildren");
   }
 });
-
-// ../node_modules/domhandler/lib/index.js
 var require_lib2 = __commonJS({
   "../node_modules/domhandler/lib/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -8582,7 +9746,7 @@ var require_lib2 = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -8628,7 +9792,8 @@ var require_lib2 = __commonJS({
           this.options = options !== null && options !== void 0 ? options : defaultOpts;
           this.elementCB = elementCB !== null && elementCB !== void 0 ? elementCB : null;
         }
-        __name(DomHandler2, "DomHandler");
+        __name(DomHandler2, "DomHandler2");
+        __name2(DomHandler2, "DomHandler");
         DomHandler2.prototype.onparserinit = function(parser) {
           this.parser = parser;
         };
@@ -8743,12 +9908,10 @@ var require_lib2 = __commonJS({
     exports.default = DomHandler;
   }
 });
-
-// ../node_modules/entities/lib/decode.js
 var require_decode2 = __commonJS({
   "../node_modules/entities/lib/decode.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -8771,7 +9934,8 @@ var require_decode2 = __commonJS({
       };
     }
     __name(getStrictDecoder, "getStrictDecoder");
-    var sorter = /* @__PURE__ */ __name(function(a, b) {
+    __name2(getStrictDecoder, "getStrictDecoder");
+    var sorter = /* @__PURE__ */ __name2(function(a, b) {
       return a < b ? 1 : -1;
     }, "sorter");
     exports.decodeHTML = (function() {
@@ -8793,12 +9957,13 @@ var require_decode2 = __commonJS({
         return replace(str);
       }
       __name(replacer, "replacer");
+      __name2(replacer, "replacer");
       return function(str) {
         return String(str).replace(re, replacer);
       };
     })();
     function getReplacer(map) {
-      return /* @__PURE__ */ __name(function replace(str) {
+      return /* @__PURE__ */ __name2(/* @__PURE__ */ __name(function replace(str) {
         if (str.charAt(1) === "#") {
           var secondChar = str.charAt(2);
           if (secondChar === "X" || secondChar === "x") {
@@ -8807,17 +9972,16 @@ var require_decode2 = __commonJS({
           return decode_codepoint_1.default(parseInt(str.substr(2), 10));
         }
         return map[str.slice(1, -1)] || str;
-      }, "replace");
+      }, "replace"), "replace");
     }
     __name(getReplacer, "getReplacer");
+    __name2(getReplacer, "getReplacer");
   }
 });
-
-// ../node_modules/entities/lib/encode.js
 var require_encode = __commonJS({
   "../node_modules/entities/lib/encode.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -8842,6 +10006,7 @@ var require_encode = __commonJS({
       }, {});
     }
     __name(getInverseObj, "getInverseObj");
+    __name2(getInverseObj, "getInverseObj");
     function getInverseReplacer(inverse) {
       var single = [];
       var multiple = [];
@@ -8868,25 +10033,27 @@ var require_encode = __commonJS({
       return new RegExp(multiple.join("|"), "g");
     }
     __name(getInverseReplacer, "getInverseReplacer");
+    __name2(getInverseReplacer, "getInverseReplacer");
     var reNonASCII = /(?:[\x80-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])/g;
     var getCodePoint = (
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       String.prototype.codePointAt != null ? (
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        function(str) {
+        (function(str) {
           return str.codePointAt(0);
-        }
+        })
       ) : (
         // http://mathiasbynens.be/notes/javascript-encoding#surrogate-formulae
-        function(c) {
+        (function(c) {
           return (c.charCodeAt(0) - 55296) * 1024 + c.charCodeAt(1) - 56320 + 65536;
-        }
+        })
       )
     );
     function singleCharReplacer(c) {
       return "&#x" + (c.length > 1 ? getCodePoint(c) : c.charCodeAt(0)).toString(16).toUpperCase() + ";";
     }
     __name(singleCharReplacer, "singleCharReplacer");
+    __name2(singleCharReplacer, "singleCharReplacer");
     function getInverse(inverse, re) {
       return function(data) {
         return data.replace(re, function(name) {
@@ -8895,16 +10062,19 @@ var require_encode = __commonJS({
       };
     }
     __name(getInverse, "getInverse");
+    __name2(getInverse, "getInverse");
     var reEscapeChars = new RegExp(xmlReplacer.source + "|" + reNonASCII.source, "g");
     function escape2(data) {
       return data.replace(reEscapeChars, singleCharReplacer);
     }
-    __name(escape2, "escape");
+    __name(escape2, "escape2");
+    __name2(escape2, "escape");
     exports.escape = escape2;
     function escapeUTF8(data) {
       return data.replace(xmlReplacer, singleCharReplacer);
     }
     __name(escapeUTF8, "escapeUTF8");
+    __name2(escapeUTF8, "escapeUTF8");
     exports.escapeUTF8 = escapeUTF8;
     function getASCIIEncoder(obj) {
       return function(data) {
@@ -8914,14 +10084,13 @@ var require_encode = __commonJS({
       };
     }
     __name(getASCIIEncoder, "getASCIIEncoder");
+    __name2(getASCIIEncoder, "getASCIIEncoder");
   }
 });
-
-// ../node_modules/entities/lib/index.js
 var require_lib3 = __commonJS({
   "../node_modules/entities/lib/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -8933,72 +10102,73 @@ var require_lib3 = __commonJS({
       return (!level || level <= 0 ? decode_1.decodeXML : decode_1.decodeHTML)(data);
     }
     __name(decode, "decode");
+    __name2(decode, "decode");
     exports.decode = decode;
     function decodeStrict(data, level) {
       return (!level || level <= 0 ? decode_1.decodeXML : decode_1.decodeHTMLStrict)(data);
     }
     __name(decodeStrict, "decodeStrict");
+    __name2(decodeStrict, "decodeStrict");
     exports.decodeStrict = decodeStrict;
     function encode(data, level) {
       return (!level || level <= 0 ? encode_1.encodeXML : encode_1.encodeHTML)(data);
     }
     __name(encode, "encode");
+    __name2(encode, "encode");
     exports.encode = encode;
     var encode_2 = require_encode();
-    Object.defineProperty(exports, "encodeXML", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "encodeXML", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return encode_2.encodeXML;
     }, "get") });
-    Object.defineProperty(exports, "encodeHTML", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "encodeHTML", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return encode_2.encodeHTML;
     }, "get") });
-    Object.defineProperty(exports, "encodeNonAsciiHTML", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "encodeNonAsciiHTML", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return encode_2.encodeNonAsciiHTML;
     }, "get") });
-    Object.defineProperty(exports, "escape", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "escape", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return encode_2.escape;
     }, "get") });
-    Object.defineProperty(exports, "escapeUTF8", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "escapeUTF8", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return encode_2.escapeUTF8;
     }, "get") });
-    Object.defineProperty(exports, "encodeHTML4", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "encodeHTML4", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return encode_2.encodeHTML;
     }, "get") });
-    Object.defineProperty(exports, "encodeHTML5", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "encodeHTML5", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return encode_2.encodeHTML;
     }, "get") });
     var decode_2 = require_decode2();
-    Object.defineProperty(exports, "decodeXML", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "decodeXML", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return decode_2.decodeXML;
     }, "get") });
-    Object.defineProperty(exports, "decodeHTML", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "decodeHTML", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return decode_2.decodeHTML;
     }, "get") });
-    Object.defineProperty(exports, "decodeHTMLStrict", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "decodeHTMLStrict", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return decode_2.decodeHTMLStrict;
     }, "get") });
-    Object.defineProperty(exports, "decodeHTML4", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "decodeHTML4", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return decode_2.decodeHTML;
     }, "get") });
-    Object.defineProperty(exports, "decodeHTML5", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "decodeHTML5", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return decode_2.decodeHTML;
     }, "get") });
-    Object.defineProperty(exports, "decodeHTML4Strict", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "decodeHTML4Strict", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return decode_2.decodeHTMLStrict;
     }, "get") });
-    Object.defineProperty(exports, "decodeHTML5Strict", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "decodeHTML5Strict", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return decode_2.decodeHTMLStrict;
     }, "get") });
-    Object.defineProperty(exports, "decodeXMLStrict", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "decodeXMLStrict", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return decode_2.decodeXML;
     }, "get") });
   }
 });
-
-// ../node_modules/dom-serializer/lib/foreignNames.js
 var require_foreignNames = __commonJS({
   "../node_modules/dom-serializer/lib/foreignNames.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -9106,12 +10276,10 @@ var require_foreignNames = __commonJS({
     ]);
   }
 });
-
-// ../node_modules/dom-serializer/lib/index.js
 var require_lib4 = __commonJS({
   "../node_modules/dom-serializer/lib/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -9128,7 +10296,7 @@ var require_lib4 = __commonJS({
     };
     var __createBinding = exports && exports.__createBinding || (Object.create ? (function(o, m, k, k2) {
       if (k2 === void 0) k2 = k;
-      Object.defineProperty(o, k2, { enumerable: true, get: /* @__PURE__ */ __name(function() {
+      Object.defineProperty(o, k2, { enumerable: true, get: /* @__PURE__ */ __name2(function() {
         return m[k];
       }, "get") });
     }) : (function(o, m, k, k2) {
@@ -9179,6 +10347,7 @@ var require_lib4 = __commonJS({
       }).join(" ");
     }
     __name(formatAttributes, "formatAttributes");
+    __name2(formatAttributes, "formatAttributes");
     var singleTag = /* @__PURE__ */ new Set([
       "area",
       "base",
@@ -9212,6 +10381,7 @@ var require_lib4 = __commonJS({
       return output;
     }
     __name(render, "render");
+    __name2(render, "render");
     exports.default = render;
     function renderNode(node, options) {
       switch (node.type) {
@@ -9233,6 +10403,7 @@ var require_lib4 = __commonJS({
       }
     }
     __name(renderNode, "renderNode");
+    __name2(renderNode, "renderNode");
     var foreignModeIntegrationPoints = /* @__PURE__ */ new Set([
       "mi",
       "mo",
@@ -9283,10 +10454,12 @@ var require_lib4 = __commonJS({
       return tag;
     }
     __name(renderTag, "renderTag");
+    __name2(renderTag, "renderTag");
     function renderDirective(elem) {
       return "<" + elem.data + ">";
     }
     __name(renderDirective, "renderDirective");
+    __name2(renderDirective, "renderDirective");
     function renderText(elem, opts) {
       var data = elem.data || "";
       if (opts.decodeEntities !== false && !(!opts.xmlMode && elem.parent && unencodedElements.has(elem.parent.name))) {
@@ -9295,22 +10468,23 @@ var require_lib4 = __commonJS({
       return data;
     }
     __name(renderText, "renderText");
+    __name2(renderText, "renderText");
     function renderCdata(elem) {
       return "<![CDATA[" + elem.children[0].data + "]]>";
     }
     __name(renderCdata, "renderCdata");
+    __name2(renderCdata, "renderCdata");
     function renderComment(elem) {
       return "<!--" + elem.data + "-->";
     }
     __name(renderComment, "renderComment");
+    __name2(renderComment, "renderComment");
   }
 });
-
-// ../node_modules/domutils/lib/stringify.js
 var require_stringify = __commonJS({
   "../node_modules/domutils/lib/stringify.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -9326,6 +10500,7 @@ var require_stringify = __commonJS({
       return (0, dom_serializer_1.default)(node, options);
     }
     __name(getOuterHTML, "getOuterHTML");
+    __name2(getOuterHTML, "getOuterHTML");
     exports.getOuterHTML = getOuterHTML;
     function getInnerHTML(node, options) {
       return (0, domhandler_1.hasChildren)(node) ? node.children.map(function(node2) {
@@ -9333,6 +10508,7 @@ var require_stringify = __commonJS({
       }).join("") : "";
     }
     __name(getInnerHTML, "getInnerHTML");
+    __name2(getInnerHTML, "getInnerHTML");
     exports.getInnerHTML = getInnerHTML;
     function getText(node) {
       if (Array.isArray(node))
@@ -9346,6 +10522,7 @@ var require_stringify = __commonJS({
       return "";
     }
     __name(getText, "getText");
+    __name2(getText, "getText");
     exports.getText = getText;
     function textContent(node) {
       if (Array.isArray(node))
@@ -9358,6 +10535,7 @@ var require_stringify = __commonJS({
       return "";
     }
     __name(textContent, "textContent");
+    __name2(textContent, "textContent");
     exports.textContent = textContent;
     function innerText(node) {
       if (Array.isArray(node))
@@ -9370,15 +10548,14 @@ var require_stringify = __commonJS({
       return "";
     }
     __name(innerText, "innerText");
+    __name2(innerText, "innerText");
     exports.innerText = innerText;
   }
 });
-
-// ../node_modules/domutils/lib/traversal.js
 var require_traversal = __commonJS({
   "../node_modules/domutils/lib/traversal.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -9391,11 +10568,13 @@ var require_traversal = __commonJS({
       return (_a = elem.children) !== null && _a !== void 0 ? _a : emptyArray;
     }
     __name(getChildren, "getChildren");
+    __name2(getChildren, "getChildren");
     exports.getChildren = getChildren;
     function getParent(elem) {
       return elem.parent || null;
     }
     __name(getParent, "getParent");
+    __name2(getParent, "getParent");
     exports.getParent = getParent;
     function getSiblings(elem) {
       var _a, _b;
@@ -9415,22 +10594,26 @@ var require_traversal = __commonJS({
       return siblings;
     }
     __name(getSiblings, "getSiblings");
+    __name2(getSiblings, "getSiblings");
     exports.getSiblings = getSiblings;
     function getAttributeValue(elem, name) {
       var _a;
       return (_a = elem.attribs) === null || _a === void 0 ? void 0 : _a[name];
     }
     __name(getAttributeValue, "getAttributeValue");
+    __name2(getAttributeValue, "getAttributeValue");
     exports.getAttributeValue = getAttributeValue;
     function hasAttrib(elem, name) {
       return elem.attribs != null && Object.prototype.hasOwnProperty.call(elem.attribs, name) && elem.attribs[name] != null;
     }
     __name(hasAttrib, "hasAttrib");
+    __name2(hasAttrib, "hasAttrib");
     exports.hasAttrib = hasAttrib;
     function getName(elem) {
       return elem.name;
     }
     __name(getName, "getName");
+    __name2(getName, "getName");
     exports.getName = getName;
     function nextElementSibling(elem) {
       var _a;
@@ -9440,6 +10623,7 @@ var require_traversal = __commonJS({
       return next;
     }
     __name(nextElementSibling, "nextElementSibling");
+    __name2(nextElementSibling, "nextElementSibling");
     exports.nextElementSibling = nextElementSibling;
     function prevElementSibling(elem) {
       var _a;
@@ -9449,15 +10633,14 @@ var require_traversal = __commonJS({
       return prev;
     }
     __name(prevElementSibling, "prevElementSibling");
+    __name2(prevElementSibling, "prevElementSibling");
     exports.prevElementSibling = prevElementSibling;
   }
 });
-
-// ../node_modules/domutils/lib/manipulation.js
 var require_manipulation = __commonJS({
   "../node_modules/domutils/lib/manipulation.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -9474,6 +10657,7 @@ var require_manipulation = __commonJS({
       }
     }
     __name(removeElement, "removeElement");
+    __name2(removeElement, "removeElement");
     exports.removeElement = removeElement;
     function replaceElement(elem, replacement) {
       var prev = replacement.prev = elem.prev;
@@ -9491,6 +10675,7 @@ var require_manipulation = __commonJS({
       }
     }
     __name(replaceElement, "replaceElement");
+    __name2(replaceElement, "replaceElement");
     exports.replaceElement = replaceElement;
     function appendChild(elem, child) {
       removeElement(child);
@@ -9505,6 +10690,7 @@ var require_manipulation = __commonJS({
       }
     }
     __name(appendChild, "appendChild");
+    __name2(appendChild, "appendChild");
     exports.appendChild = appendChild;
     function append(elem, next) {
       removeElement(next);
@@ -9525,6 +10711,7 @@ var require_manipulation = __commonJS({
       }
     }
     __name(append, "append");
+    __name2(append, "append");
     exports.append = append;
     function prependChild(elem, child) {
       removeElement(child);
@@ -9539,6 +10726,7 @@ var require_manipulation = __commonJS({
       }
     }
     __name(prependChild, "prependChild");
+    __name2(prependChild, "prependChild");
     exports.prependChild = prependChild;
     function prepend(elem, prev) {
       removeElement(prev);
@@ -9556,15 +10744,14 @@ var require_manipulation = __commonJS({
       elem.prev = prev;
     }
     __name(prepend, "prepend");
+    __name2(prepend, "prepend");
     exports.prepend = prepend;
   }
 });
-
-// ../node_modules/domutils/lib/querying.js
 var require_querying = __commonJS({
   "../node_modules/domutils/lib/querying.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -9583,6 +10770,7 @@ var require_querying = __commonJS({
       return find(test, node, recurse, limit);
     }
     __name(filter, "filter");
+    __name2(filter, "filter");
     exports.filter = filter;
     function find(test, nodes, recurse, limit) {
       var result = [];
@@ -9604,11 +10792,13 @@ var require_querying = __commonJS({
       return result;
     }
     __name(find, "find");
+    __name2(find, "find");
     exports.find = find;
     function findOneChild(test, nodes) {
       return nodes.find(test);
     }
     __name(findOneChild, "findOneChild");
+    __name2(findOneChild, "findOneChild");
     exports.findOneChild = findOneChild;
     function findOne(test, nodes, recurse) {
       if (recurse === void 0) {
@@ -9628,6 +10818,7 @@ var require_querying = __commonJS({
       return elem;
     }
     __name(findOne, "findOne");
+    __name2(findOne, "findOne");
     exports.findOne = findOne;
     function existsOne(test, nodes) {
       return nodes.some(function(checked) {
@@ -9635,6 +10826,7 @@ var require_querying = __commonJS({
       });
     }
     __name(existsOne, "existsOne");
+    __name2(existsOne, "existsOne");
     exports.existsOne = existsOne;
     function findAll(test, nodes) {
       var _a;
@@ -9652,15 +10844,14 @@ var require_querying = __commonJS({
       return result;
     }
     __name(findAll, "findAll");
+    __name2(findAll, "findAll");
     exports.findAll = findAll;
   }
 });
-
-// ../node_modules/domutils/lib/legacy.js
 var require_legacy2 = __commonJS({
   "../node_modules/domutils/lib/legacy.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -9669,7 +10860,7 @@ var require_legacy2 = __commonJS({
     var domhandler_1 = require_lib2();
     var querying_1 = require_querying();
     var Checks = {
-      tag_name: /* @__PURE__ */ __name(function(name) {
+      tag_name: /* @__PURE__ */ __name2(function(name) {
         if (typeof name === "function") {
           return function(elem) {
             return (0, domhandler_1.isTag)(elem) && name(elem.name);
@@ -9681,7 +10872,7 @@ var require_legacy2 = __commonJS({
           return (0, domhandler_1.isTag)(elem) && elem.name === name;
         };
       }, "tag_name"),
-      tag_type: /* @__PURE__ */ __name(function(type2) {
+      tag_type: /* @__PURE__ */ __name2(function(type2) {
         if (typeof type2 === "function") {
           return function(elem) {
             return type2(elem.type);
@@ -9691,7 +10882,7 @@ var require_legacy2 = __commonJS({
           return elem.type === type2;
         };
       }, "tag_type"),
-      tag_contains: /* @__PURE__ */ __name(function(data) {
+      tag_contains: /* @__PURE__ */ __name2(function(data) {
         if (typeof data === "function") {
           return function(elem) {
             return (0, domhandler_1.isText)(elem) && data(elem.data);
@@ -9713,12 +10904,14 @@ var require_legacy2 = __commonJS({
       };
     }
     __name(getAttribCheck, "getAttribCheck");
+    __name2(getAttribCheck, "getAttribCheck");
     function combineFuncs(a, b) {
       return function(elem) {
         return a(elem) || b(elem);
       };
     }
     __name(combineFuncs, "combineFuncs");
+    __name2(combineFuncs, "combineFuncs");
     function compileTest(options) {
       var funcs = Object.keys(options).map(function(key) {
         var value = options[key];
@@ -9727,11 +10920,13 @@ var require_legacy2 = __commonJS({
       return funcs.length === 0 ? null : funcs.reduce(combineFuncs);
     }
     __name(compileTest, "compileTest");
+    __name2(compileTest, "compileTest");
     function testElement(options, node) {
       var test = compileTest(options);
       return test ? test(node) : true;
     }
     __name(testElement, "testElement");
+    __name2(testElement, "testElement");
     exports.testElement = testElement;
     function getElements(options, nodes, recurse, limit) {
       if (limit === void 0) {
@@ -9741,6 +10936,7 @@ var require_legacy2 = __commonJS({
       return test ? (0, querying_1.filter)(test, nodes, recurse, limit) : [];
     }
     __name(getElements, "getElements");
+    __name2(getElements, "getElements");
     exports.getElements = getElements;
     function getElementById(id, nodes, recurse) {
       if (recurse === void 0) {
@@ -9751,6 +10947,7 @@ var require_legacy2 = __commonJS({
       return (0, querying_1.findOne)(getAttribCheck("id", id), nodes, recurse);
     }
     __name(getElementById, "getElementById");
+    __name2(getElementById, "getElementById");
     exports.getElementById = getElementById;
     function getElementsByTagName(tagName, nodes, recurse, limit) {
       if (recurse === void 0) {
@@ -9762,6 +10959,7 @@ var require_legacy2 = __commonJS({
       return (0, querying_1.filter)(Checks.tag_name(tagName), nodes, recurse, limit);
     }
     __name(getElementsByTagName, "getElementsByTagName");
+    __name2(getElementsByTagName, "getElementsByTagName");
     exports.getElementsByTagName = getElementsByTagName;
     function getElementsByTagType(type2, nodes, recurse, limit) {
       if (recurse === void 0) {
@@ -9773,15 +10971,14 @@ var require_legacy2 = __commonJS({
       return (0, querying_1.filter)(Checks.tag_type(type2), nodes, recurse, limit);
     }
     __name(getElementsByTagType, "getElementsByTagType");
+    __name2(getElementsByTagType, "getElementsByTagType");
     exports.getElementsByTagType = getElementsByTagType;
   }
 });
-
-// ../node_modules/domutils/lib/helpers.js
 var require_helpers = __commonJS({
   "../node_modules/domutils/lib/helpers.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -9806,6 +11003,7 @@ var require_helpers = __commonJS({
       return nodes;
     }
     __name(removeSubsets, "removeSubsets");
+    __name2(removeSubsets, "removeSubsets");
     exports.removeSubsets = removeSubsets;
     function compareDocumentPosition(nodeA, nodeB) {
       var aParents = [];
@@ -9847,6 +11045,7 @@ var require_helpers = __commonJS({
       return 2;
     }
     __name(compareDocumentPosition, "compareDocumentPosition");
+    __name2(compareDocumentPosition, "compareDocumentPosition");
     exports.compareDocumentPosition = compareDocumentPosition;
     function uniqueSort(nodes) {
       nodes = nodes.filter(function(node, i, arr) {
@@ -9864,15 +11063,14 @@ var require_helpers = __commonJS({
       return nodes;
     }
     __name(uniqueSort, "uniqueSort");
+    __name2(uniqueSort, "uniqueSort");
     exports.uniqueSort = uniqueSort;
   }
 });
-
-// ../node_modules/domutils/lib/feeds.js
 var require_feeds = __commonJS({
   "../node_modules/domutils/lib/feeds.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -9885,6 +11083,7 @@ var require_feeds = __commonJS({
       return !feedRoot ? null : feedRoot.name === "feed" ? getAtomFeed(feedRoot) : getRssFeed(feedRoot);
     }
     __name(getFeed, "getFeed");
+    __name2(getFeed, "getFeed");
     exports.getFeed = getFeed;
     function getAtomFeed(feedRoot) {
       var _a;
@@ -9927,6 +11126,7 @@ var require_feeds = __commonJS({
       return feed;
     }
     __name(getAtomFeed, "getAtomFeed");
+    __name2(getAtomFeed, "getAtomFeed");
     function getRssFeed(feedRoot) {
       var _a, _b;
       var childs = (_b = (_a = getOneElement("channel", feedRoot.children)) === null || _a === void 0 ? void 0 : _a.children) !== null && _b !== void 0 ? _b : [];
@@ -9957,6 +11157,7 @@ var require_feeds = __commonJS({
       return feed;
     }
     __name(getRssFeed, "getRssFeed");
+    __name2(getRssFeed, "getRssFeed");
     var MEDIA_KEYS_STRING = ["url", "type", "lang"];
     var MEDIA_KEYS_INT = [
       "fileSize",
@@ -9994,17 +11195,20 @@ var require_feeds = __commonJS({
       });
     }
     __name(getMediaElements, "getMediaElements");
+    __name2(getMediaElements, "getMediaElements");
     function getOneElement(tagName, node) {
       return (0, legacy_1.getElementsByTagName)(tagName, node, true, 1)[0];
     }
     __name(getOneElement, "getOneElement");
+    __name2(getOneElement, "getOneElement");
     function fetch2(tagName, where, recurse) {
       if (recurse === void 0) {
         recurse = false;
       }
       return (0, stringify_1.textContent)((0, legacy_1.getElementsByTagName)(tagName, where, recurse, 1)).trim();
     }
-    __name(fetch2, "fetch");
+    __name(fetch2, "fetch2");
+    __name2(fetch2, "fetch");
     function addConditionally(obj, prop, tagName, where, recurse) {
       if (recurse === void 0) {
         recurse = false;
@@ -10014,24 +11218,24 @@ var require_feeds = __commonJS({
         obj[prop] = val;
     }
     __name(addConditionally, "addConditionally");
+    __name2(addConditionally, "addConditionally");
     function isValidFeed(value) {
       return value === "rss" || value === "feed" || value === "rdf:RDF";
     }
     __name(isValidFeed, "isValidFeed");
+    __name2(isValidFeed, "isValidFeed");
   }
 });
-
-// ../node_modules/domutils/lib/index.js
 var require_lib5 = __commonJS({
   "../node_modules/domutils/lib/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     var __createBinding = exports && exports.__createBinding || (Object.create ? (function(o, m, k, k2) {
       if (k2 === void 0) k2 = k;
-      Object.defineProperty(o, k2, { enumerable: true, get: /* @__PURE__ */ __name(function() {
+      Object.defineProperty(o, k2, { enumerable: true, get: /* @__PURE__ */ __name2(function() {
         return m[k];
       }, "get") });
     }) : (function(o, m, k, k2) {
@@ -10051,37 +11255,35 @@ var require_lib5 = __commonJS({
     __exportStar(require_helpers(), exports);
     __exportStar(require_feeds(), exports);
     var domhandler_1 = require_lib2();
-    Object.defineProperty(exports, "isTag", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "isTag", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return domhandler_1.isTag;
     }, "get") });
-    Object.defineProperty(exports, "isCDATA", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "isCDATA", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return domhandler_1.isCDATA;
     }, "get") });
-    Object.defineProperty(exports, "isText", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "isText", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return domhandler_1.isText;
     }, "get") });
-    Object.defineProperty(exports, "isComment", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "isComment", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return domhandler_1.isComment;
     }, "get") });
-    Object.defineProperty(exports, "isDocument", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "isDocument", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return domhandler_1.isDocument;
     }, "get") });
-    Object.defineProperty(exports, "hasChildren", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "hasChildren", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return domhandler_1.hasChildren;
     }, "get") });
   }
 });
-
-// ../node_modules/htmlparser2/lib/FeedHandler.js
 var require_FeedHandler = __commonJS({
   "../node_modules/htmlparser2/lib/FeedHandler.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     var __extends = exports && exports.__extends || /* @__PURE__ */ (function() {
-      var extendStatics = /* @__PURE__ */ __name(function(d, b) {
+      var extendStatics = /* @__PURE__ */ __name2(function(d, b) {
         extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
           d2.__proto__ = b2;
         } || function(d2, b2) {
@@ -10097,12 +11299,13 @@ var require_FeedHandler = __commonJS({
           this.constructor = d;
         }
         __name(__, "__");
+        __name2(__, "__");
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
       };
     })();
     var __createBinding = exports && exports.__createBinding || (Object.create ? (function(o, m, k, k2) {
       if (k2 === void 0) k2 = k;
-      Object.defineProperty(o, k2, { enumerable: true, get: /* @__PURE__ */ __name(function() {
+      Object.defineProperty(o, k2, { enumerable: true, get: /* @__PURE__ */ __name2(function() {
         return m[k];
       }, "get") });
     }) : (function(o, m, k, k2) {
@@ -10158,7 +11361,8 @@ var require_FeedHandler = __commonJS({
           _this = _super.call(this, callback, options) || this;
           return _this;
         }
-        __name(FeedHandler2, "FeedHandler");
+        __name(FeedHandler2, "FeedHandler2");
+        __name2(FeedHandler2, "FeedHandler");
         FeedHandler2.prototype.onend = function() {
           var _a, _b;
           var feedRoot = getOneElement(isValidFeed, this.dom);
@@ -10281,21 +11485,25 @@ var require_FeedHandler = __commonJS({
       });
     }
     __name(getMediaElements, "getMediaElements");
+    __name2(getMediaElements, "getMediaElements");
     function getElements(tagName, where) {
       return DomUtils.getElementsByTagName(tagName, where, true);
     }
     __name(getElements, "getElements");
+    __name2(getElements, "getElements");
     function getOneElement(tagName, node) {
       return DomUtils.getElementsByTagName(tagName, node, true, 1)[0];
     }
     __name(getOneElement, "getOneElement");
+    __name2(getOneElement, "getOneElement");
     function fetch2(tagName, where, recurse) {
       if (recurse === void 0) {
         recurse = false;
       }
       return DomUtils.getText(DomUtils.getElementsByTagName(tagName, where, recurse, 1)).trim();
     }
-    __name(fetch2, "fetch");
+    __name(fetch2, "fetch2");
+    __name2(fetch2, "fetch");
     function getAttribute(name, elem) {
       if (!elem) {
         return null;
@@ -10304,6 +11512,7 @@ var require_FeedHandler = __commonJS({
       return attribs[name];
     }
     __name(getAttribute, "getAttribute");
+    __name2(getAttribute, "getAttribute");
     function addConditionally(obj, prop, what, where, recurse) {
       if (recurse === void 0) {
         recurse = false;
@@ -10313,10 +11522,12 @@ var require_FeedHandler = __commonJS({
         obj[prop] = tmp;
     }
     __name(addConditionally, "addConditionally");
+    __name2(addConditionally, "addConditionally");
     function isValidFeed(value) {
       return value === "rss" || value === "feed" || value === "rdf:RDF";
     }
     __name(isValidFeed, "isValidFeed");
+    __name2(isValidFeed, "isValidFeed");
     function parseFeed(feed, options) {
       if (options === void 0) {
         options = { xmlMode: true };
@@ -10326,21 +11537,20 @@ var require_FeedHandler = __commonJS({
       return handler.feed;
     }
     __name(parseFeed, "parseFeed");
+    __name2(parseFeed, "parseFeed");
     exports.parseFeed = parseFeed;
   }
 });
-
-// ../node_modules/htmlparser2/lib/index.js
 var require_lib6 = __commonJS({
   "../node_modules/htmlparser2/lib/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     var __createBinding = exports && exports.__createBinding || (Object.create ? (function(o, m, k, k2) {
       if (k2 === void 0) k2 = k;
-      Object.defineProperty(o, k2, { enumerable: true, get: /* @__PURE__ */ __name(function() {
+      Object.defineProperty(o, k2, { enumerable: true, get: /* @__PURE__ */ __name2(function() {
         return m[k];
       }, "get") });
     }) : (function(o, m, k, k2) {
@@ -10370,14 +11580,14 @@ var require_lib6 = __commonJS({
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RssHandler = exports.DefaultHandler = exports.DomUtils = exports.ElementType = exports.Tokenizer = exports.createDomStream = exports.parseDOM = exports.parseDocument = exports.DomHandler = exports.Parser = void 0;
     var Parser_1 = require_Parser();
-    Object.defineProperty(exports, "Parser", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "Parser", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return Parser_1.Parser;
     }, "get") });
     var domhandler_1 = require_lib2();
-    Object.defineProperty(exports, "DomHandler", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "DomHandler", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return domhandler_1.DomHandler;
     }, "get") });
-    Object.defineProperty(exports, "DefaultHandler", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "DefaultHandler", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return domhandler_1.DomHandler;
     }, "get") });
     function parseDocument(data, options) {
@@ -10386,20 +11596,23 @@ var require_lib6 = __commonJS({
       return handler.root;
     }
     __name(parseDocument, "parseDocument");
+    __name2(parseDocument, "parseDocument");
     exports.parseDocument = parseDocument;
     function parseDOM(data, options) {
       return parseDocument(data, options).children;
     }
     __name(parseDOM, "parseDOM");
+    __name2(parseDOM, "parseDOM");
     exports.parseDOM = parseDOM;
     function createDomStream(cb, options, elementCb) {
       var handler = new domhandler_1.DomHandler(cb, options, elementCb);
       return new Parser_1.Parser(handler, options);
     }
     __name(createDomStream, "createDomStream");
+    __name2(createDomStream, "createDomStream");
     exports.createDomStream = createDomStream;
     var Tokenizer_1 = require_Tokenizer();
-    Object.defineProperty(exports, "Tokenizer", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "Tokenizer", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return __importDefault(Tokenizer_1).default;
     }, "get") });
     var ElementType = __importStar(require_lib());
@@ -10407,17 +11620,15 @@ var require_lib6 = __commonJS({
     __exportStar(require_FeedHandler(), exports);
     exports.DomUtils = __importStar(require_lib5());
     var FeedHandler_1 = require_FeedHandler();
-    Object.defineProperty(exports, "RssHandler", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "RssHandler", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return FeedHandler_1.FeedHandler;
     }, "get") });
   }
 });
-
-// ../node_modules/telegram/extensions/html.js
 var require_html = __commonJS({
   "../node_modules/telegram/extensions/html.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -10429,6 +11640,9 @@ var require_html = __commonJS({
     var HTMLToTelegramParser = class {
       static {
         __name(this, "HTMLToTelegramParser");
+      }
+      static {
+        __name2(this, "HTMLToTelegramParser");
       }
       constructor() {
         this.text = "";
@@ -10542,6 +11756,9 @@ var require_html = __commonJS({
       static {
         __name(this, "HTMLParser");
       }
+      static {
+        __name2(this, "HTMLParser");
+      }
       static parse(html) {
         if (!html) {
           return [html, []];
@@ -10618,12 +11835,10 @@ var require_html = __commonJS({
     exports.HTMLParser = HTMLParser;
   }
 });
-
-// ../node_modules/telegram/client/messageParse.js
 var require_messageParse = __commonJS({
   "../node_modules/telegram/client/messageParse.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -10660,6 +11875,7 @@ var require_messageParse = __commonJS({
       }
     }
     __name(_replaceWithMention, "_replaceWithMention");
+    __name2(_replaceWithMention, "_replaceWithMention");
     async function _parseMessageText(client, message, parseMode) {
       if (parseMode == false) {
         return [message, []];
@@ -10689,6 +11905,7 @@ var require_messageParse = __commonJS({
       return [rawMessage, msgEntities];
     }
     __name(_parseMessageText, "_parseMessageText");
+    __name2(_parseMessageText, "_parseMessageText");
     function _getResponseMessage(client, request, result, inputChat) {
       let updates = [];
       let entities = /* @__PURE__ */ new Map();
@@ -10796,14 +12013,13 @@ var require_messageParse = __commonJS({
       return finalToReturn;
     }
     __name(_getResponseMessage, "_getResponseMessage");
+    __name2(_getResponseMessage, "_getResponseMessage");
   }
 });
-
-// ../node_modules/telegram/extensions/markdown.js
 var require_markdown = __commonJS({
   "../node_modules/telegram/extensions/markdown.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -10813,6 +12029,9 @@ var require_markdown = __commonJS({
     var MarkdownParser = class {
       static {
         __name(this, "MarkdownParser");
+      }
+      static {
+        __name2(this, "MarkdownParser");
       }
       // TODO maybe there is a better way :shrug:
       static parse(message) {
@@ -10885,12 +12104,10 @@ var require_markdown = __commonJS({
     exports.MarkdownParser = MarkdownParser;
   }
 });
-
-// ../node_modules/telegram/extensions/markdownv2.js
 var require_markdownv2 = __commonJS({
   "../node_modules/telegram/extensions/markdownv2.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -10900,6 +12117,9 @@ var require_markdownv2 = __commonJS({
     var MarkdownV2Parser = class {
       static {
         __name(this, "MarkdownV2Parser");
+      }
+      static {
+        __name2(this, "MarkdownV2Parser");
       }
       static parse(message) {
         message = message.replace(/\*(.*?)\*/g, "<b>$1</b>");
@@ -10930,12 +12150,10 @@ var require_markdownv2 = __commonJS({
     exports.MarkdownV2Parser = MarkdownV2Parser;
   }
 });
-
-// ../node_modules/telegram/Utils.js
 var require_Utils = __commonJS({
   "../node_modules/telegram/Utils.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -11027,12 +12245,14 @@ var require_Utils = __commonJS({
       _raiseCastFail(fileLocation, "InputFileLocation");
     }
     __name(getFileInfo, "getFileInfo");
+    __name2(getFileInfo, "getFileInfo");
     function* chunks(arr, size = 100) {
       for (let i = 0; i < arr.length; i += size) {
         yield arr.slice(i, i + size);
       }
     }
     __name(chunks, "chunks");
+    __name2(chunks, "chunks");
     var USERNAME_RE = new RegExp("@|(?:https?:\\/\\/)?(?:www\\.)?(?:telegram\\.(?:me|dog)|t\\.me)\\/(@|joinchat\\/)?", "i");
     var JPEG_HEADER = Buffer.from("ffd8ffe000104a46494600010100000100010000ffdb004300281c1e231e19282321232d2b28303c64413c37373c7b585d4964918099968f808c8aa0b4e6c3a0aadaad8a8cc8ffcbdaeef5ffffff9bc1fffffffaffe6fdfff8ffdb0043012b2d2d3c353c76414176f8a58ca5f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8ffc00011080000000003012200021101031101ffc4001f0000010501010101010100000000000000000102030405060708090a0bffc400b5100002010303020403050504040000017d01020300041105122131410613516107227114328191a1082342b1c11552d1f02433627282090a161718191a25262728292a3435363738393a434445464748494a535455565758595a636465666768696a737475767778797a838485868788898a92939495969798999aa2a3a4a5a6a7a8a9aab2b3b4b5b6b7b8b9bac2c3c4c5c6c7c8c9cad2d3d4d5d6d7d8d9dae1e2e3e4e5e6e7e8e9eaf1f2f3f4f5f6f7f8f9faffc4001f0100030101010101010101010000000000000102030405060708090a0bffc400b51100020102040403040705040400010277000102031104052131061241510761711322328108144291a1b1c109233352f0156272d10a162434e125f11718191a262728292a35363738393a434445464748494a535455565758595a636465666768696a737475767778797a82838485868788898a92939495969798999aa2a3a4a5a6a7a8a9aab2b3b4b5b6b7b8b9bac2c3c4c5c6c7c8c9cad2d3d4d5d6d7d8d9dae2e3e4e5e6e7e8e9eaf2f3f4f5f6f7f8f9faffda000c03010002110311003f00", "hex");
     var JPEG_FOOTER = Buffer.from("ffd9", "hex");
@@ -11046,6 +12266,7 @@ var require_Utils = __commonJS({
       throw new Error(`Cannot cast ${toWrite} to any kind of ${target}`);
     }
     __name(_raiseCastFail, "_raiseCastFail");
+    __name2(_raiseCastFail, "_raiseCastFail");
     function getInputPeer(entity, allowSelf = true, checkHash = true) {
       if (entity.SUBCLASS_OF_ID === void 0) {
         if (allowSelf && "inputEntity" in entity) {
@@ -11119,6 +12340,7 @@ var require_Utils = __commonJS({
       _raiseCastFail(entity, "InputPeer");
     }
     __name(getInputPeer, "getInputPeer");
+    __name2(getInputPeer, "getInputPeer");
     function _photoSizeByteCount(size) {
       if (size instanceof tl_1.Api.PhotoSize) {
         return size.size;
@@ -11138,6 +12360,7 @@ var require_Utils = __commonJS({
       }
     }
     __name(_photoSizeByteCount, "_photoSizeByteCount");
+    __name2(_photoSizeByteCount, "_photoSizeByteCount");
     function _getEntityPair(entityId, entities, cache, getInputPeerFunction = getInputPeer) {
       const entity = entities.get(entityId);
       let inputEntity;
@@ -11152,6 +12375,7 @@ var require_Utils = __commonJS({
       return [entity, inputEntity];
     }
     __name(_getEntityPair, "_getEntityPair");
+    __name2(_getEntityPair, "_getEntityPair");
     function getInnerText(text, entities) {
       const result = [];
       entities.forEach(function(value, key) {
@@ -11162,6 +12386,7 @@ var require_Utils = __commonJS({
       return result;
     }
     __name(getInnerText, "getInnerText");
+    __name2(getInnerText, "getInnerText");
     function getInputChannel(entity) {
       if (typeof entity === "string" || typeof entity == "number" || typeof entity == "bigint" || big_integer_1.default.isInstance(entity)) {
         _raiseCastFail(entity, "InputChannel");
@@ -11187,6 +12412,7 @@ var require_Utils = __commonJS({
       _raiseCastFail(entity, "InputChannel");
     }
     __name(getInputChannel, "getInputChannel");
+    __name2(getInputChannel, "getInputChannel");
     function getInputUser(entity) {
       if (typeof entity === "string" || typeof entity == "number" || typeof entity == "bigint" || big_integer_1.default.isInstance(entity)) {
         _raiseCastFail(entity, "InputUser");
@@ -11232,6 +12458,7 @@ var require_Utils = __commonJS({
       _raiseCastFail(entity, "InputUser");
     }
     __name(getInputUser, "getInputUser");
+    __name2(getInputUser, "getInputUser");
     function getInputMessage(message) {
       if (typeof message === "number") {
         return new tl_1.Api.InputMessageID({ id: message });
@@ -11247,6 +12474,7 @@ var require_Utils = __commonJS({
       _raiseCastFail(message, "InputMessage");
     }
     __name(getInputMessage, "getInputMessage");
+    __name2(getInputMessage, "getInputMessage");
     function getInputChatPhoto(photo) {
       if (photo === void 0 || photo.SUBCLASS_OF_ID === void 0) {
         _raiseCastFail(photo, "InputChatPhoto");
@@ -11269,6 +12497,7 @@ var require_Utils = __commonJS({
       _raiseCastFail(photo, "InputChatPhoto");
     }
     __name(getInputChatPhoto, "getInputChatPhoto");
+    __name2(getInputChatPhoto, "getInputChatPhoto");
     function strippedPhotoToJpg(stripped) {
       if (stripped.length < 3 || stripped[0] !== 1) {
         return stripped;
@@ -11279,6 +12508,7 @@ var require_Utils = __commonJS({
       return Buffer.concat([header, stripped.slice(3), JPEG_FOOTER]);
     }
     __name(strippedPhotoToJpg, "strippedPhotoToJpg");
+    __name2(strippedPhotoToJpg, "strippedPhotoToJpg");
     function getInputPhoto(photo) {
       if (photo.SUBCLASS_OF_ID === void 0) {
         _raiseCastFail(photo, "InputPhoto");
@@ -11322,6 +12552,7 @@ var require_Utils = __commonJS({
       _raiseCastFail(photo, "InputPhoto");
     }
     __name(getInputPhoto, "getInputPhoto");
+    __name2(getInputPhoto, "getInputPhoto");
     function getInputDocument(document) {
       if (document.SUBCLASS_OF_ID === void 0) {
         _raiseCastFail(document, "InputDocument");
@@ -11348,6 +12579,7 @@ var require_Utils = __commonJS({
       _raiseCastFail(document, "InputDocument");
     }
     __name(getInputDocument, "getInputDocument");
+    __name2(getInputDocument, "getInputDocument");
     function isAudio(file) {
       const ext = _getExtension(file);
       if (!ext) {
@@ -11359,11 +12591,13 @@ var require_Utils = __commonJS({
       }
     }
     __name(isAudio, "isAudio");
+    __name2(isAudio, "isAudio");
     function isImage(file) {
       const ext = _getExtension(file).toLowerCase();
       return ext.endsWith(".png") || ext.endsWith(".jpg") || ext.endsWith(".jpeg");
     }
     __name(isImage, "isImage");
+    __name2(isImage, "isImage");
     function getExtension(media) {
       try {
         getInputPhoto(media);
@@ -11386,6 +12620,7 @@ var require_Utils = __commonJS({
       return "";
     }
     __name(getExtension, "getExtension");
+    __name2(getExtension, "getExtension");
     function _getExtension(file) {
       if (typeof file === "string") {
         return "." + file.split(".").pop();
@@ -11396,10 +12631,12 @@ var require_Utils = __commonJS({
       }
     }
     __name(_getExtension, "_getExtension");
+    __name2(_getExtension, "_getExtension");
     function _getMetadata(file) {
       return /* @__PURE__ */ new Map();
     }
     __name(_getMetadata, "_getMetadata");
+    __name2(_getMetadata, "_getMetadata");
     function isVideo(file) {
       var _a;
       const ext = _getExtension(file);
@@ -11416,6 +12653,7 @@ var require_Utils = __commonJS({
       }
     }
     __name(isVideo, "isVideo");
+    __name2(isVideo, "isVideo");
     function getAttributes(file, { attributes = null, mimeType = void 0, forceDocument = false, voiceNote = false, videoNote = false, supportsStreaming = false, thumb = null }) {
       var _a, _b, _c, _d;
       const name = typeof file == "string" ? file : "name" in file ? file.name || "unnamed" : "unnamed";
@@ -11481,6 +12719,7 @@ var require_Utils = __commonJS({
       };
     }
     __name(getAttributes, "getAttributes");
+    __name2(getAttributes, "getAttributes");
     function getInputGeo(geo) {
       if (geo === void 0 || geo.SUBCLASS_OF_ID === void 0) {
         _raiseCastFail(geo, "InputGeoPoint");
@@ -11503,6 +12742,7 @@ var require_Utils = __commonJS({
       _raiseCastFail(geo, "InputGeoPoint");
     }
     __name(getInputGeo, "getInputGeo");
+    __name2(getInputGeo, "getInputGeo");
     function getInputMedia(media, { isPhoto = false, attributes = void 0, forceDocument = false, voiceNote = false, videoNote = false, supportsStreaming = false } = {}) {
       if (media.SUBCLASS_OF_ID === void 0) {
         _raiseCastFail(media, "InputMedia");
@@ -11625,6 +12865,7 @@ var require_Utils = __commonJS({
       _raiseCastFail(media, "InputMedia");
     }
     __name(getInputMedia, "getInputMedia");
+    __name2(getInputMedia, "getInputMedia");
     function getAppropriatedPartSize(fileSize) {
       if (fileSize.lesser(104857600)) {
         return 128;
@@ -11635,6 +12876,7 @@ var require_Utils = __commonJS({
       return 512;
     }
     __name(getAppropriatedPartSize, "getAppropriatedPartSize");
+    __name2(getAppropriatedPartSize, "getAppropriatedPartSize");
     function getPeer(peer) {
       if (!peer) {
         _raiseCastFail(peer, "undefined");
@@ -11684,6 +12926,7 @@ var require_Utils = __commonJS({
       _raiseCastFail(peer, "peer");
     }
     __name(getPeer, "getPeer");
+    __name2(getPeer, "getPeer");
     function sanitizeParseMode(mode) {
       if (mode === "md" || mode === "markdown") {
         return markdown_1.MarkdownParser;
@@ -11702,6 +12945,7 @@ var require_Utils = __commonJS({
       throw new Error(`Invalid parse mode type ${mode}`);
     }
     __name(sanitizeParseMode, "sanitizeParseMode");
+    __name2(sanitizeParseMode, "sanitizeParseMode");
     function getPeerId2(peer, addMark = true) {
       if (typeof peer == "string" && parseID(peer)) {
         peer = (0, Helpers_1.returnBigInt)(peer);
@@ -11731,7 +12975,8 @@ var require_Utils = __commonJS({
       }
       _raiseCastFail(peer, "int");
     }
-    __name(getPeerId2, "getPeerId");
+    __name(getPeerId2, "getPeerId2");
+    __name2(getPeerId2, "getPeerId");
     function resolveId(markedId) {
       if (markedId.greaterOrEquals(big_integer_1.default.zero)) {
         return [markedId, tl_1.Api.PeerUser];
@@ -11743,6 +12988,7 @@ var require_Utils = __commonJS({
       return [markedId.negate(), tl_1.Api.PeerChat];
     }
     __name(resolveId, "resolveId");
+    __name2(resolveId, "resolveId");
     function getMessageId(message) {
       if (!message) {
         return void 0;
@@ -11755,6 +13001,7 @@ var require_Utils = __commonJS({
       }
     }
     __name(getMessageId, "getMessageId");
+    __name2(getMessageId, "getMessageId");
     function parsePhone(phone) {
       phone = phone.toString().replace(/[()\s-]/gm, "");
       if (phone.startsWith("+") && phone.split("+").length - 1 == 1) {
@@ -11762,15 +13009,18 @@ var require_Utils = __commonJS({
       }
     }
     __name(parsePhone, "parsePhone");
+    __name2(parsePhone, "parsePhone");
     function parseID(id) {
       const isValid = /^(-?[0-9][0-9]*)$/.test(id);
       return isValid ? (0, big_integer_1.default)(id) : void 0;
     }
     __name(parseID, "parseID");
+    __name2(parseID, "parseID");
     function resolveInviteLink(link3) {
       throw new Error("not implemented");
     }
     __name(resolveInviteLink, "resolveInviteLink");
+    __name2(resolveInviteLink, "resolveInviteLink");
     function parseUsername(username) {
       username = username.trim();
       const m = username.match(USERNAME_RE) || username.match(TG_JOIN_RE);
@@ -11798,6 +13048,7 @@ var require_Utils = __commonJS({
       }
     }
     __name(parseUsername, "parseUsername");
+    __name2(parseUsername, "parseUsername");
     function rtrim(s, mask) {
       while (~mask.indexOf(s[s.length - 1])) {
         s = s.slice(0, -1);
@@ -11805,6 +13056,7 @@ var require_Utils = __commonJS({
       return s;
     }
     __name(rtrim, "rtrim");
+    __name2(rtrim, "rtrim");
     function getDisplayName(entity) {
       if (entity instanceof tl_1.Api.User) {
         if (entity.lastName && entity.firstName) {
@@ -11822,14 +13074,13 @@ var require_Utils = __commonJS({
       return "";
     }
     __name(getDisplayName, "getDisplayName");
+    __name2(getDisplayName, "getDisplayName");
   }
 });
-
-// ../node_modules/telegram/tl/custom/forward.js
 var require_forward = __commonJS({
   "../node_modules/telegram/tl/custom/forward.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -11843,6 +13094,9 @@ var require_forward = __commonJS({
     var Forward = class extends senderGetter_1.SenderGetter {
       static {
         __name(this, "Forward");
+      }
+      static {
+        __name2(this, "Forward");
       }
       [inspect_1.inspect.custom]() {
         return (0, Helpers_1.betterConsoleLog)(this);
@@ -11882,12 +13136,10 @@ var require_forward = __commonJS({
     exports.Forward = Forward;
   }
 });
-
-// ../node_modules/telegram/tl/custom/file.js
 var require_file = __commonJS({
   "../node_modules/telegram/tl/custom/file.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -11899,7 +13151,10 @@ var require_file = __commonJS({
     var inspect_1 = require_inspect();
     var File2 = class {
       static {
-        __name(this, "File");
+        __name(this, "File2");
+      }
+      static {
+        __name2(this, "File");
       }
       [inspect_1.inspect.custom]() {
         return (0, Helpers_1.betterConsoleLog)(this);
@@ -11961,12 +13216,10 @@ var require_file = __commonJS({
     exports.File = File2;
   }
 });
-
-// ../node_modules/telegram/extensions/Logger.js
 var require_Logger = __commonJS({
   "../node_modules/telegram/extensions/Logger.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -11984,6 +13237,9 @@ var require_Logger = __commonJS({
     var Logger = class {
       static {
         __name(this, "Logger");
+      }
+      static {
+        __name2(this, "Logger");
       }
       constructor(level) {
         this.levels = ["error", "warn", "info", "debug"];
@@ -12089,19 +13345,20 @@ var require_Logger = __commonJS({
     exports.Logger = Logger;
   }
 });
-
-// ../node_modules/telegram/extensions/Deferred.js
 var require_Deferred = __commonJS({
   "../node_modules/telegram/extensions/Deferred.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     Object.defineProperty(exports, "__esModule", { value: true });
     var Deferred = class _Deferred {
       static {
-        __name(this, "Deferred");
+        __name(this, "_Deferred");
+      }
+      static {
+        __name2(this, "Deferred");
       }
       constructor() {
         this.promise = new Promise((resolve, reject) => {
@@ -12118,12 +13375,10 @@ var require_Deferred = __commonJS({
     exports.default = Deferred;
   }
 });
-
-// ../node_modules/telegram/network/RequestState.js
 var require_RequestState = __commonJS({
   "../node_modules/telegram/network/RequestState.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -12136,6 +13391,9 @@ var require_RequestState = __commonJS({
     var RequestState = class {
       static {
         __name(this, "RequestState");
+      }
+      static {
+        __name2(this, "RequestState");
       }
       constructor(request) {
         this.containerId = void 0;
@@ -12165,12 +13423,10 @@ var require_RequestState = __commonJS({
     exports.RequestState = RequestState;
   }
 });
-
-// ../node_modules/telegram/client/users.js
 var require_users = __commonJS({
   "../node_modules/telegram/client/users.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -12265,6 +13521,7 @@ var require_users = __commonJS({
       throw new Error(`Request was unsuccessful ${attempt} time(s)`);
     }
     __name(invoke, "invoke");
+    __name2(invoke, "invoke");
     async function getMe(client, inputPeer) {
       if (inputPeer && client._selfInputPeer) {
         return client._selfInputPeer;
@@ -12277,6 +13534,7 @@ var require_users = __commonJS({
       return inputPeer ? client._selfInputPeer : me;
     }
     __name(getMe, "getMe");
+    __name2(getMe, "getMe");
     async function isBot(client) {
       if (client._bot === void 0) {
         const me = await client.getMe();
@@ -12287,6 +13545,7 @@ var require_users = __commonJS({
       return client._bot;
     }
     __name(isBot, "isBot");
+    __name2(isBot, "isBot");
     async function isUserAuthorized(client) {
       try {
         await client.invoke(new tl_1.Api.updates.GetState());
@@ -12296,6 +13555,7 @@ var require_users = __commonJS({
       }
     }
     __name(isUserAuthorized, "isUserAuthorized");
+    __name2(isUserAuthorized, "isUserAuthorized");
     async function getEntity(client, entity) {
       const single = !(0, Helpers_1.isArrayLike)(entity);
       let entityArray = [];
@@ -12347,8 +13607,8 @@ var require_users = __commonJS({
       for (const user of users) {
         idEntity.set((0, Utils_1.getPeerId)(user), user);
       }
-      for (const channel2 of channels) {
-        idEntity.set((0, Utils_1.getPeerId)(channel2), channel2);
+      for (const channel22 of channels) {
+        idEntity.set((0, Utils_1.getPeerId)(channel22), channel22);
       }
       for (const chat of chats) {
         idEntity.set((0, Utils_1.getPeerId)(chat), chat);
@@ -12371,6 +13631,7 @@ var require_users = __commonJS({
       return single ? result[0] : result;
     }
     __name(getEntity, "getEntity");
+    __name2(getEntity, "getEntity");
     async function getInputEntity(client, peer) {
       try {
         return __1.utils.getInputPeer(peer);
@@ -12458,6 +13719,7 @@ var require_users = __commonJS({
          Please read https://docs.telethon.dev/en/stable/concepts/entities.html to find out more details.`);
     }
     __name(getInputEntity, "getInputEntity");
+    __name2(getInputEntity, "getInputEntity");
     async function _getEntityFromString(client, string) {
       const phone = __1.utils.parsePhone(string);
       if (phone) {
@@ -12498,16 +13760,16 @@ var require_users = __commonJS({
         } else if (username) {
           try {
             const result = await client.invoke(new tl_1.Api.contacts.ResolveUsername({ username }));
-            const pid2 = __1.utils.getPeerId(result.peer, false);
+            const pid22 = __1.utils.getPeerId(result.peer, false);
             if (result.peer instanceof tl_1.Api.PeerUser) {
               for (const x of result.users) {
-                if ((0, Helpers_1.returnBigInt)(x.id).equals((0, Helpers_1.returnBigInt)(pid2))) {
+                if ((0, Helpers_1.returnBigInt)(x.id).equals((0, Helpers_1.returnBigInt)(pid22))) {
                   return x;
                 }
               }
             } else {
               for (const x of result.chats) {
-                if ((0, Helpers_1.returnBigInt)(x.id).equals((0, Helpers_1.returnBigInt)(pid2))) {
+                if ((0, Helpers_1.returnBigInt)(x.id).equals((0, Helpers_1.returnBigInt)(pid22))) {
                   return x;
                 }
               }
@@ -12523,6 +13785,7 @@ var require_users = __commonJS({
       throw new Error(`Cannot find any entity corresponding to "${string}"`);
     }
     __name(_getEntityFromString, "_getEntityFromString");
+    __name2(_getEntityFromString, "_getEntityFromString");
     async function getPeerId2(client, peer, addMark = true) {
       if (typeof peer == "string") {
         const valid = (0, Utils_1.parseID)(peer);
@@ -12543,7 +13806,8 @@ var require_users = __commonJS({
       }
       return __1.utils.getPeerId(peer, addMark);
     }
-    __name(getPeerId2, "getPeerId");
+    __name(getPeerId2, "getPeerId2");
+    __name2(getPeerId2, "getPeerId");
     async function _getPeer(client, peer) {
       if (!peer) {
         return void 0;
@@ -12556,6 +13820,7 @@ var require_users = __commonJS({
       });
     }
     __name(_getPeer, "_getPeer");
+    __name2(_getPeer, "_getPeer");
     async function _getInputDialog(client, dialog) {
       try {
         if (dialog.SUBCLASS_OF_ID == 2719782805) {
@@ -12573,6 +13838,7 @@ var require_users = __commonJS({
       });
     }
     __name(_getInputDialog, "_getInputDialog");
+    __name2(_getInputDialog, "_getInputDialog");
     async function _getInputNotify(client, notify) {
       try {
         if (notify.SUBCLASS_OF_ID == 1486362133) {
@@ -12588,18 +13854,18 @@ var require_users = __commonJS({
       });
     }
     __name(_getInputNotify, "_getInputNotify");
+    __name2(_getInputNotify, "_getInputNotify");
     function _selfId(client) {
       return client._selfInputPeer ? client._selfInputPeer.userId : void 0;
     }
     __name(_selfId, "_selfId");
+    __name2(_selfId, "_selfId");
   }
 });
-
-// ../node_modules/telegram/tl/custom/button.js
 var require_button = __commonJS({
   "../node_modules/telegram/tl/custom/button.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -12612,6 +13878,9 @@ var require_button = __commonJS({
     var Button = class {
       static {
         __name(this, "Button");
+      }
+      static {
+        __name2(this, "Button");
       }
       [inspect_1.inspect.custom]() {
         return (0, Helpers_1.betterConsoleLog)(this);
@@ -12681,12 +13950,10 @@ var require_button = __commonJS({
     exports.Button = Button;
   }
 });
-
-// ../node_modules/telegram/Password.js
 var require_Password = __commonJS({
   "../node_modules/telegram/Password.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -12968,18 +14235,22 @@ var require_Password = __commonJS({
       throw new Error("Changing passwords unsupported");
     }
     __name(checkPrimeAndGood, "checkPrimeAndGood");
+    __name2(checkPrimeAndGood, "checkPrimeAndGood");
     function isGoodLarge(number, p) {
       return number.greater((0, big_integer_1.default)(0)) && p.subtract(number).greater((0, big_integer_1.default)(0));
     }
     __name(isGoodLarge, "isGoodLarge");
+    __name2(isGoodLarge, "isGoodLarge");
     function numBytesForHash(number) {
       return Buffer.concat([Buffer.alloc(SIZE_FOR_HASH - number.length), number]);
     }
     __name(numBytesForHash, "numBytesForHash");
+    __name2(numBytesForHash, "numBytesForHash");
     function bigNumForHash(g) {
       return (0, Helpers_1.readBufferFromBigInt)(g, SIZE_FOR_HASH, false);
     }
     __name(bigNumForHash, "bigNumForHash");
+    __name2(bigNumForHash, "bigNumForHash");
     function isGoodModExpFirst(modexp, prime) {
       const diff = prime.subtract(modexp);
       const minDiffBitsCount = 2048 - 64;
@@ -12987,6 +14258,7 @@ var require_Password = __commonJS({
       return !(diff.lesser((0, big_integer_1.default)(0)) || diff.bitLength().toJSNumber() < minDiffBitsCount || modexp.bitLength().toJSNumber() < minDiffBitsCount || Math.floor((modexp.bitLength().toJSNumber() + 7) / 8) > maxModExpSize);
     }
     __name(isGoodModExpFirst, "isGoodModExpFirst");
+    __name2(isGoodModExpFirst, "isGoodModExpFirst");
     function xor(a, b) {
       const length = Math.min(a.length, b.length);
       for (let i = 0; i < length; i++) {
@@ -12995,10 +14267,12 @@ var require_Password = __commonJS({
       return a;
     }
     __name(xor, "xor");
+    __name2(xor, "xor");
     function pbkdf2sha512(password, salt, iterations) {
       return CryptoFile_1.default.pbkdf2Sync(password, salt, iterations, 64, "sha512");
     }
     __name(pbkdf2sha512, "pbkdf2sha512");
+    __name2(pbkdf2sha512, "pbkdf2sha512");
     async function computeHash(algo, password) {
       const hash1 = await (0, Helpers_1.sha256)(Buffer.concat([algo.salt1, Buffer.from(password, "utf-8"), algo.salt1]));
       const hash2 = await (0, Helpers_1.sha256)(Buffer.concat([algo.salt2, hash1, algo.salt2]));
@@ -13006,6 +14280,7 @@ var require_Password = __commonJS({
       return (0, Helpers_1.sha256)(Buffer.concat([algo.salt2, hash3, algo.salt2]));
     }
     __name(computeHash, "computeHash");
+    __name2(computeHash, "computeHash");
     async function computeDigest(algo, password) {
       try {
         checkPrimeAndGood(algo.p, algo.g);
@@ -13016,6 +14291,7 @@ var require_Password = __commonJS({
       return bigNumForHash(value);
     }
     __name(computeDigest, "computeDigest");
+    __name2(computeDigest, "computeDigest");
     async function computeCheck(request, password) {
       const algo = request.currentAlgo;
       if (!(algo instanceof tl_1.Api.PasswordKdfAlgoSHA256SHA256PBKDF2HMACSHA512iter100000SHA256ModPow)) {
@@ -13045,7 +14321,7 @@ var require_Password = __commonJS({
       const gX = (0, Helpers_1.modExp)((0, big_integer_1.default)(g), x, p);
       const k = (0, Helpers_1.readBigIntFromBuffer)(await (0, Helpers_1.sha256)(Buffer.concat([pForHash, gForHash])), false);
       const kgX = (0, Helpers_1.bigIntMod)(k.multiply(gX), p);
-      const generateAndCheckRandom = /* @__PURE__ */ __name(async () => {
+      const generateAndCheckRandom = /* @__PURE__ */ __name2(async () => {
         const randomSize = 256;
         while (true) {
           const random = (0, Helpers_1.generateRandomBytes)(randomSize);
@@ -13094,14 +14370,13 @@ var require_Password = __commonJS({
       });
     }
     __name(computeCheck, "computeCheck");
+    __name2(computeCheck, "computeCheck");
   }
 });
-
-// ../node_modules/telegram/tl/custom/messageButton.js
 var require_messageButton = __commonJS({
   "../node_modules/telegram/tl/custom/messageButton.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -13115,6 +14390,9 @@ var require_messageButton = __commonJS({
     var MessageButton = class {
       static {
         __name(this, "MessageButton");
+      }
+      static {
+        __name2(this, "MessageButton");
       }
       [inspect_1.inspect.custom]() {
         return (0, Helpers_1.betterConsoleLog)(this);
@@ -13249,12 +14527,10 @@ var require_messageButton = __commonJS({
     exports.MessageButton = MessageButton;
   }
 });
-
-// ../node_modules/telegram/tl/custom/message.js
 var require_message = __commonJS({
   "../node_modules/telegram/tl/custom/message.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -13262,7 +14538,7 @@ var require_message = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -13301,6 +14577,9 @@ var require_message = __commonJS({
     var CustomMessage = class extends senderGetter_1.SenderGetter {
       static {
         __name(this, "CustomMessage");
+      }
+      static {
+        __name2(this, "CustomMessage");
       }
       [inspect_1.inspect.custom]() {
         return (0, Helpers_1.betterConsoleLog)(this);
@@ -13651,7 +14930,7 @@ var require_message = __commonJS({
           ent = ent.filter((v) => v instanceof cls);
         }
         const texts = utils.getInnerText(this.message || "", ent);
-        const zip = /* @__PURE__ */ __name((rows) => rows[0].map((_, c) => rows.map((row) => row[c])), "zip");
+        const zip = /* @__PURE__ */ __name2((rows) => rows[0].map((_, c) => rows.map((row) => row[c])), "zip");
         return zip([ent, texts]);
       }
       async getReplyMessage() {
@@ -13761,7 +15040,7 @@ var require_message = __commonJS({
           });
         }
         if (this.poll) {
-          let findPoll = function(answers) {
+          let findPoll = /* @__PURE__ */ __name(function(answers) {
             if (i != void 0) {
               if (Array.isArray(i)) {
                 const corrects = [];
@@ -13796,8 +15075,8 @@ var require_message = __commonJS({
               }
               return;
             }
-          };
-          __name(findPoll, "findPoll");
+          }, "findPoll");
+          __name2(findPoll, "findPoll");
           const options = findPoll(this.poll.poll.answers) || [];
           return await this.client.invoke(new api_1.Api.messages.SendVote({
             peer: this.inputChat,
@@ -13849,6 +15128,7 @@ var require_message = __commonJS({
           }
         }
         __name(findButton, "findButton");
+        __name2(findButton, "findButton");
         const button = findButton(this);
         if (button) {
           return await button.click({
@@ -13926,12 +15206,10 @@ var require_message = __commonJS({
     exports.CustomMessage = CustomMessage;
   }
 });
-
-// ../node_modules/telegram/tl/patched/index.js
 var require_patched = __commonJS({
   "../node_modules/telegram/tl/patched/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -13949,6 +15227,7 @@ var require_patched = __commonJS({
       }
     }
     __name(getGetter, "getGetter");
+    __name2(getGetter, "getGetter");
     function getSetter(obj, prop) {
       while (obj) {
         let getter = Object.getOwnPropertyDescriptor(obj, prop);
@@ -13959,14 +15238,15 @@ var require_patched = __commonJS({
       }
     }
     __name(getSetter, "getSetter");
-    var getInstanceMethods = /* @__PURE__ */ __name((obj) => {
+    __name2(getSetter, "getSetter");
+    var getInstanceMethods = /* @__PURE__ */ __name2((obj) => {
       let keys = {
         methods: /* @__PURE__ */ new Set(),
         setters: /* @__PURE__ */ new Set(),
         getters: /* @__PURE__ */ new Set()
       };
       let topObject = obj;
-      const mapAllMethods = /* @__PURE__ */ __name((property) => {
+      const mapAllMethods = /* @__PURE__ */ __name2((property) => {
         const getter = getGetter(topObject, property);
         const setter = getSetter(topObject, property);
         if (getter) {
@@ -14005,46 +15285,44 @@ var require_patched = __commonJS({
       }
     }
     __name(patchClass, "patchClass");
+    __name2(patchClass, "patchClass");
     function patchAll() {
       patchClass(api_1.Api.Message);
       patchClass(api_1.Api.MessageService);
       patchClass(api_1.Api.MessageEmpty);
     }
     __name(patchAll, "patchAll");
+    __name2(patchAll, "patchAll");
   }
 });
-
-// ../node_modules/telegram/tl/index.js
 var require_tl = __commonJS({
   "../node_modules/telegram/tl/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.serializeDate = exports.serializeBytes = exports.Api = void 0;
     var api_1 = require_api();
-    Object.defineProperty(exports, "Api", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "Api", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return api_1.Api;
     }, "get") });
     var patched_1 = require_patched();
     (0, patched_1.patchAll)();
     var generationHelpers_1 = require_generationHelpers();
-    Object.defineProperty(exports, "serializeBytes", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "serializeBytes", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return generationHelpers_1.serializeBytes;
     }, "get") });
-    Object.defineProperty(exports, "serializeDate", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "serializeDate", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return generationHelpers_1.serializeDate;
     }, "get") });
   }
 });
-
-// ../node_modules/telegram/extensions/BinaryWriter.js
 var require_BinaryWriter = __commonJS({
   "../node_modules/telegram/extensions/BinaryWriter.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14053,6 +15331,9 @@ var require_BinaryWriter = __commonJS({
     var BinaryWriter = class {
       static {
         __name(this, "BinaryWriter");
+      }
+      static {
+        __name2(this, "BinaryWriter");
       }
       constructor(stream) {
         this._buffers = [stream];
@@ -14067,11 +15348,9 @@ var require_BinaryWriter = __commonJS({
     exports.BinaryWriter = BinaryWriter;
   }
 });
-
-// ../node_modules/ts-custom-error/dist/custom-error.js
 var require_custom_error = __commonJS({
   "../node_modules/ts-custom-error/dist/custom-error.js"(exports) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14080,6 +15359,7 @@ var require_custom_error = __commonJS({
       setPrototypeOf ? setPrototypeOf(target, prototype) : target.__proto__ = prototype;
     }
     __name(fixProto, "fixProto");
+    __name2(fixProto, "fixProto");
     function fixStack(target, fn) {
       if (fn === void 0) {
         fn = target.constructor;
@@ -14088,8 +15368,9 @@ var require_custom_error = __commonJS({
       captureStackTrace && captureStackTrace(target, fn);
     }
     __name(fixStack, "fixStack");
+    __name2(fixStack, "fixStack");
     var __extends = /* @__PURE__ */ (function() {
-      var _extendStatics = /* @__PURE__ */ __name(function extendStatics(d, b) {
+      var _extendStatics = /* @__PURE__ */ __name2(/* @__PURE__ */ __name(function extendStatics(d, b) {
         _extendStatics = Object.setPrototypeOf || {
           __proto__: []
         } instanceof Array && function(d2, b2) {
@@ -14100,7 +15381,7 @@ var require_custom_error = __commonJS({
           }
         };
         return _extendStatics(d, b);
-      }, "extendStatics");
+      }, "extendStatics"), "extendStatics");
       return function(d, b) {
         if (typeof b !== "function" && b !== null) throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         _extendStatics(d, b);
@@ -14108,6 +15389,7 @@ var require_custom_error = __commonJS({
           this.constructor = d;
         }
         __name(__, "__");
+        __name2(__, "__");
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
       };
     })();
@@ -14125,10 +15407,11 @@ var require_custom_error = __commonJS({
         fixStack(_this);
         return _this;
       }
-      __name(CustomError2, "CustomError");
+      __name(CustomError2, "CustomError2");
+      __name2(CustomError2, "CustomError");
       return CustomError2;
     })(Error);
-    var __spreadArray = function(to, from, pack) {
+    var __spreadArray = /* @__PURE__ */ __name(function(to, from, pack) {
       if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
         if (ar || !(i in from)) {
           if (!ar) ar = Array.prototype.slice.call(from, 0, i);
@@ -14136,7 +15419,7 @@ var require_custom_error = __commonJS({
         }
       }
       return to.concat(ar || Array.prototype.slice.call(from));
-    };
+    }, "__spreadArray");
     function customErrorFactory(fn, parent) {
       if (parent === void 0) {
         parent = Error;
@@ -14156,7 +15439,8 @@ var require_custom_error = __commonJS({
         fn.apply(this, args);
         fixStack(this, CustomError2);
       }
-      __name(CustomError2, "CustomError");
+      __name(CustomError2, "CustomError2");
+      __name2(CustomError2, "CustomError");
       return Object.defineProperties(CustomError2, {
         prototype: {
           value: Object.create(parent.prototype, {
@@ -14170,16 +15454,15 @@ var require_custom_error = __commonJS({
       });
     }
     __name(customErrorFactory, "customErrorFactory");
+    __name2(customErrorFactory, "customErrorFactory");
     exports.CustomError = CustomError;
     exports.customErrorFactory = customErrorFactory;
   }
 });
-
-// ../node_modules/telegram/errors/RPCBaseErrors.js
 var require_RPCBaseErrors = __commonJS({
   "../node_modules/telegram/errors/RPCBaseErrors.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14188,7 +15471,10 @@ var require_RPCBaseErrors = __commonJS({
     var ts_custom_error_1 = require_custom_error();
     var RPCError = class _RPCError extends ts_custom_error_1.CustomError {
       static {
-        __name(this, "RPCError");
+        __name(this, "_RPCError");
+      }
+      static {
+        __name2(this, "RPCError");
       }
       constructor(message, request, code) {
         super("{0}: {1}{2}".replace("{0}", (code === null || code === void 0 ? void 0 : code.toString()) || "").replace("{1}", message || "").replace("{2}", _RPCError._fmtRequest(request)));
@@ -14208,6 +15494,9 @@ var require_RPCBaseErrors = __commonJS({
       static {
         __name(this, "InvalidDCError");
       }
+      static {
+        __name2(this, "InvalidDCError");
+      }
       constructor(message, request, code) {
         super(message, request, code);
         this.code = code || 303;
@@ -14218,6 +15507,9 @@ var require_RPCBaseErrors = __commonJS({
     var BadRequestError = class extends RPCError {
       static {
         __name(this, "BadRequestError");
+      }
+      static {
+        __name2(this, "BadRequestError");
       }
       constructor() {
         super(...arguments);
@@ -14230,6 +15522,9 @@ var require_RPCBaseErrors = __commonJS({
       static {
         __name(this, "UnauthorizedError");
       }
+      static {
+        __name2(this, "UnauthorizedError");
+      }
       constructor() {
         super(...arguments);
         this.code = 401;
@@ -14240,6 +15535,9 @@ var require_RPCBaseErrors = __commonJS({
     var ForbiddenError = class extends RPCError {
       static {
         __name(this, "ForbiddenError");
+      }
+      static {
+        __name2(this, "ForbiddenError");
       }
       constructor() {
         super(...arguments);
@@ -14252,6 +15550,9 @@ var require_RPCBaseErrors = __commonJS({
       static {
         __name(this, "NotFoundError");
       }
+      static {
+        __name2(this, "NotFoundError");
+      }
       constructor() {
         super(...arguments);
         this.code = 404;
@@ -14262,6 +15563,9 @@ var require_RPCBaseErrors = __commonJS({
     var AuthKeyError = class extends RPCError {
       static {
         __name(this, "AuthKeyError");
+      }
+      static {
+        __name2(this, "AuthKeyError");
       }
       constructor() {
         super(...arguments);
@@ -14274,6 +15578,9 @@ var require_RPCBaseErrors = __commonJS({
       static {
         __name(this, "FloodError");
       }
+      static {
+        __name2(this, "FloodError");
+      }
       constructor() {
         super(...arguments);
         this.code = 420;
@@ -14284,6 +15591,9 @@ var require_RPCBaseErrors = __commonJS({
     var ServerError = class extends RPCError {
       static {
         __name(this, "ServerError");
+      }
+      static {
+        __name2(this, "ServerError");
       }
       constructor() {
         super(...arguments);
@@ -14296,6 +15606,9 @@ var require_RPCBaseErrors = __commonJS({
       static {
         __name(this, "TimedOutError");
       }
+      static {
+        __name2(this, "TimedOutError");
+      }
       constructor() {
         super(...arguments);
         this.code = 503;
@@ -14305,12 +15618,10 @@ var require_RPCBaseErrors = __commonJS({
     exports.TimedOutError = TimedOutError;
   }
 });
-
-// ../node_modules/telegram/errors/RPCErrorList.js
 var require_RPCErrorList = __commonJS({
   "../node_modules/telegram/errors/RPCErrorList.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14320,6 +15631,9 @@ var require_RPCErrorList = __commonJS({
     var UserMigrateError = class extends RPCBaseErrors_1.InvalidDCError {
       static {
         __name(this, "UserMigrateError");
+      }
+      static {
+        __name2(this, "UserMigrateError");
       }
       constructor(args) {
         const newDc = Number(args.capture || 0);
@@ -14333,6 +15647,9 @@ var require_RPCErrorList = __commonJS({
       static {
         __name(this, "PhoneMigrateError");
       }
+      static {
+        __name2(this, "PhoneMigrateError");
+      }
       constructor(args) {
         const newDc = Number(args.capture || 0);
         super(`The phone number a user is trying to use for authorization is associated with DC ${newDc}` + RPCBaseErrors_1.RPCError._fmtRequest(args.request), args.request);
@@ -14344,6 +15661,9 @@ var require_RPCErrorList = __commonJS({
     var SlowModeWaitError = class extends RPCBaseErrors_1.FloodError {
       static {
         __name(this, "SlowModeWaitError");
+      }
+      static {
+        __name2(this, "SlowModeWaitError");
       }
       constructor(args) {
         const seconds = Number(args.capture || 0);
@@ -14357,6 +15677,9 @@ var require_RPCErrorList = __commonJS({
       static {
         __name(this, "FloodWaitError");
       }
+      static {
+        __name2(this, "FloodWaitError");
+      }
       constructor(args) {
         const seconds = Number(args.capture || 0);
         super(`A wait of ${seconds} seconds is required` + RPCBaseErrors_1.RPCError._fmtRequest(args.request), args.request);
@@ -14368,6 +15691,9 @@ var require_RPCErrorList = __commonJS({
     var FloodTestPhoneWaitError = class extends RPCBaseErrors_1.FloodError {
       static {
         __name(this, "FloodTestPhoneWaitError");
+      }
+      static {
+        __name2(this, "FloodTestPhoneWaitError");
       }
       constructor(args) {
         const seconds = Number(args.capture || 0);
@@ -14381,6 +15707,9 @@ var require_RPCErrorList = __commonJS({
       static {
         __name(this, "FileMigrateError");
       }
+      static {
+        __name2(this, "FileMigrateError");
+      }
       constructor(args) {
         const newDc = Number(args.capture || 0);
         super(`The file to be accessed is currently stored in DC ${newDc}` + RPCBaseErrors_1.RPCError._fmtRequest(args.request), args.request);
@@ -14392,6 +15721,9 @@ var require_RPCErrorList = __commonJS({
     var NetworkMigrateError = class extends RPCBaseErrors_1.InvalidDCError {
       static {
         __name(this, "NetworkMigrateError");
+      }
+      static {
+        __name2(this, "NetworkMigrateError");
       }
       constructor(args) {
         const newDc = Number(args.capture || 0);
@@ -14405,6 +15737,9 @@ var require_RPCErrorList = __commonJS({
       static {
         __name(this, "EmailUnconfirmedError");
       }
+      static {
+        __name2(this, "EmailUnconfirmedError");
+      }
       constructor(args) {
         const codeLength = Number(args.capture || 0);
         super(`Email unconfirmed, the length of the code must be ${codeLength}${RPCBaseErrors_1.RPCError._fmtRequest(args.request)}`, args.request, 400);
@@ -14416,6 +15751,9 @@ var require_RPCErrorList = __commonJS({
     var MsgWaitError = class extends RPCBaseErrors_1.FloodError {
       static {
         __name(this, "MsgWaitError");
+      }
+      static {
+        __name2(this, "MsgWaitError");
       }
       constructor(args) {
         super(`Message failed to be sent.${RPCBaseErrors_1.RPCError._fmtRequest(args.request)}`, args.request);
@@ -14437,12 +15775,10 @@ var require_RPCErrorList = __commonJS({
     ]);
   }
 });
-
-// ../node_modules/telegram/errors/Common.js
 var require_Common = __commonJS({
   "../node_modules/telegram/errors/Common.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14452,6 +15788,9 @@ var require_Common = __commonJS({
       static {
         __name(this, "ReadCancelledError");
       }
+      static {
+        __name2(this, "ReadCancelledError");
+      }
       constructor() {
         super("The read operation was cancelled.");
       }
@@ -14460,6 +15799,9 @@ var require_Common = __commonJS({
     var TypeNotFoundError = class extends Error {
       static {
         __name(this, "TypeNotFoundError");
+      }
+      static {
+        __name2(this, "TypeNotFoundError");
       }
       constructor(invalidConstructorId, remaining) {
         super(`Could not find a matching Constructor ID for the TLObject that was supposed to be
@@ -14477,6 +15819,9 @@ var require_Common = __commonJS({
       static {
         __name(this, "InvalidChecksumError");
       }
+      static {
+        __name2(this, "InvalidChecksumError");
+      }
       constructor(checksum, validChecksum) {
         super(`Invalid checksum (${checksum} when ${validChecksum} was expected). This packet should be skipped.`);
         this.checksum = checksum;
@@ -14487,6 +15832,9 @@ var require_Common = __commonJS({
     var InvalidBufferError = class extends Error {
       static {
         __name(this, "InvalidBufferError");
+      }
+      static {
+        __name2(this, "InvalidBufferError");
       }
       constructor(payload) {
         let code = void 0;
@@ -14505,6 +15853,9 @@ var require_Common = __commonJS({
       static {
         __name(this, "SecurityError");
       }
+      static {
+        __name2(this, "SecurityError");
+      }
       constructor(...args) {
         if (!args.length) {
           args = ["A security check failed."];
@@ -14517,6 +15868,9 @@ var require_Common = __commonJS({
       static {
         __name(this, "CdnFileTamperedError");
       }
+      static {
+        __name2(this, "CdnFileTamperedError");
+      }
       constructor() {
         super("The CDN file has been altered and its download cancelled.");
       }
@@ -14524,7 +15878,10 @@ var require_Common = __commonJS({
     exports.CdnFileTamperedError = CdnFileTamperedError;
     var BadMessageError = class _BadMessageError extends Error {
       static {
-        __name(this, "BadMessageError");
+        __name(this, "_BadMessageError");
+      }
+      static {
+        __name2(this, "BadMessageError");
       }
       constructor(request, code) {
         let errorMessage = _BadMessageError.ErrorMessages[code] || `Unknown error code (this should not happen): ${code}.`;
@@ -14550,12 +15907,10 @@ var require_Common = __commonJS({
     };
   }
 });
-
-// ../node_modules/telegram/errors/index.js
 var require_errors = __commonJS({
   "../node_modules/telegram/errors/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14563,7 +15918,7 @@ var require_errors = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -14590,17 +15945,16 @@ var require_errors = __commonJS({
       return new RPCBaseErrors_1.RPCError(rpcError.errorMessage, request, rpcError.errorCode);
     }
     __name(RPCMessageToError, "RPCMessageToError");
+    __name2(RPCMessageToError, "RPCMessageToError");
     __exportStar(require_Common(), exports);
     __exportStar(require_RPCBaseErrors(), exports);
     __exportStar(require_RPCErrorList(), exports);
   }
 });
-
-// ../node_modules/telegram/tl/core/TLMessage.js
 var require_TLMessage = __commonJS({
   "../node_modules/telegram/tl/core/TLMessage.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14609,6 +15963,9 @@ var require_TLMessage = __commonJS({
     var TLMessage = class {
       static {
         __name(this, "TLMessage");
+      }
+      static {
+        __name2(this, "TLMessage");
       }
       constructor(msgId, seqNo, obj) {
         this.msgId = msgId;
@@ -14622,12 +15979,10 @@ var require_TLMessage = __commonJS({
     TLMessage.classType = "constructor";
   }
 });
-
-// ../node_modules/telegram/tl/core/RPCResult.js
 var require_RPCResult = __commonJS({
   "../node_modules/telegram/tl/core/RPCResult.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14637,7 +15992,10 @@ var require_RPCResult = __commonJS({
     var _1 = require_core();
     var RPCResult = class _RPCResult {
       static {
-        __name(this, "RPCResult");
+        __name(this, "_RPCResult");
+      }
+      static {
+        __name2(this, "RPCResult");
       }
       constructor(reqMsgId, body, error3) {
         this.CONSTRUCTOR_ID = 4082920705;
@@ -14664,12 +16022,10 @@ var require_RPCResult = __commonJS({
     RPCResult.classType = "constructor";
   }
 });
-
-// ../node_modules/telegram/tl/core/MessageContainer.js
 var require_MessageContainer = __commonJS({
   "../node_modules/telegram/tl/core/MessageContainer.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14678,7 +16034,10 @@ var require_MessageContainer = __commonJS({
     var TLMessage_1 = require_TLMessage();
     var MessageContainer = class _MessageContainer {
       static {
-        __name(this, "MessageContainer");
+        __name(this, "_MessageContainer");
+      }
+      static {
+        __name2(this, "MessageContainer");
       }
       constructor(messages) {
         this.CONSTRUCTOR_ID = 1945237724;
@@ -14708,12 +16067,10 @@ var require_MessageContainer = __commonJS({
     MessageContainer.MAXIMUM_LENGTH = 100;
   }
 });
-
-// ../node_modules/pako/lib/zlib/trees.js
 var require_trees = __commonJS({
   "../node_modules/pako/lib/zlib/trees.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14728,6 +16085,7 @@ var require_trees = __commonJS({
       }
     }
     __name(zero, "zero");
+    __name2(zero, "zero");
     var STORED_BLOCK = 0;
     var STATIC_TREES = 1;
     var DYN_TREES = 2;
@@ -14781,6 +16139,7 @@ var require_trees = __commonJS({
       this.has_stree = static_tree && static_tree.length;
     }
     __name(StaticTreeDesc, "StaticTreeDesc");
+    __name2(StaticTreeDesc, "StaticTreeDesc");
     var static_l_desc;
     var static_d_desc;
     var static_bl_desc;
@@ -14790,14 +16149,15 @@ var require_trees = __commonJS({
       this.stat_desc = stat_desc;
     }
     __name(TreeDesc, "TreeDesc");
-    var d_code = /* @__PURE__ */ __name((dist) => {
+    __name2(TreeDesc, "TreeDesc");
+    var d_code = /* @__PURE__ */ __name2((dist) => {
       return dist < 256 ? _dist_code[dist] : _dist_code[256 + (dist >>> 7)];
     }, "d_code");
-    var put_short = /* @__PURE__ */ __name((s, w) => {
+    var put_short = /* @__PURE__ */ __name2((s, w) => {
       s.pending_buf[s.pending++] = w & 255;
       s.pending_buf[s.pending++] = w >>> 8 & 255;
     }, "put_short");
-    var send_bits = /* @__PURE__ */ __name((s, value, length) => {
+    var send_bits = /* @__PURE__ */ __name2((s, value, length) => {
       if (s.bi_valid > Buf_size - length) {
         s.bi_buf |= value << s.bi_valid & 65535;
         put_short(s, s.bi_buf);
@@ -14808,7 +16168,7 @@ var require_trees = __commonJS({
         s.bi_valid += length;
       }
     }, "send_bits");
-    var send_code = /* @__PURE__ */ __name((s, c, tree) => {
+    var send_code = /* @__PURE__ */ __name2((s, c, tree) => {
       send_bits(
         s,
         tree[c * 2],
@@ -14816,7 +16176,7 @@ var require_trees = __commonJS({
         /*.Len*/
       );
     }, "send_code");
-    var bi_reverse = /* @__PURE__ */ __name((code, len) => {
+    var bi_reverse = /* @__PURE__ */ __name2((code, len) => {
       let res = 0;
       do {
         res |= code & 1;
@@ -14825,7 +16185,7 @@ var require_trees = __commonJS({
       } while (--len > 0);
       return res >>> 1;
     }, "bi_reverse");
-    var bi_flush = /* @__PURE__ */ __name((s) => {
+    var bi_flush = /* @__PURE__ */ __name2((s) => {
       if (s.bi_valid === 16) {
         put_short(s, s.bi_buf);
         s.bi_buf = 0;
@@ -14836,7 +16196,7 @@ var require_trees = __commonJS({
         s.bi_valid -= 8;
       }
     }, "bi_flush");
-    var gen_bitlen = /* @__PURE__ */ __name((s, desc) => {
+    var gen_bitlen = /* @__PURE__ */ __name2((s, desc) => {
       const tree = desc.dyn_tree;
       const max_code = desc.max_code;
       const stree = desc.stat_desc.static_tree;
@@ -14904,7 +16264,7 @@ var require_trees = __commonJS({
         }
       }
     }, "gen_bitlen");
-    var gen_codes = /* @__PURE__ */ __name((tree, max_code, bl_count) => {
+    var gen_codes = /* @__PURE__ */ __name2((tree, max_code, bl_count) => {
       const next_code = new Array(MAX_BITS + 1);
       let code = 0;
       let bits;
@@ -14921,7 +16281,7 @@ var require_trees = __commonJS({
         tree[n * 2] = bi_reverse(next_code[len]++, len);
       }
     }, "gen_codes");
-    var tr_static_init = /* @__PURE__ */ __name(() => {
+    var tr_static_init = /* @__PURE__ */ __name2(() => {
       let n;
       let bits;
       let length;
@@ -14983,7 +16343,7 @@ var require_trees = __commonJS({
       static_d_desc = new StaticTreeDesc(static_dtree, extra_dbits, 0, D_CODES, MAX_BITS);
       static_bl_desc = new StaticTreeDesc(new Array(0), extra_blbits, 0, BL_CODES, MAX_BL_BITS);
     }, "tr_static_init");
-    var init_block = /* @__PURE__ */ __name((s) => {
+    var init_block = /* @__PURE__ */ __name2((s) => {
       let n;
       for (n = 0; n < L_CODES; n++) {
         s.dyn_ltree[n * 2] = 0;
@@ -14998,7 +16358,7 @@ var require_trees = __commonJS({
       s.opt_len = s.static_len = 0;
       s.sym_next = s.matches = 0;
     }, "init_block");
-    var bi_windup = /* @__PURE__ */ __name((s) => {
+    var bi_windup = /* @__PURE__ */ __name2((s) => {
       if (s.bi_valid > 8) {
         put_short(s, s.bi_buf);
       } else if (s.bi_valid > 0) {
@@ -15007,12 +16367,12 @@ var require_trees = __commonJS({
       s.bi_buf = 0;
       s.bi_valid = 0;
     }, "bi_windup");
-    var smaller = /* @__PURE__ */ __name((tree, n, m, depth) => {
+    var smaller = /* @__PURE__ */ __name2((tree, n, m, depth) => {
       const _n2 = n * 2;
       const _m2 = m * 2;
       return tree[_n2] < tree[_m2] || tree[_n2] === tree[_m2] && depth[n] <= depth[m];
     }, "smaller");
-    var pqdownheap = /* @__PURE__ */ __name((s, tree, k) => {
+    var pqdownheap = /* @__PURE__ */ __name2((s, tree, k) => {
       const v = s.heap[k];
       let j = k << 1;
       while (j <= s.heap_len) {
@@ -15028,7 +16388,7 @@ var require_trees = __commonJS({
       }
       s.heap[k] = v;
     }, "pqdownheap");
-    var compress_block = /* @__PURE__ */ __name((s, ltree, dtree) => {
+    var compress_block = /* @__PURE__ */ __name2((s, ltree, dtree) => {
       let dist;
       let lc;
       let sx = 0;
@@ -15062,7 +16422,7 @@ var require_trees = __commonJS({
       }
       send_code(s, END_BLOCK, ltree);
     }, "compress_block");
-    var build_tree = /* @__PURE__ */ __name((s, desc) => {
+    var build_tree = /* @__PURE__ */ __name2((s, desc) => {
       const tree = desc.dyn_tree;
       const stree = desc.stat_desc.static_tree;
       const has_stree = desc.stat_desc.has_stree;
@@ -15136,7 +16496,7 @@ var require_trees = __commonJS({
       gen_bitlen(s, desc);
       gen_codes(tree, max_code, s.bl_count);
     }, "build_tree");
-    var scan_tree = /* @__PURE__ */ __name((s, tree, max_code) => {
+    var scan_tree = /* @__PURE__ */ __name2((s, tree, max_code) => {
       let n;
       let prevlen = -1;
       let curlen;
@@ -15180,7 +16540,7 @@ var require_trees = __commonJS({
         }
       }
     }, "scan_tree");
-    var send_tree = /* @__PURE__ */ __name((s, tree, max_code) => {
+    var send_tree = /* @__PURE__ */ __name2((s, tree, max_code) => {
       let n;
       let prevlen = -1;
       let curlen;
@@ -15229,7 +16589,7 @@ var require_trees = __commonJS({
         }
       }
     }, "send_tree");
-    var build_bl_tree = /* @__PURE__ */ __name((s) => {
+    var build_bl_tree = /* @__PURE__ */ __name2((s) => {
       let max_blindex;
       scan_tree(s, s.dyn_ltree, s.l_desc.max_code);
       scan_tree(s, s.dyn_dtree, s.d_desc.max_code);
@@ -15242,7 +16602,7 @@ var require_trees = __commonJS({
       s.opt_len += 3 * (max_blindex + 1) + 5 + 5 + 4;
       return max_blindex;
     }, "build_bl_tree");
-    var send_all_trees = /* @__PURE__ */ __name((s, lcodes, dcodes, blcodes) => {
+    var send_all_trees = /* @__PURE__ */ __name2((s, lcodes, dcodes, blcodes) => {
       let rank;
       send_bits(s, lcodes - 257, 5);
       send_bits(s, dcodes - 1, 5);
@@ -15253,7 +16613,7 @@ var require_trees = __commonJS({
       send_tree(s, s.dyn_ltree, lcodes - 1);
       send_tree(s, s.dyn_dtree, dcodes - 1);
     }, "send_all_trees");
-    var detect_data_type = /* @__PURE__ */ __name((s) => {
+    var detect_data_type = /* @__PURE__ */ __name2((s) => {
       let block_mask = 4093624447;
       let n;
       for (n = 0; n <= 31; n++, block_mask >>>= 1) {
@@ -15272,7 +16632,7 @@ var require_trees = __commonJS({
       return Z_BINARY;
     }, "detect_data_type");
     var static_init_done = false;
-    var _tr_init = /* @__PURE__ */ __name((s) => {
+    var _tr_init = /* @__PURE__ */ __name2((s) => {
       if (!static_init_done) {
         tr_static_init();
         static_init_done = true;
@@ -15284,7 +16644,7 @@ var require_trees = __commonJS({
       s.bi_valid = 0;
       init_block(s);
     }, "_tr_init");
-    var _tr_stored_block = /* @__PURE__ */ __name((s, buf, stored_len, last) => {
+    var _tr_stored_block = /* @__PURE__ */ __name2((s, buf, stored_len, last) => {
       send_bits(s, (STORED_BLOCK << 1) + (last ? 1 : 0), 3);
       bi_windup(s);
       put_short(s, stored_len);
@@ -15294,12 +16654,12 @@ var require_trees = __commonJS({
       }
       s.pending += stored_len;
     }, "_tr_stored_block");
-    var _tr_align = /* @__PURE__ */ __name((s) => {
+    var _tr_align = /* @__PURE__ */ __name2((s) => {
       send_bits(s, STATIC_TREES << 1, 3);
       send_code(s, END_BLOCK, static_ltree);
       bi_flush(s);
     }, "_tr_align");
-    var _tr_flush_block = /* @__PURE__ */ __name((s, buf, stored_len, last) => {
+    var _tr_flush_block = /* @__PURE__ */ __name2((s, buf, stored_len, last) => {
       let opt_lenb, static_lenb;
       let max_blindex = 0;
       if (s.level > 0) {
@@ -15332,7 +16692,7 @@ var require_trees = __commonJS({
         bi_windup(s);
       }
     }, "_tr_flush_block");
-    var _tr_tally = /* @__PURE__ */ __name((s, dist, lc) => {
+    var _tr_tally = /* @__PURE__ */ __name2((s, dist, lc) => {
       s.pending_buf[s.sym_buf + s.sym_next++] = dist;
       s.pending_buf[s.sym_buf + s.sym_next++] = dist >> 8;
       s.pending_buf[s.sym_buf + s.sym_next++] = lc;
@@ -15353,16 +16713,14 @@ var require_trees = __commonJS({
     module.exports._tr_align = _tr_align;
   }
 });
-
-// ../node_modules/pako/lib/zlib/adler32.js
 var require_adler32 = __commonJS({
   "../node_modules/pako/lib/zlib/adler32.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
-    var adler32 = /* @__PURE__ */ __name((adler, buf, len, pos) => {
+    var adler32 = /* @__PURE__ */ __name2((adler, buf, len, pos) => {
       let s1 = adler & 65535 | 0, s2 = adler >>> 16 & 65535 | 0, n = 0;
       while (len !== 0) {
         n = len > 2e3 ? 2e3 : len;
@@ -15379,16 +16737,14 @@ var require_adler32 = __commonJS({
     module.exports = adler32;
   }
 });
-
-// ../node_modules/pako/lib/zlib/crc32.js
 var require_crc32 = __commonJS({
   "../node_modules/pako/lib/zlib/crc32.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
-    var makeTable = /* @__PURE__ */ __name(() => {
+    var makeTable = /* @__PURE__ */ __name2(() => {
       let c, table3 = [];
       for (var n = 0; n < 256; n++) {
         c = n;
@@ -15400,7 +16756,7 @@ var require_crc32 = __commonJS({
       return table3;
     }, "makeTable");
     var crcTable = new Uint32Array(makeTable());
-    var crc32 = /* @__PURE__ */ __name((crc, buf, len, pos) => {
+    var crc32 = /* @__PURE__ */ __name2((crc, buf, len, pos) => {
       const t = crcTable;
       const end = pos + len;
       crc ^= -1;
@@ -15412,12 +16768,10 @@ var require_crc32 = __commonJS({
     module.exports = crc32;
   }
 });
-
-// ../node_modules/pako/lib/zlib/messages.js
 var require_messages = __commonJS({
   "../node_modules/pako/lib/zlib/messages.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -15443,12 +16797,10 @@ var require_messages = __commonJS({
     };
   }
 });
-
-// ../node_modules/pako/lib/zlib/constants.js
 var require_constants = __commonJS({
   "../node_modules/pako/lib/zlib/constants.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -15494,12 +16846,10 @@ var require_constants = __commonJS({
     };
   }
 });
-
-// ../node_modules/pako/lib/zlib/deflate.js
 var require_deflate = __commonJS({
   "../node_modules/pako/lib/zlib/deflate.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -15554,20 +16904,20 @@ var require_deflate = __commonJS({
     var BS_FINISH_STARTED = 3;
     var BS_FINISH_DONE = 4;
     var OS_CODE = 3;
-    var err = /* @__PURE__ */ __name((strm, errorCode) => {
+    var err = /* @__PURE__ */ __name2((strm, errorCode) => {
       strm.msg = msg[errorCode];
       return errorCode;
     }, "err");
-    var rank = /* @__PURE__ */ __name((f) => {
+    var rank = /* @__PURE__ */ __name2((f) => {
       return f * 2 - (f > 4 ? 9 : 0);
     }, "rank");
-    var zero = /* @__PURE__ */ __name((buf) => {
+    var zero = /* @__PURE__ */ __name2((buf) => {
       let len = buf.length;
       while (--len >= 0) {
         buf[len] = 0;
       }
     }, "zero");
-    var slide_hash = /* @__PURE__ */ __name((s) => {
+    var slide_hash = /* @__PURE__ */ __name2((s) => {
       let n, m;
       let p;
       let wsize = s.w_size;
@@ -15584,9 +16934,9 @@ var require_deflate = __commonJS({
         s.prev[p] = m >= wsize ? m - wsize : 0;
       } while (--n);
     }, "slide_hash");
-    var HASH_ZLIB = /* @__PURE__ */ __name((s, prev, data) => (prev << s.hash_shift ^ data) & s.hash_mask, "HASH_ZLIB");
+    var HASH_ZLIB = /* @__PURE__ */ __name2((s, prev, data) => (prev << s.hash_shift ^ data) & s.hash_mask, "HASH_ZLIB");
     var HASH = HASH_ZLIB;
-    var flush_pending = /* @__PURE__ */ __name((strm) => {
+    var flush_pending = /* @__PURE__ */ __name2((strm) => {
       const s = strm.state;
       let len = s.pending;
       if (len > strm.avail_out) {
@@ -15605,19 +16955,19 @@ var require_deflate = __commonJS({
         s.pending_out = 0;
       }
     }, "flush_pending");
-    var flush_block_only = /* @__PURE__ */ __name((s, last) => {
+    var flush_block_only = /* @__PURE__ */ __name2((s, last) => {
       _tr_flush_block(s, s.block_start >= 0 ? s.block_start : -1, s.strstart - s.block_start, last);
       s.block_start = s.strstart;
       flush_pending(s.strm);
     }, "flush_block_only");
-    var put_byte = /* @__PURE__ */ __name((s, b) => {
+    var put_byte = /* @__PURE__ */ __name2((s, b) => {
       s.pending_buf[s.pending++] = b;
     }, "put_byte");
-    var putShortMSB = /* @__PURE__ */ __name((s, b) => {
+    var putShortMSB = /* @__PURE__ */ __name2((s, b) => {
       s.pending_buf[s.pending++] = b >>> 8 & 255;
       s.pending_buf[s.pending++] = b & 255;
     }, "putShortMSB");
-    var read_buf = /* @__PURE__ */ __name((strm, buf, start, size) => {
+    var read_buf = /* @__PURE__ */ __name2((strm, buf, start, size) => {
       let len = strm.avail_in;
       if (len > size) {
         len = size;
@@ -15636,7 +16986,7 @@ var require_deflate = __commonJS({
       strm.total_in += len;
       return len;
     }, "read_buf");
-    var longest_match = /* @__PURE__ */ __name((s, cur_match) => {
+    var longest_match = /* @__PURE__ */ __name2((s, cur_match) => {
       let chain_length = s.max_chain_length;
       let scan = s.strstart;
       let match2;
@@ -15682,7 +17032,7 @@ var require_deflate = __commonJS({
       }
       return s.lookahead;
     }, "longest_match");
-    var fill_window = /* @__PURE__ */ __name((s) => {
+    var fill_window = /* @__PURE__ */ __name2((s) => {
       const _w_size = s.w_size;
       let n, more, str;
       do {
@@ -15720,7 +17070,7 @@ var require_deflate = __commonJS({
         }
       } while (s.lookahead < MIN_LOOKAHEAD && s.strm.avail_in !== 0);
     }, "fill_window");
-    var deflate_stored = /* @__PURE__ */ __name((s, flush) => {
+    var deflate_stored = /* @__PURE__ */ __name2((s, flush) => {
       let min_block = s.pending_buf_size - 5 > s.w_size ? s.w_size : s.pending_buf_size - 5;
       let len, left, have, last = 0;
       let used = s.strm.avail_in;
@@ -15836,7 +17186,7 @@ var require_deflate = __commonJS({
       }
       return last ? BS_FINISH_STARTED : BS_NEED_MORE;
     }, "deflate_stored");
-    var deflate_fast = /* @__PURE__ */ __name((s, flush) => {
+    var deflate_fast = /* @__PURE__ */ __name2((s, flush) => {
       let hash_head;
       let bflush;
       for (; ; ) {
@@ -15904,7 +17254,7 @@ var require_deflate = __commonJS({
       }
       return BS_BLOCK_DONE;
     }, "deflate_fast");
-    var deflate_slow = /* @__PURE__ */ __name((s, flush) => {
+    var deflate_slow = /* @__PURE__ */ __name2((s, flush) => {
       let hash_head;
       let bflush;
       let max_insert;
@@ -15990,7 +17340,7 @@ var require_deflate = __commonJS({
       }
       return BS_BLOCK_DONE;
     }, "deflate_slow");
-    var deflate_rle = /* @__PURE__ */ __name((s, flush) => {
+    var deflate_rle = /* @__PURE__ */ __name2((s, flush) => {
       let bflush;
       let prev;
       let scan, strend;
@@ -16052,7 +17402,7 @@ var require_deflate = __commonJS({
       }
       return BS_BLOCK_DONE;
     }, "deflate_rle");
-    var deflate_huff = /* @__PURE__ */ __name((s, flush) => {
+    var deflate_huff = /* @__PURE__ */ __name2((s, flush) => {
       let bflush;
       for (; ; ) {
         if (s.lookahead === 0) {
@@ -16099,6 +17449,7 @@ var require_deflate = __commonJS({
       this.func = func;
     }
     __name(Config, "Config");
+    __name2(Config, "Config");
     var configuration_table = [
       /*      good lazy nice chain */
       new Config(0, 0, 0, 0, deflate_stored),
@@ -16122,7 +17473,7 @@ var require_deflate = __commonJS({
       new Config(32, 258, 258, 4096, deflate_slow)
       /* 9 max compression */
     ];
-    var lm_init = /* @__PURE__ */ __name((s) => {
+    var lm_init = /* @__PURE__ */ __name2((s) => {
       s.window_size = 2 * s.w_size;
       zero(s.head);
       s.max_lazy_match = configuration_table[s.level].max_lazy;
@@ -16203,7 +17554,8 @@ var require_deflate = __commonJS({
       this.bi_valid = 0;
     }
     __name(DeflateState, "DeflateState");
-    var deflateStateCheck = /* @__PURE__ */ __name((strm) => {
+    __name2(DeflateState, "DeflateState");
+    var deflateStateCheck = /* @__PURE__ */ __name2((strm) => {
       if (!strm) {
         return 1;
       }
@@ -16215,7 +17567,7 @@ var require_deflate = __commonJS({
       }
       return 0;
     }, "deflateStateCheck");
-    var deflateResetKeep = /* @__PURE__ */ __name((strm) => {
+    var deflateResetKeep = /* @__PURE__ */ __name2((strm) => {
       if (deflateStateCheck(strm)) {
         return err(strm, Z_STREAM_ERROR);
       }
@@ -16237,21 +17589,21 @@ var require_deflate = __commonJS({
       _tr_init(s);
       return Z_OK;
     }, "deflateResetKeep");
-    var deflateReset = /* @__PURE__ */ __name((strm) => {
+    var deflateReset = /* @__PURE__ */ __name2((strm) => {
       const ret = deflateResetKeep(strm);
       if (ret === Z_OK) {
         lm_init(strm.state);
       }
       return ret;
     }, "deflateReset");
-    var deflateSetHeader = /* @__PURE__ */ __name((strm, head) => {
+    var deflateSetHeader = /* @__PURE__ */ __name2((strm, head) => {
       if (deflateStateCheck(strm) || strm.state.wrap !== 2) {
         return Z_STREAM_ERROR;
       }
       strm.state.gzhead = head;
       return Z_OK;
     }, "deflateSetHeader");
-    var deflateInit2 = /* @__PURE__ */ __name((strm, level, method, windowBits, memLevel, strategy) => {
+    var deflateInit2 = /* @__PURE__ */ __name2((strm, level, method, windowBits, memLevel, strategy) => {
       if (!strm) {
         return Z_STREAM_ERROR;
       }
@@ -16298,10 +17650,10 @@ var require_deflate = __commonJS({
       s.method = method;
       return deflateReset(strm);
     }, "deflateInit2");
-    var deflateInit = /* @__PURE__ */ __name((strm, level) => {
+    var deflateInit = /* @__PURE__ */ __name2((strm, level) => {
       return deflateInit2(strm, level, Z_DEFLATED, MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY);
     }, "deflateInit");
-    var deflate = /* @__PURE__ */ __name((strm, flush) => {
+    var deflate = /* @__PURE__ */ __name2((strm, flush) => {
       if (deflateStateCheck(strm) || flush > Z_BLOCK || flush < 0) {
         return strm ? err(strm, Z_STREAM_ERROR) : Z_STREAM_ERROR;
       }
@@ -16563,7 +17915,7 @@ var require_deflate = __commonJS({
       }
       return s.pending !== 0 ? Z_OK : Z_STREAM_END;
     }, "deflate");
-    var deflateEnd = /* @__PURE__ */ __name((strm) => {
+    var deflateEnd = /* @__PURE__ */ __name2((strm) => {
       if (deflateStateCheck(strm)) {
         return Z_STREAM_ERROR;
       }
@@ -16571,7 +17923,7 @@ var require_deflate = __commonJS({
       strm.state = null;
       return status === BUSY_STATE ? err(strm, Z_DATA_ERROR) : Z_OK;
     }, "deflateEnd");
-    var deflateSetDictionary = /* @__PURE__ */ __name((strm, dictionary) => {
+    var deflateSetDictionary = /* @__PURE__ */ __name2((strm, dictionary) => {
       let dictLength = dictionary.length;
       if (deflateStateCheck(strm)) {
         return Z_STREAM_ERROR;
@@ -16640,16 +17992,14 @@ var require_deflate = __commonJS({
     module.exports.deflateInfo = "pako deflate (from Nodeca project)";
   }
 });
-
-// ../node_modules/pako/lib/utils/common.js
 var require_common = __commonJS({
   "../node_modules/pako/lib/utils/common.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
-    var _has = /* @__PURE__ */ __name((obj, key) => {
+    var _has = /* @__PURE__ */ __name2((obj, key) => {
       return Object.prototype.hasOwnProperty.call(obj, key);
     }, "_has");
     module.exports.assign = function(obj) {
@@ -16685,12 +18035,10 @@ var require_common = __commonJS({
     };
   }
 });
-
-// ../node_modules/pako/lib/utils/strings.js
 var require_strings = __commonJS({
   "../node_modules/pako/lib/utils/strings.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -16749,7 +18097,7 @@ var require_strings = __commonJS({
       }
       return buf;
     };
-    var buf2binstring = /* @__PURE__ */ __name((buf, len) => {
+    var buf2binstring = /* @__PURE__ */ __name2((buf, len) => {
       if (len < 65534) {
         if (buf.subarray && STR_APPLY_UIA_OK) {
           return String.fromCharCode.apply(null, buf.length === len ? buf : buf.subarray(0, len));
@@ -16818,12 +18166,10 @@ var require_strings = __commonJS({
     };
   }
 });
-
-// ../node_modules/pako/lib/zlib/zstream.js
 var require_zstream = __commonJS({
   "../node_modules/pako/lib/zlib/zstream.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -16842,15 +18188,14 @@ var require_zstream = __commonJS({
       this.adler = 0;
     }
     __name(ZStream, "ZStream");
+    __name2(ZStream, "ZStream");
     module.exports = ZStream;
   }
 });
-
-// ../node_modules/pako/lib/deflate.js
 var require_deflate2 = __commonJS({
   "../node_modules/pako/lib/deflate.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -16923,6 +18268,7 @@ var require_deflate2 = __commonJS({
       }
     }
     __name(Deflate, "Deflate");
+    __name2(Deflate, "Deflate");
     Deflate.prototype.push = function(data, flush_mode) {
       const strm = this.strm;
       const chunkSize = this.options.chunkSize;
@@ -16995,18 +18341,21 @@ var require_deflate2 = __commonJS({
       return deflator.result;
     }
     __name(deflate, "deflate");
+    __name2(deflate, "deflate");
     function deflateRaw(input, options) {
       options = options || {};
       options.raw = true;
       return deflate(input, options);
     }
     __name(deflateRaw, "deflateRaw");
+    __name2(deflateRaw, "deflateRaw");
     function gzip(input, options) {
       options = options || {};
       options.gzip = true;
       return deflate(input, options);
     }
     __name(gzip, "gzip");
+    __name2(gzip, "gzip");
     module.exports.Deflate = Deflate;
     module.exports.deflate = deflate;
     module.exports.deflateRaw = deflateRaw;
@@ -17014,18 +18363,16 @@ var require_deflate2 = __commonJS({
     module.exports.constants = require_constants();
   }
 });
-
-// ../node_modules/pako/lib/zlib/inffast.js
 var require_inffast = __commonJS({
   "../node_modules/pako/lib/zlib/inffast.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     var BAD = 16209;
     var TYPE = 16191;
-    module.exports = /* @__PURE__ */ __name(function inflate_fast(strm, start) {
+    module.exports = /* @__PURE__ */ __name2(/* @__PURE__ */ __name(function inflate_fast(strm, start) {
       let _in;
       let last;
       let _out;
@@ -17243,15 +18590,13 @@ var require_inffast = __commonJS({
       state.hold = hold;
       state.bits = bits;
       return;
-    }, "inflate_fast");
+    }, "inflate_fast"), "inflate_fast");
   }
 });
-
-// ../node_modules/pako/lib/zlib/inftrees.js
 var require_inftrees = __commonJS({
   "../node_modules/pako/lib/zlib/inftrees.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -17399,7 +18744,7 @@ var require_inftrees = __commonJS({
       64,
       64
     ]);
-    var inflate_table = /* @__PURE__ */ __name((type2, lens, lens_index, codes, table3, table_index, work, opts) => {
+    var inflate_table = /* @__PURE__ */ __name2((type2, lens, lens_index, codes, table3, table_index, work, opts) => {
       const bits = opts.bits;
       let len = 0;
       let sym = 0;
@@ -17562,12 +18907,10 @@ var require_inftrees = __commonJS({
     module.exports = inflate_table;
   }
 });
-
-// ../node_modules/pako/lib/zlib/inflate.js
 var require_inflate = __commonJS({
   "../node_modules/pako/lib/zlib/inflate.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -17627,7 +18970,7 @@ var require_inflate = __commonJS({
     var ENOUGH_DISTS = 592;
     var MAX_WBITS = 15;
     var DEF_WBITS = MAX_WBITS;
-    var zswap32 = /* @__PURE__ */ __name((q) => {
+    var zswap32 = /* @__PURE__ */ __name2((q) => {
       return (q >>> 24 & 255) + (q >>> 8 & 65280) + ((q & 65280) << 8) + ((q & 255) << 24);
     }, "zswap32");
     function InflateState() {
@@ -17669,7 +19012,8 @@ var require_inflate = __commonJS({
       this.was = 0;
     }
     __name(InflateState, "InflateState");
-    var inflateStateCheck = /* @__PURE__ */ __name((strm) => {
+    __name2(InflateState, "InflateState");
+    var inflateStateCheck = /* @__PURE__ */ __name2((strm) => {
       if (!strm) {
         return 1;
       }
@@ -17679,7 +19023,7 @@ var require_inflate = __commonJS({
       }
       return 0;
     }, "inflateStateCheck");
-    var inflateResetKeep = /* @__PURE__ */ __name((strm) => {
+    var inflateResetKeep = /* @__PURE__ */ __name2((strm) => {
       if (inflateStateCheck(strm)) {
         return Z_STREAM_ERROR;
       }
@@ -17703,7 +19047,7 @@ var require_inflate = __commonJS({
       state.back = -1;
       return Z_OK;
     }, "inflateResetKeep");
-    var inflateReset = /* @__PURE__ */ __name((strm) => {
+    var inflateReset = /* @__PURE__ */ __name2((strm) => {
       if (inflateStateCheck(strm)) {
         return Z_STREAM_ERROR;
       }
@@ -17713,7 +19057,7 @@ var require_inflate = __commonJS({
       state.wnext = 0;
       return inflateResetKeep(strm);
     }, "inflateReset");
-    var inflateReset2 = /* @__PURE__ */ __name((strm, windowBits) => {
+    var inflateReset2 = /* @__PURE__ */ __name2((strm, windowBits) => {
       let wrap;
       if (inflateStateCheck(strm)) {
         return Z_STREAM_ERROR;
@@ -17738,7 +19082,7 @@ var require_inflate = __commonJS({
       state.wbits = windowBits;
       return inflateReset(strm);
     }, "inflateReset2");
-    var inflateInit2 = /* @__PURE__ */ __name((strm, windowBits) => {
+    var inflateInit2 = /* @__PURE__ */ __name2((strm, windowBits) => {
       if (!strm) {
         return Z_STREAM_ERROR;
       }
@@ -17753,13 +19097,13 @@ var require_inflate = __commonJS({
       }
       return ret;
     }, "inflateInit2");
-    var inflateInit = /* @__PURE__ */ __name((strm) => {
+    var inflateInit = /* @__PURE__ */ __name2((strm) => {
       return inflateInit2(strm, DEF_WBITS);
     }, "inflateInit");
     var virgin = true;
     var lenfix;
     var distfix;
-    var fixedtables = /* @__PURE__ */ __name((state) => {
+    var fixedtables = /* @__PURE__ */ __name2((state) => {
       if (virgin) {
         lenfix = new Int32Array(512);
         distfix = new Int32Array(32);
@@ -17789,7 +19133,7 @@ var require_inflate = __commonJS({
       state.distcode = distfix;
       state.distbits = 5;
     }, "fixedtables");
-    var updatewindow = /* @__PURE__ */ __name((strm, src, end, copy) => {
+    var updatewindow = /* @__PURE__ */ __name2((strm, src, end, copy) => {
       let dist;
       const state = strm.state;
       if (state.window === null) {
@@ -17825,7 +19169,7 @@ var require_inflate = __commonJS({
       }
       return 0;
     }, "updatewindow");
-    var inflate = /* @__PURE__ */ __name((strm, flush) => {
+    var inflate = /* @__PURE__ */ __name2((strm, flush) => {
       let state;
       let input, output;
       let next;
@@ -18756,7 +20100,7 @@ var require_inflate = __commonJS({
       }
       return ret;
     }, "inflate");
-    var inflateEnd = /* @__PURE__ */ __name((strm) => {
+    var inflateEnd = /* @__PURE__ */ __name2((strm) => {
       if (inflateStateCheck(strm)) {
         return Z_STREAM_ERROR;
       }
@@ -18767,7 +20111,7 @@ var require_inflate = __commonJS({
       strm.state = null;
       return Z_OK;
     }, "inflateEnd");
-    var inflateGetHeader = /* @__PURE__ */ __name((strm, head) => {
+    var inflateGetHeader = /* @__PURE__ */ __name2((strm, head) => {
       if (inflateStateCheck(strm)) {
         return Z_STREAM_ERROR;
       }
@@ -18779,7 +20123,7 @@ var require_inflate = __commonJS({
       head.done = false;
       return Z_OK;
     }, "inflateGetHeader");
-    var inflateSetDictionary = /* @__PURE__ */ __name((strm, dictionary) => {
+    var inflateSetDictionary = /* @__PURE__ */ __name2((strm, dictionary) => {
       const dictLength = dictionary.length;
       let state;
       let dictid;
@@ -18818,12 +20162,10 @@ var require_inflate = __commonJS({
     module.exports.inflateInfo = "pako inflate (from Nodeca project)";
   }
 });
-
-// ../node_modules/pako/lib/zlib/gzheader.js
 var require_gzheader = __commonJS({
   "../node_modules/pako/lib/zlib/gzheader.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -18840,15 +20182,14 @@ var require_gzheader = __commonJS({
       this.done = false;
     }
     __name(GZheader, "GZheader");
+    __name2(GZheader, "GZheader");
     module.exports = GZheader;
   }
 });
-
-// ../node_modules/pako/lib/inflate.js
 var require_inflate2 = __commonJS({
   "../node_modules/pako/lib/inflate.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -18920,6 +20261,7 @@ var require_inflate2 = __commonJS({
       }
     }
     __name(Inflate, "Inflate");
+    __name2(Inflate, "Inflate");
     Inflate.prototype.push = function(data, flush_mode) {
       const strm = this.strm;
       const chunkSize = this.options.chunkSize;
@@ -19012,12 +20354,14 @@ var require_inflate2 = __commonJS({
       return inflator.result;
     }
     __name(inflate, "inflate");
+    __name2(inflate, "inflate");
     function inflateRaw(input, options) {
       options = options || {};
       options.raw = true;
       return inflate(input, options);
     }
     __name(inflateRaw, "inflateRaw");
+    __name2(inflateRaw, "inflateRaw");
     module.exports.Inflate = Inflate;
     module.exports.inflate = inflate;
     module.exports.inflateRaw = inflateRaw;
@@ -19025,12 +20369,10 @@ var require_inflate2 = __commonJS({
     module.exports.constants = require_constants();
   }
 });
-
-// ../node_modules/pako/index.js
 var require_pako = __commonJS({
   "../node_modules/pako/index.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -19048,12 +20390,10 @@ var require_pako = __commonJS({
     module.exports.constants = constants2;
   }
 });
-
-// ../node_modules/telegram/tl/core/GZIPPacked.js
 var require_GZIPPacked = __commonJS({
   "../node_modules/telegram/tl/core/GZIPPacked.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -19063,7 +20403,10 @@ var require_GZIPPacked = __commonJS({
     var pako_1 = require_pako();
     var GZIPPacked = class _GZIPPacked {
       static {
-        __name(this, "GZIPPacked");
+        __name(this, "_GZIPPacked");
+      }
+      static {
+        __name2(this, "GZIPPacked");
       }
       constructor(data) {
         this.data = data;
@@ -19110,31 +20453,29 @@ var require_GZIPPacked = __commonJS({
     GZIPPacked.classType = "constructor";
   }
 });
-
-// ../node_modules/telegram/tl/core/index.js
 var require_core = __commonJS({
   "../node_modules/telegram/tl/core/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.GZIPPacked = exports.MessageContainer = exports.TLMessage = exports.RPCResult = exports.coreObjects = void 0;
     var TLMessage_1 = require_TLMessage();
-    Object.defineProperty(exports, "TLMessage", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "TLMessage", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return TLMessage_1.TLMessage;
     }, "get") });
     var RPCResult_1 = require_RPCResult();
-    Object.defineProperty(exports, "RPCResult", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "RPCResult", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return RPCResult_1.RPCResult;
     }, "get") });
     var MessageContainer_1 = require_MessageContainer();
-    Object.defineProperty(exports, "MessageContainer", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "MessageContainer", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return MessageContainer_1.MessageContainer;
     }, "get") });
     var GZIPPacked_1 = require_GZIPPacked();
-    Object.defineProperty(exports, "GZIPPacked", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "GZIPPacked", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return GZIPPacked_1.GZIPPacked;
     }, "get") });
     exports.coreObjects = /* @__PURE__ */ new Map([
@@ -19144,12 +20485,10 @@ var require_core = __commonJS({
     ]);
   }
 });
-
-// ../node_modules/telegram/tl/AllTLObjects.js
 var require_AllTLObjects = __commonJS({
   "../node_modules/telegram/tl/AllTLObjects.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -19170,12 +20509,10 @@ var require_AllTLObjects = __commonJS({
     }
   }
 });
-
-// ../node_modules/telegram/extensions/BinaryReader.js
 var require_BinaryReader = __commonJS({
   "../node_modules/telegram/extensions/BinaryReader.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -19188,6 +20525,9 @@ var require_BinaryReader = __commonJS({
     var BinaryReader = class {
       static {
         __name(this, "BinaryReader");
+      }
+      static {
+        __name2(this, "BinaryReader");
       }
       /**
        * Small utility class to read binary data.
@@ -19405,15 +20745,13 @@ var require_BinaryReader = __commonJS({
     exports.BinaryReader = BinaryReader;
   }
 });
-
-// ../node_modules/es5-ext/global.js
 var require_global = __commonJS({
   "../node_modules/es5-ext/global.js"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
-    var naiveFallback = /* @__PURE__ */ __name(function() {
+    var naiveFallback = /* @__PURE__ */ __name2(function() {
       if (typeof self === "object" && self) return self;
       if (typeof window === "object" && window) return window;
       throw new Error("Unable to resolve global `this`");
@@ -19423,7 +20761,7 @@ var require_global = __commonJS({
       if (typeof globalThis === "object" && globalThis) return globalThis;
       try {
         Object.defineProperty(Object.prototype, "__global__", {
-          get: /* @__PURE__ */ __name(function() {
+          get: /* @__PURE__ */ __name2(function() {
             return this;
           }, "get"),
           configurable: true
@@ -19440,8 +20778,6 @@ var require_global = __commonJS({
     })();
   }
 });
-
-// ../node_modules/websocket/package.json
 var require_package = __commonJS({
   "../node_modules/websocket/package.json"(exports, module) {
     module.exports = {
@@ -19504,22 +20840,18 @@ var require_package = __commonJS({
     };
   }
 });
-
-// ../node_modules/websocket/lib/version.js
 var require_version = __commonJS({
   "../node_modules/websocket/lib/version.js"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     module.exports = require_package().version;
   }
 });
-
-// ../node_modules/websocket/lib/browser.js
 var require_browser = __commonJS({
   "../node_modules/websocket/lib/browser.js"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -19551,10 +20883,11 @@ var require_browser = __commonJS({
       return native_instance;
     }
     __name(W3CWebSocket, "W3CWebSocket");
+    __name2(W3CWebSocket, "W3CWebSocket");
     if (NativeWebSocket) {
       ["CONNECTING", "OPEN", "CLOSING", "CLOSED"].forEach(function(prop) {
         Object.defineProperty(W3CWebSocket, prop, {
-          get: /* @__PURE__ */ __name(function() {
+          get: /* @__PURE__ */ __name2(function() {
             return NativeWebSocket[prop];
           }, "get")
         });
@@ -19566,11 +20899,9 @@ var require_browser = __commonJS({
     };
   }
 });
-
-// ../node_modules/tslib/tslib.js
 var require_tslib = __commonJS({
   "../node_modules/tslib/tslib.js"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -19630,13 +20961,14 @@ var require_tslib = __commonJS({
         };
       }
       __name(createExporter, "createExporter");
+      __name2(createExporter, "createExporter");
     })(function(exporter) {
       var extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d, b) {
         d.__proto__ = b;
       } || function(d, b) {
         for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
       };
-      __extends = /* @__PURE__ */ __name(function(d, b) {
+      __extends = /* @__PURE__ */ __name2(function(d, b) {
         if (typeof b !== "function" && b !== null)
           throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         extendStatics(d, b);
@@ -19644,6 +20976,7 @@ var require_tslib = __commonJS({
           this.constructor = d;
         }
         __name(__, "__");
+        __name2(__, "__");
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
       }, "__extends");
       __assign = Object.assign || function(t) {
@@ -19653,7 +20986,7 @@ var require_tslib = __commonJS({
         }
         return t;
       };
-      __rest = /* @__PURE__ */ __name(function(s, e) {
+      __rest = /* @__PURE__ */ __name2(function(s, e) {
         var t = {};
         for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
           t[p] = s[p];
@@ -19664,23 +20997,24 @@ var require_tslib = __commonJS({
           }
         return t;
       }, "__rest");
-      __decorate = /* @__PURE__ */ __name(function(decorators, target, key, desc) {
+      __decorate = /* @__PURE__ */ __name2(function(decorators, target, key, desc) {
         var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
         if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
         else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
         return c > 3 && r && Object.defineProperty(target, key, r), r;
       }, "__decorate");
-      __param = /* @__PURE__ */ __name(function(paramIndex, decorator) {
+      __param = /* @__PURE__ */ __name2(function(paramIndex, decorator) {
         return function(target, key) {
           decorator(target, key, paramIndex);
         };
       }, "__param");
-      __esDecorate = /* @__PURE__ */ __name(function(ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+      __esDecorate = /* @__PURE__ */ __name2(function(ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
         function accept(f) {
           if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected");
           return f;
         }
         __name(accept, "accept");
+        __name2(accept, "accept");
         var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
         var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
         var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
@@ -19708,30 +21042,31 @@ var require_tslib = __commonJS({
         if (target) Object.defineProperty(target, contextIn.name, descriptor);
         done = true;
       }, "__esDecorate");
-      __runInitializers = /* @__PURE__ */ __name(function(thisArg, initializers, value) {
+      __runInitializers = /* @__PURE__ */ __name2(function(thisArg, initializers, value) {
         var useValue = arguments.length > 2;
         for (var i = 0; i < initializers.length; i++) {
           value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
         }
         return useValue ? value : void 0;
       }, "__runInitializers");
-      __propKey = /* @__PURE__ */ __name(function(x) {
+      __propKey = /* @__PURE__ */ __name2(function(x) {
         return typeof x === "symbol" ? x : "".concat(x);
       }, "__propKey");
-      __setFunctionName = /* @__PURE__ */ __name(function(f, name, prefix) {
+      __setFunctionName = /* @__PURE__ */ __name2(function(f, name, prefix) {
         if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
         return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
       }, "__setFunctionName");
-      __metadata = /* @__PURE__ */ __name(function(metadataKey, metadataValue) {
+      __metadata = /* @__PURE__ */ __name2(function(metadataKey, metadataValue) {
         if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
       }, "__metadata");
-      __awaiter = /* @__PURE__ */ __name(function(thisArg, _arguments, P, generator) {
+      __awaiter = /* @__PURE__ */ __name2(function(thisArg, _arguments, P, generator) {
         function adopt(value) {
           return value instanceof P ? value : new P(function(resolve) {
             resolve(value);
           });
         }
         __name(adopt, "adopt");
+        __name2(adopt, "adopt");
         return new (P || (P = Promise))(function(resolve, reject) {
           function fulfilled(value) {
             try {
@@ -19741,6 +21076,7 @@ var require_tslib = __commonJS({
             }
           }
           __name(fulfilled, "fulfilled");
+          __name2(fulfilled, "fulfilled");
           function rejected(value) {
             try {
               step(generator["throw"](value));
@@ -19749,15 +21085,17 @@ var require_tslib = __commonJS({
             }
           }
           __name(rejected, "rejected");
+          __name2(rejected, "rejected");
           function step(result) {
             result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
           }
           __name(step, "step");
+          __name2(step, "step");
           step((generator = generator.apply(thisArg, _arguments || [])).next());
         });
       }, "__awaiter");
-      __generator = /* @__PURE__ */ __name(function(thisArg, body) {
-        var _ = { label: 0, sent: /* @__PURE__ */ __name(function() {
+      __generator = /* @__PURE__ */ __name2(function(thisArg, body) {
+        var _ = { label: 0, sent: /* @__PURE__ */ __name2(function() {
           if (t[0] & 1) throw t[1];
           return t[1];
         }, "sent"), trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
@@ -19770,6 +21108,7 @@ var require_tslib = __commonJS({
           };
         }
         __name(verb, "verb");
+        __name2(verb, "verb");
         function step(op) {
           if (f) throw new TypeError("Generator is already executing.");
           while (g && (g = 0, op[0] && (_ = 0)), _) try {
@@ -19826,15 +21165,16 @@ var require_tslib = __commonJS({
           return { value: op[0] ? op[1] : void 0, done: true };
         }
         __name(step, "step");
+        __name2(step, "step");
       }, "__generator");
-      __exportStar = /* @__PURE__ */ __name(function(m, o) {
+      __exportStar = /* @__PURE__ */ __name2(function(m, o) {
         for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
       }, "__exportStar");
       __createBinding = Object.create ? (function(o, m, k, k2) {
         if (k2 === void 0) k2 = k;
         var desc = Object.getOwnPropertyDescriptor(m, k);
         if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-          desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+          desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
             return m[k];
           }, "get") };
         }
@@ -19843,18 +21183,18 @@ var require_tslib = __commonJS({
         if (k2 === void 0) k2 = k;
         o[k2] = m[k];
       });
-      __values2 = /* @__PURE__ */ __name(function(o) {
+      __values2 = /* @__PURE__ */ __name2(function(o) {
         var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
         if (m) return m.call(o);
         if (o && typeof o.length === "number") return {
-          next: /* @__PURE__ */ __name(function() {
+          next: /* @__PURE__ */ __name2(function() {
             if (o && i >= o.length) o = void 0;
             return { value: o && o[i++], done: !o };
           }, "next")
         };
         throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
       }, "__values");
-      __read = /* @__PURE__ */ __name(function(o, n) {
+      __read = /* @__PURE__ */ __name2(function(o, n) {
         var m = typeof Symbol === "function" && o[Symbol.iterator];
         if (!m) return o;
         var i = m.call(o), r, ar = [], e;
@@ -19871,19 +21211,19 @@ var require_tslib = __commonJS({
         }
         return ar;
       }, "__read");
-      __spread = /* @__PURE__ */ __name(function() {
+      __spread = /* @__PURE__ */ __name2(function() {
         for (var ar = [], i = 0; i < arguments.length; i++)
           ar = ar.concat(__read(arguments[i]));
         return ar;
       }, "__spread");
-      __spreadArrays = /* @__PURE__ */ __name(function() {
+      __spreadArrays = /* @__PURE__ */ __name2(function() {
         for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
         for (var r = Array(s), k = 0, i = 0; i < il; i++)
           for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
             r[k] = a[j];
         return r;
       }, "__spreadArrays");
-      __spreadArray = /* @__PURE__ */ __name(function(to, from, pack) {
+      __spreadArray = /* @__PURE__ */ __name2(function(to, from, pack) {
         if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
           if (ar || !(i in from)) {
             if (!ar) ar = Array.prototype.slice.call(from, 0, i);
@@ -19892,10 +21232,10 @@ var require_tslib = __commonJS({
         }
         return to.concat(ar || Array.prototype.slice.call(from));
       }, "__spreadArray");
-      __await = /* @__PURE__ */ __name(function(v) {
+      __await = /* @__PURE__ */ __name2(function(v) {
         return this instanceof __await ? (this.v = v, this) : new __await(v);
       }, "__await");
-      __asyncGenerator = /* @__PURE__ */ __name(function(thisArg, _arguments, generator) {
+      __asyncGenerator = /* @__PURE__ */ __name2(function(thisArg, _arguments, generator) {
         if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
         var g = generator.apply(thisArg, _arguments || []), i, q = [];
         return i = Object.create((typeof AsyncIterator === "function" ? AsyncIterator : Object).prototype), verb("next"), verb("throw"), verb("return", awaitReturn), i[Symbol.asyncIterator] = function() {
@@ -19907,6 +21247,7 @@ var require_tslib = __commonJS({
           };
         }
         __name(awaitReturn, "awaitReturn");
+        __name2(awaitReturn, "awaitReturn");
         function verb(n, f) {
           if (g[n]) {
             i[n] = function(v) {
@@ -19918,6 +21259,7 @@ var require_tslib = __commonJS({
           }
         }
         __name(verb, "verb");
+        __name2(verb, "verb");
         function resume(n, v) {
           try {
             step(g[n](v));
@@ -19926,24 +21268,29 @@ var require_tslib = __commonJS({
           }
         }
         __name(resume, "resume");
+        __name2(resume, "resume");
         function step(r) {
           r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r);
         }
         __name(step, "step");
+        __name2(step, "step");
         function fulfill(value) {
           resume("next", value);
         }
         __name(fulfill, "fulfill");
+        __name2(fulfill, "fulfill");
         function reject(value) {
           resume("throw", value);
         }
         __name(reject, "reject");
+        __name2(reject, "reject");
         function settle(f, v) {
           if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]);
         }
         __name(settle, "settle");
+        __name2(settle, "settle");
       }, "__asyncGenerator");
-      __asyncDelegator = /* @__PURE__ */ __name(function(o) {
+      __asyncDelegator = /* @__PURE__ */ __name2(function(o) {
         var i, p;
         return i = {}, verb("next"), verb("throw", function(e) {
           throw e;
@@ -19956,8 +21303,9 @@ var require_tslib = __commonJS({
           } : f;
         }
         __name(verb, "verb");
+        __name2(verb, "verb");
       }, "__asyncDelegator");
-      __asyncValues = /* @__PURE__ */ __name(function(o) {
+      __asyncValues = /* @__PURE__ */ __name2(function(o) {
         if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
         var m = o[Symbol.asyncIterator], i;
         return m ? m.call(o) : (o = typeof __values2 === "function" ? __values2(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function() {
@@ -19971,14 +21319,16 @@ var require_tslib = __commonJS({
           };
         }
         __name(verb, "verb");
+        __name2(verb, "verb");
         function settle(resolve, reject, d, v) {
           Promise.resolve(v).then(function(v2) {
             resolve({ value: v2, done: d });
           }, reject);
         }
         __name(settle, "settle");
+        __name2(settle, "settle");
       }, "__asyncValues");
-      __makeTemplateObject = /* @__PURE__ */ __name(function(cooked, raw) {
+      __makeTemplateObject = /* @__PURE__ */ __name2(function(cooked, raw) {
         if (Object.defineProperty) {
           Object.defineProperty(cooked, "raw", { value: raw });
         } else {
@@ -19991,7 +21341,7 @@ var require_tslib = __commonJS({
       }) : function(o, v) {
         o["default"] = v;
       };
-      var ownKeys = /* @__PURE__ */ __name(function(o) {
+      var ownKeys = /* @__PURE__ */ __name2(function(o) {
         ownKeys = Object.getOwnPropertyNames || function(o2) {
           var ar = [];
           for (var k in o2) if (Object.prototype.hasOwnProperty.call(o2, k)) ar[ar.length] = k;
@@ -19999,7 +21349,7 @@ var require_tslib = __commonJS({
         };
         return ownKeys(o);
       }, "ownKeys");
-      __importStar = /* @__PURE__ */ __name(function(mod) {
+      __importStar = /* @__PURE__ */ __name2(function(mod) {
         if (mod && mod.__esModule) return mod;
         var result = {};
         if (mod != null) {
@@ -20008,25 +21358,25 @@ var require_tslib = __commonJS({
         __setModuleDefault(result, mod);
         return result;
       }, "__importStar");
-      __importDefault = /* @__PURE__ */ __name(function(mod) {
+      __importDefault = /* @__PURE__ */ __name2(function(mod) {
         return mod && mod.__esModule ? mod : { "default": mod };
       }, "__importDefault");
-      __classPrivateFieldGet = /* @__PURE__ */ __name(function(receiver, state, kind, f) {
+      __classPrivateFieldGet = /* @__PURE__ */ __name2(function(receiver, state, kind, f) {
         if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
         if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
         return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
       }, "__classPrivateFieldGet");
-      __classPrivateFieldSet = /* @__PURE__ */ __name(function(receiver, state, value, kind, f) {
+      __classPrivateFieldSet = /* @__PURE__ */ __name2(function(receiver, state, value, kind, f) {
         if (kind === "m") throw new TypeError("Private method is not writable");
         if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
         if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
         return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
       }, "__classPrivateFieldSet");
-      __classPrivateFieldIn = /* @__PURE__ */ __name(function(state, receiver) {
+      __classPrivateFieldIn = /* @__PURE__ */ __name2(function(state, receiver) {
         if (receiver === null || typeof receiver !== "object" && typeof receiver !== "function") throw new TypeError("Cannot use 'in' operator on non-object");
         return typeof state === "function" ? receiver === state : state.has(receiver);
       }, "__classPrivateFieldIn");
-      __addDisposableResource = /* @__PURE__ */ __name(function(env2, value, async) {
+      __addDisposableResource = /* @__PURE__ */ __name2(function(env22, value, async) {
         if (value !== null && value !== void 0) {
           if (typeof value !== "object" && typeof value !== "function") throw new TypeError("Object expected.");
           var dispose, inner;
@@ -20040,16 +21390,16 @@ var require_tslib = __commonJS({
             if (async) inner = dispose;
           }
           if (typeof dispose !== "function") throw new TypeError("Object not disposable.");
-          if (inner) dispose = /* @__PURE__ */ __name(function() {
+          if (inner) dispose = /* @__PURE__ */ __name2(function() {
             try {
               inner.call(this);
             } catch (e) {
               return Promise.reject(e);
             }
           }, "dispose");
-          env2.stack.push({ value, dispose, async });
+          env22.stack.push({ value, dispose, async });
         } else if (async) {
-          env2.stack.push({ async: true });
+          env22.stack.push({ async: true });
         }
         return value;
       }, "__addDisposableResource");
@@ -20057,17 +21407,18 @@ var require_tslib = __commonJS({
         var e = new Error(message);
         return e.name = "SuppressedError", e.error = error3, e.suppressed = suppressed, e;
       };
-      __disposeResources = /* @__PURE__ */ __name(function(env2) {
+      __disposeResources = /* @__PURE__ */ __name2(function(env22) {
         function fail(e) {
-          env2.error = env2.hasError ? new _SuppressedError(e, env2.error, "An error was suppressed during disposal.") : e;
-          env2.hasError = true;
+          env22.error = env22.hasError ? new _SuppressedError(e, env22.error, "An error was suppressed during disposal.") : e;
+          env22.hasError = true;
         }
         __name(fail, "fail");
+        __name2(fail, "fail");
         var r, s = 0;
         function next() {
-          while (r = env2.stack.pop()) {
+          while (r = env22.stack.pop()) {
             try {
-              if (!r.async && s === 1) return s = 0, env2.stack.push(r), Promise.resolve().then(next);
+              if (!r.async && s === 1) return s = 0, env22.stack.push(r), Promise.resolve().then(next);
               if (r.dispose) {
                 var result = r.dispose.call(r.value);
                 if (r.async) return s |= 2, Promise.resolve(result).then(next, function(e) {
@@ -20079,13 +21430,14 @@ var require_tslib = __commonJS({
               fail(e);
             }
           }
-          if (s === 1) return env2.hasError ? Promise.reject(env2.error) : Promise.resolve();
-          if (env2.hasError) throw env2.error;
+          if (s === 1) return env22.hasError ? Promise.reject(env22.error) : Promise.resolve();
+          if (env22.hasError) throw env22.error;
         }
         __name(next, "next");
+        __name2(next, "next");
         return next();
       }, "__disposeResources");
-      __rewriteRelativeImportExtension = /* @__PURE__ */ __name(function(path, preserveJsx) {
+      __rewriteRelativeImportExtension = /* @__PURE__ */ __name2(function(path, preserveJsx) {
         if (typeof path === "string" && /^\.\.?\//.test(path)) {
           return path.replace(/\.(tsx)$|((?:\.d)?)((?:\.[^./]+?)?)\.([cm]?)ts$/i, function(m, tsx, d, ext, cm) {
             return tsx ? preserveJsx ? ".jsx" : ".js" : d && (!ext || !cm) ? m : d + ext + "." + cm.toLowerCase() + "js";
@@ -20128,12 +21480,10 @@ var require_tslib = __commonJS({
     });
   }
 });
-
-// ../node_modules/async-mutex/lib/errors.js
 var require_errors2 = __commonJS({
   "../node_modules/async-mutex/lib/errors.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20144,12 +21494,10 @@ var require_errors2 = __commonJS({
     exports.E_CANCELED = new Error("request for lock canceled");
   }
 });
-
-// ../node_modules/async-mutex/lib/Semaphore.js
 var require_Semaphore = __commonJS({
   "../node_modules/async-mutex/lib/Semaphore.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20172,7 +21520,8 @@ var require_Semaphore = __commonJS({
           }
           this._value = _maxConcurrency;
         }
-        __name(Semaphore2, "Semaphore");
+        __name(Semaphore2, "Semaphore2");
+        __name2(Semaphore2, "Semaphore");
         Semaphore2.prototype.acquire = function() {
           var _this = this;
           var locked = this.isLocked();
@@ -20276,12 +21625,10 @@ var require_Semaphore = __commonJS({
     exports.default = Semaphore;
   }
 });
-
-// ../node_modules/async-mutex/lib/Mutex.js
 var require_Mutex = __commonJS({
   "../node_modules/async-mutex/lib/Mutex.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20294,7 +21641,8 @@ var require_Mutex = __commonJS({
         function Mutex2(cancelError) {
           this._semaphore = new Semaphore_1.default(1, cancelError);
         }
-        __name(Mutex2, "Mutex");
+        __name(Mutex2, "Mutex2");
+        __name2(Mutex2, "Mutex");
         Mutex2.prototype.acquire = function() {
           return (0, tslib_1.__awaiter)(this, void 0, void 0, function() {
             var _a, releaser;
@@ -20332,12 +21680,10 @@ var require_Mutex = __commonJS({
     exports.default = Mutex;
   }
 });
-
-// ../node_modules/async-mutex/lib/withTimeout.js
 var require_withTimeout = __commonJS({
   "../node_modules/async-mutex/lib/withTimeout.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20351,7 +21697,7 @@ var require_withTimeout = __commonJS({
         timeoutError = errors_1.E_TIMEOUT;
       }
       return {
-        acquire: /* @__PURE__ */ __name(function() {
+        acquire: /* @__PURE__ */ __name2(function() {
           return new Promise(function(resolve, reject) {
             return (0, tslib_1.__awaiter)(_this, void 0, void 0, function() {
               var isTimeout, handle, ticket, release3, e_1;
@@ -20394,13 +21740,13 @@ var require_withTimeout = __commonJS({
             });
           });
         }, "acquire"),
-        runExclusive: /* @__PURE__ */ __name(function(callback) {
+        runExclusive: /* @__PURE__ */ __name2(function(callback) {
           return (0, tslib_1.__awaiter)(this, void 0, void 0, function() {
             var release3, ticket;
             return (0, tslib_1.__generator)(this, function(_a) {
               switch (_a.label) {
                 case 0:
-                  release3 = /* @__PURE__ */ __name(function() {
+                  release3 = /* @__PURE__ */ __name2(function() {
                     return void 0;
                   }, "release");
                   _a.label = 1;
@@ -20437,30 +21783,29 @@ var require_withTimeout = __commonJS({
           });
         }, "runExclusive"),
         /** @deprecated Deprecated in 0.3.0, will be removed in 0.4.0. Use runExclusive instead. */
-        release: /* @__PURE__ */ __name(function() {
+        release: /* @__PURE__ */ __name2(function() {
           sync.release();
         }, "release"),
-        cancel: /* @__PURE__ */ __name(function() {
+        cancel: /* @__PURE__ */ __name2(function() {
           return sync.cancel();
         }, "cancel"),
-        waitForUnlock: /* @__PURE__ */ __name(function() {
+        waitForUnlock: /* @__PURE__ */ __name2(function() {
           return sync.waitForUnlock();
         }, "waitForUnlock"),
-        isLocked: /* @__PURE__ */ __name(function() {
+        isLocked: /* @__PURE__ */ __name2(function() {
           return sync.isLocked();
         }, "isLocked")
       };
     }
-    __name(withTimeout2, "withTimeout");
+    __name(withTimeout2, "withTimeout2");
+    __name2(withTimeout2, "withTimeout");
     exports.withTimeout = withTimeout2;
   }
 });
-
-// ../node_modules/async-mutex/lib/tryAcquire.js
 var require_tryAcquire = __commonJS({
   "../node_modules/async-mutex/lib/tryAcquire.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20475,15 +21820,14 @@ var require_tryAcquire = __commonJS({
       return (0, withTimeout_1.withTimeout)(sync, 0, alreadyAcquiredError);
     }
     __name(tryAcquire, "tryAcquire");
+    __name2(tryAcquire, "tryAcquire");
     exports.tryAcquire = tryAcquire;
   }
 });
-
-// ../node_modules/async-mutex/lib/index.js
 var require_lib7 = __commonJS({
   "../node_modules/async-mutex/lib/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20491,30 +21835,28 @@ var require_lib7 = __commonJS({
     exports.tryAcquire = exports.withTimeout = exports.Semaphore = exports.Mutex = void 0;
     var tslib_1 = require_tslib();
     var Mutex_1 = require_Mutex();
-    Object.defineProperty(exports, "Mutex", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "Mutex", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return Mutex_1.default;
     }, "get") });
     var Semaphore_1 = require_Semaphore();
-    Object.defineProperty(exports, "Semaphore", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "Semaphore", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return Semaphore_1.default;
     }, "get") });
     var withTimeout_1 = require_withTimeout();
-    Object.defineProperty(exports, "withTimeout", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "withTimeout", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return withTimeout_1.withTimeout;
     }, "get") });
     var tryAcquire_1 = require_tryAcquire();
-    Object.defineProperty(exports, "tryAcquire", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "tryAcquire", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return tryAcquire_1.tryAcquire;
     }, "get") });
     (0, tslib_1.__exportStar)(require_errors2(), exports);
   }
 });
-
-// ../node_modules/telegram/extensions/PromisedWebSockets.js
 var require_PromisedWebSockets = __commonJS({
   "../node_modules/telegram/extensions/PromisedWebSockets.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20527,7 +21869,10 @@ var require_PromisedWebSockets = __commonJS({
     var closeError = new Error("WebSocket was closed");
     var PromisedWebSockets2 = class {
       static {
-        __name(this, "PromisedWebSockets");
+        __name(this, "PromisedWebSockets2");
+      }
+      static {
+        __name2(this, "PromisedWebSockets");
       }
       constructor() {
         this.client = void 0;
@@ -20652,24 +21997,19 @@ var require_PromisedWebSockets = __commonJS({
     exports.PromisedWebSockets = PromisedWebSockets2;
   }
 });
-
-// node-built-in-modules:net
-import libDefault3 from "net";
 var require_net = __commonJS({
   "node-built-in-modules:net"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     module.exports = libDefault3;
   }
 });
-
-// ../node_modules/telegram/extensions/net.js
 var require_net2 = __commonJS({
   "../node_modules/telegram/extensions/net.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20677,7 +22017,7 @@ var require_net2 = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -20693,36 +22033,28 @@ var require_net2 = __commonJS({
     __exportStar(require_net(), exports);
   }
 });
-
-// node-built-in-modules:events
-import libDefault4 from "events";
 var require_events = __commonJS({
   "node-built-in-modules:events"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     module.exports = libDefault4;
   }
 });
-
-// node-built-in-modules:buffer
-import libDefault5 from "buffer";
 var require_buffer = __commonJS({
   "node-built-in-modules:buffer"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     module.exports = libDefault5;
   }
 });
-
-// ../node_modules/smart-buffer/build/utils.js
 var require_utils = __commonJS({
   "../node_modules/smart-buffer/build/utils.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20749,11 +22081,13 @@ var require_utils = __commonJS({
       }
     }
     __name(checkEncoding, "checkEncoding");
+    __name2(checkEncoding, "checkEncoding");
     exports.checkEncoding = checkEncoding;
     function isFiniteInteger(value) {
       return typeof value === "number" && isFinite(value) && isInteger(value);
     }
     __name(isFiniteInteger, "isFiniteInteger");
+    __name2(isFiniteInteger, "isFiniteInteger");
     exports.isFiniteInteger = isFiniteInteger;
     function checkOffsetOrLengthValue(value, offset) {
       if (typeof value === "number") {
@@ -20765,15 +22099,18 @@ var require_utils = __commonJS({
       }
     }
     __name(checkOffsetOrLengthValue, "checkOffsetOrLengthValue");
+    __name2(checkOffsetOrLengthValue, "checkOffsetOrLengthValue");
     function checkLengthValue(length) {
       checkOffsetOrLengthValue(length, false);
     }
     __name(checkLengthValue, "checkLengthValue");
+    __name2(checkLengthValue, "checkLengthValue");
     exports.checkLengthValue = checkLengthValue;
     function checkOffsetValue(offset) {
       checkOffsetOrLengthValue(offset, true);
     }
     __name(checkOffsetValue, "checkOffsetValue");
+    __name2(checkOffsetValue, "checkOffsetValue");
     exports.checkOffsetValue = checkOffsetValue;
     function checkTargetOffset(offset, buff) {
       if (offset < 0 || offset > buff.length) {
@@ -20781,11 +22118,13 @@ var require_utils = __commonJS({
       }
     }
     __name(checkTargetOffset, "checkTargetOffset");
+    __name2(checkTargetOffset, "checkTargetOffset");
     exports.checkTargetOffset = checkTargetOffset;
     function isInteger(value) {
       return typeof value === "number" && isFinite(value) && Math.floor(value) === value;
     }
     __name(isInteger, "isInteger");
+    __name2(isInteger, "isInteger");
     function bigIntAndBufferInt64Check(bufferMethod) {
       if (typeof BigInt === "undefined") {
         throw new Error("Platform does not support JS BigInt type.");
@@ -20795,15 +22134,14 @@ var require_utils = __commonJS({
       }
     }
     __name(bigIntAndBufferInt64Check, "bigIntAndBufferInt64Check");
+    __name2(bigIntAndBufferInt64Check, "bigIntAndBufferInt64Check");
     exports.bigIntAndBufferInt64Check = bigIntAndBufferInt64Check;
   }
 });
-
-// ../node_modules/smart-buffer/build/smartbuffer.js
 var require_smartbuffer = __commonJS({
   "../node_modules/smart-buffer/build/smartbuffer.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20813,7 +22151,10 @@ var require_smartbuffer = __commonJS({
     var DEFAULT_SMARTBUFFER_ENCODING = "utf8";
     var SmartBuffer = class _SmartBuffer {
       static {
-        __name(this, "SmartBuffer");
+        __name(this, "_SmartBuffer");
+      }
+      static {
+        __name2(this, "SmartBuffer");
       }
       /**
        * Creates a new SmartBuffer instance.
@@ -21963,12 +23304,10 @@ var require_smartbuffer = __commonJS({
     exports.SmartBuffer = SmartBuffer;
   }
 });
-
-// ../node_modules/socks/build/common/constants.js
 var require_constants2 = __commonJS({
   "../node_modules/socks/build/common/constants.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22016,7 +23355,7 @@ var require_constants2 = __commonJS({
       // 4 header + 4 ip + 2 port
       Socks5ResponseIPv6: 22,
       // 4 header + 16 ip + 2 port
-      Socks5ResponseHostname: /* @__PURE__ */ __name((hostNameLength) => hostNameLength + 7, "Socks5ResponseHostname"),
+      Socks5ResponseHostname: /* @__PURE__ */ __name2((hostNameLength) => hostNameLength + 7, "Socks5ResponseHostname"),
       // 4 header + 1 host length + host + 2 port
       // Command response + incoming connection (bind)
       Socks4Response: 8
@@ -22084,12 +23423,10 @@ var require_constants2 = __commonJS({
     })(SocksClientState || (exports.SocksClientState = SocksClientState = {}));
   }
 });
-
-// ../node_modules/socks/build/common/util.js
 var require_util2 = __commonJS({
   "../node_modules/socks/build/common/util.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22098,6 +23435,9 @@ var require_util2 = __commonJS({
     var SocksClientError = class extends Error {
       static {
         __name(this, "SocksClientError");
+      }
+      static {
+        __name2(this, "SocksClientError");
       }
       constructor(message, options) {
         super(message);
@@ -22112,27 +23452,23 @@ var require_util2 = __commonJS({
       }
     }
     __name(shuffleArray, "shuffleArray");
+    __name2(shuffleArray, "shuffleArray");
     exports.shuffleArray = shuffleArray;
   }
 });
-
-// node-built-in-modules:stream
-import libDefault6 from "stream";
 var require_stream = __commonJS({
   "node-built-in-modules:stream"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     module.exports = libDefault6;
   }
 });
-
-// ../node_modules/ip-address/dist/common.js
 var require_common2 = __commonJS({
   "../node_modules/ip-address/dist/common.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22152,6 +23488,7 @@ var require_common2 = __commonJS({
       return false;
     }
     __name(isInSubnet, "isInSubnet");
+    __name2(isInSubnet, "isInSubnet");
     function isCorrect(defaultBits) {
       return function() {
         if (this.addressMinusSuffix !== this.correctForm()) {
@@ -22164,14 +23501,17 @@ var require_common2 = __commonJS({
       };
     }
     __name(isCorrect, "isCorrect");
+    __name2(isCorrect, "isCorrect");
     function numberToPaddedHex(number) {
       return number.toString(16).padStart(2, "0");
     }
     __name(numberToPaddedHex, "numberToPaddedHex");
+    __name2(numberToPaddedHex, "numberToPaddedHex");
     function stringToPaddedHex(numberString) {
       return numberToPaddedHex(parseInt(numberString, 10));
     }
     __name(stringToPaddedHex, "stringToPaddedHex");
+    __name2(stringToPaddedHex, "stringToPaddedHex");
     function testBit(binaryValue, position) {
       const { length } = binaryValue;
       if (position > length) {
@@ -22181,14 +23521,13 @@ var require_common2 = __commonJS({
       return binaryValue.substring(positionInString, positionInString + 1) === "1";
     }
     __name(testBit, "testBit");
+    __name2(testBit, "testBit");
   }
 });
-
-// ../node_modules/ip-address/dist/v4/constants.js
 var require_constants3 = __commonJS({
   "../node_modules/ip-address/dist/v4/constants.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22200,12 +23539,10 @@ var require_constants3 = __commonJS({
     exports.RE_SUBNET_STRING = /\/\d{1,2}$/;
   }
 });
-
-// ../node_modules/ip-address/dist/address-error.js
 var require_address_error = __commonJS({
   "../node_modules/ip-address/dist/address-error.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22214,6 +23551,9 @@ var require_address_error = __commonJS({
     var AddressError = class extends Error {
       static {
         __name(this, "AddressError");
+      }
+      static {
+        __name2(this, "AddressError");
       }
       constructor(message, parseMessage) {
         super(message);
@@ -22224,12 +23564,10 @@ var require_address_error = __commonJS({
     exports.AddressError = AddressError;
   }
 });
-
-// ../node_modules/ip-address/dist/ipv4.js
 var require_ipv4 = __commonJS({
   "../node_modules/ip-address/dist/ipv4.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22237,7 +23575,7 @@ var require_ipv4 = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -22267,7 +23605,10 @@ var require_ipv4 = __commonJS({
     var address_error_1 = require_address_error();
     var Address4 = class _Address4 {
       static {
-        __name(this, "Address4");
+        __name(this, "_Address4");
+      }
+      static {
+        __name2(this, "Address4");
       }
       constructor(address) {
         this.groups = constants2.GROUPS;
@@ -22574,12 +23915,10 @@ var require_ipv4 = __commonJS({
     exports.Address4 = Address4;
   }
 });
-
-// ../node_modules/ip-address/dist/v6/constants.js
 var require_constants4 = __commonJS({
   "../node_modules/ip-address/dist/v6/constants.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22629,12 +23968,10 @@ var require_constants4 = __commonJS({
     exports.RE_URL_WITH_PORT = /\[([0-9a-f:]+)\]:([0-9]{1,5})/;
   }
 });
-
-// ../node_modules/ip-address/dist/v6/helpers.js
 var require_helpers2 = __commonJS({
   "../node_modules/ip-address/dist/v6/helpers.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22647,20 +23984,24 @@ var require_helpers2 = __commonJS({
       return s.replace(/(0+)/g, '<span class="zero">$1</span>');
     }
     __name(spanAllZeroes, "spanAllZeroes");
+    __name2(spanAllZeroes, "spanAllZeroes");
     function spanAll(s, offset = 0) {
       const letters = s.split("");
       return letters.map((n, i) => `<span class="digit value-${n} position-${i + offset}">${spanAllZeroes(n)}</span>`).join("");
     }
     __name(spanAll, "spanAll");
+    __name2(spanAll, "spanAll");
     function spanLeadingZeroesSimple(group3) {
       return group3.replace(/^(0+)/, '<span class="zero">$1</span>');
     }
     __name(spanLeadingZeroesSimple, "spanLeadingZeroesSimple");
+    __name2(spanLeadingZeroesSimple, "spanLeadingZeroesSimple");
     function spanLeadingZeroes(address) {
       const groups = address.split(":");
       return groups.map((g) => spanLeadingZeroesSimple(g)).join(":");
     }
     __name(spanLeadingZeroes, "spanLeadingZeroes");
+    __name2(spanLeadingZeroes, "spanLeadingZeroes");
     function simpleGroup(addressString, offset = 0) {
       const groups = addressString.split(":");
       return groups.map((g, i) => {
@@ -22671,14 +24012,13 @@ var require_helpers2 = __commonJS({
       });
     }
     __name(simpleGroup, "simpleGroup");
+    __name2(simpleGroup, "simpleGroup");
   }
 });
-
-// ../node_modules/ip-address/dist/v6/regular-expressions.js
 var require_regular_expressions = __commonJS({
   "../node_modules/ip-address/dist/v6/regular-expressions.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22686,7 +24026,7 @@ var require_regular_expressions = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -22720,6 +24060,7 @@ var require_regular_expressions = __commonJS({
       return `(${possibilities.join("|")})`;
     }
     __name(groupPossibilities, "groupPossibilities");
+    __name2(groupPossibilities, "groupPossibilities");
     function padGroup(group3) {
       if (group3.length < 4) {
         return `0{0,${4 - group3.length}}${group3}`;
@@ -22727,6 +24068,7 @@ var require_regular_expressions = __commonJS({
       return group3;
     }
     __name(padGroup, "padGroup");
+    __name2(padGroup, "padGroup");
     exports.ADDRESS_BOUNDARY = "[^A-Fa-f0-9:]";
     function simpleRegularExpression(groups) {
       const zeroIndexes = [];
@@ -22747,6 +24089,7 @@ var require_regular_expressions = __commonJS({
       return groupPossibilities(possibilities);
     }
     __name(simpleRegularExpression, "simpleRegularExpression");
+    __name2(simpleRegularExpression, "simpleRegularExpression");
     function possibleElisions(elidedGroups, moreLeft, moreRight) {
       const left = moreLeft ? "" : ":";
       const right = moreRight ? "" : ":";
@@ -22771,14 +24114,13 @@ var require_regular_expressions = __commonJS({
       return groupPossibilities(possibilities);
     }
     __name(possibleElisions, "possibleElisions");
+    __name2(possibleElisions, "possibleElisions");
   }
 });
-
-// ../node_modules/ip-address/dist/ipv6.js
 var require_ipv6 = __commonJS({
   "../node_modules/ip-address/dist/ipv6.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22786,7 +24128,7 @@ var require_ipv6 = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -22824,7 +24166,8 @@ var require_ipv6 = __commonJS({
         throw new Error("Assertion failed.");
       }
     }
-    __name(assert3, "assert");
+    __name(assert3, "assert3");
+    __name2(assert3, "assert");
     function addCommas(number) {
       const r = /(\d+)(\d{3})/;
       while (r.test(number)) {
@@ -22833,12 +24176,14 @@ var require_ipv6 = __commonJS({
       return number;
     }
     __name(addCommas, "addCommas");
+    __name2(addCommas, "addCommas");
     function spanLeadingZeroes4(n) {
       n = n.replace(/^(0{1,})([1-9]+)$/, '<span class="parse-error">$1</span>$2');
       n = n.replace(/^(0{1,})(0)$/, '<span class="parse-error">$1</span>$2');
       return n;
     }
     __name(spanLeadingZeroes4, "spanLeadingZeroes4");
+    __name2(spanLeadingZeroes4, "spanLeadingZeroes4");
     function compact(address, slice) {
       const s1 = [];
       const s2 = [];
@@ -22853,17 +24198,23 @@ var require_ipv6 = __commonJS({
       return s1.concat(["compact"]).concat(s2);
     }
     __name(compact, "compact");
+    __name2(compact, "compact");
     function paddedHex(octet) {
       return parseInt(octet, 16).toString(16).padStart(4, "0");
     }
     __name(paddedHex, "paddedHex");
+    __name2(paddedHex, "paddedHex");
     function unsignByte(b) {
       return b & 255;
     }
     __name(unsignByte, "unsignByte");
+    __name2(unsignByte, "unsignByte");
     var Address6 = class _Address6 {
       static {
-        __name(this, "Address6");
+        __name(this, "_Address6");
+      }
+      static {
+        __name2(this, "Address6");
       }
       constructor(address, optionalGroups) {
         this.addressMinusSuffix = "";
@@ -23700,12 +25051,10 @@ var require_ipv6 = __commonJS({
     exports.Address6 = Address6;
   }
 });
-
-// ../node_modules/ip-address/dist/ip-address.js
 var require_ip_address = __commonJS({
   "../node_modules/ip-address/dist/ip-address.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -23713,7 +25062,7 @@ var require_ip_address = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -23739,27 +25088,25 @@ var require_ip_address = __commonJS({
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.v6 = exports.AddressError = exports.Address6 = exports.Address4 = void 0;
     var ipv4_1 = require_ipv4();
-    Object.defineProperty(exports, "Address4", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "Address4", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return ipv4_1.Address4;
     }, "get") });
     var ipv6_1 = require_ipv6();
-    Object.defineProperty(exports, "Address6", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "Address6", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return ipv6_1.Address6;
     }, "get") });
     var address_error_1 = require_address_error();
-    Object.defineProperty(exports, "AddressError", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "AddressError", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return address_error_1.AddressError;
     }, "get") });
     var helpers = __importStar(require_helpers2());
     exports.v6 = { helpers };
   }
 });
-
-// ../node_modules/socks/build/common/helpers.js
 var require_helpers3 = __commonJS({
   "../node_modules/socks/build/common/helpers.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -23792,6 +25139,7 @@ var require_helpers3 = __commonJS({
       }
     }
     __name(validateSocksClientOptions, "validateSocksClientOptions");
+    __name2(validateSocksClientOptions, "validateSocksClientOptions");
     exports.validateSocksClientOptions = validateSocksClientOptions;
     function validateSocksClientChainOptions(options) {
       if (options.command !== "connect") {
@@ -23814,6 +25162,7 @@ var require_helpers3 = __commonJS({
       }
     }
     __name(validateSocksClientChainOptions, "validateSocksClientChainOptions");
+    __name2(validateSocksClientChainOptions, "validateSocksClientChainOptions");
     exports.validateSocksClientChainOptions = validateSocksClientChainOptions;
     function validateCustomProxyAuth(proxy, options) {
       if (proxy.custom_auth_method !== void 0) {
@@ -23832,23 +25181,28 @@ var require_helpers3 = __commonJS({
       }
     }
     __name(validateCustomProxyAuth, "validateCustomProxyAuth");
+    __name2(validateCustomProxyAuth, "validateCustomProxyAuth");
     function isValidSocksRemoteHost(remoteHost) {
       return remoteHost && typeof remoteHost.host === "string" && Buffer.byteLength(remoteHost.host) < 256 && typeof remoteHost.port === "number" && remoteHost.port >= 0 && remoteHost.port <= 65535;
     }
     __name(isValidSocksRemoteHost, "isValidSocksRemoteHost");
+    __name2(isValidSocksRemoteHost, "isValidSocksRemoteHost");
     function isValidSocksProxy(proxy) {
       return proxy && (typeof proxy.host === "string" || typeof proxy.ipaddress === "string") && typeof proxy.port === "number" && proxy.port >= 0 && proxy.port <= 65535 && (proxy.type === 4 || proxy.type === 5);
     }
     __name(isValidSocksProxy, "isValidSocksProxy");
+    __name2(isValidSocksProxy, "isValidSocksProxy");
     function isValidTimeoutValue(value) {
       return typeof value === "number" && value > 0;
     }
     __name(isValidTimeoutValue, "isValidTimeoutValue");
+    __name2(isValidTimeoutValue, "isValidTimeoutValue");
     function ipv4ToInt32(ip) {
       const address = new ip_address_1.Address4(ip);
       return address.toArray().reduce((acc, part) => (acc << 8) + part, 0) >>> 0;
     }
     __name(ipv4ToInt32, "ipv4ToInt32");
+    __name2(ipv4ToInt32, "ipv4ToInt32");
     exports.ipv4ToInt32 = ipv4ToInt32;
     function int32ToIpv4(int32) {
       const octet1 = int32 >>> 24 & 255;
@@ -23858,6 +25212,7 @@ var require_helpers3 = __commonJS({
       return [octet1, octet2, octet3, octet4].join(".");
     }
     __name(int32ToIpv4, "int32ToIpv4");
+    __name2(int32ToIpv4, "int32ToIpv4");
     exports.int32ToIpv4 = int32ToIpv4;
     function ipToBuffer(ip) {
       if (net.isIPv4(ip)) {
@@ -23871,15 +25226,14 @@ var require_helpers3 = __commonJS({
       }
     }
     __name(ipToBuffer, "ipToBuffer");
+    __name2(ipToBuffer, "ipToBuffer");
     exports.ipToBuffer = ipToBuffer;
   }
 });
-
-// ../node_modules/socks/build/common/receivebuffer.js
 var require_receivebuffer = __commonJS({
   "../node_modules/socks/build/common/receivebuffer.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -23888,6 +25242,9 @@ var require_receivebuffer = __commonJS({
     var ReceiveBuffer = class {
       static {
         __name(this, "ReceiveBuffer");
+      }
+      static {
+        __name2(this, "ReceiveBuffer");
       }
       constructor(size = 4096) {
         this.buffer = Buffer.allocUnsafe(size);
@@ -23929,12 +25286,10 @@ var require_receivebuffer = __commonJS({
     exports.ReceiveBuffer = ReceiveBuffer;
   }
 });
-
-// ../node_modules/socks/build/client/socksclient.js
 var require_socksclient = __commonJS({
   "../node_modules/socks/build/client/socksclient.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -23945,6 +25300,7 @@ var require_socksclient = __commonJS({
         });
       }
       __name(adopt, "adopt");
+      __name2(adopt, "adopt");
       return new (P || (P = Promise))(function(resolve, reject) {
         function fulfilled(value) {
           try {
@@ -23954,6 +25310,7 @@ var require_socksclient = __commonJS({
           }
         }
         __name(fulfilled, "fulfilled");
+        __name2(fulfilled, "fulfilled");
         function rejected(value) {
           try {
             step(generator["throw"](value));
@@ -23962,10 +25319,12 @@ var require_socksclient = __commonJS({
           }
         }
         __name(rejected, "rejected");
+        __name2(rejected, "rejected");
         function step(result) {
           result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
         }
         __name(step, "step");
+        __name2(step, "step");
         step((generator = generator.apply(thisArg, _arguments || [])).next());
       });
     };
@@ -23978,13 +25337,16 @@ var require_socksclient = __commonJS({
     var helpers_1 = require_helpers3();
     var receivebuffer_1 = require_receivebuffer();
     var util_1 = require_util2();
-    Object.defineProperty(exports, "SocksClientError", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "SocksClientError", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return util_1.SocksClientError;
     }, "get") });
     var ip_address_1 = require_ip_address();
     var SocksClient = class _SocksClient extends events_1.EventEmitter {
       static {
-        __name(this, "SocksClient");
+        __name(this, "_SocksClient");
+      }
+      static {
+        __name2(this, "SocksClient");
       }
       constructor(options) {
         super();
@@ -24619,12 +25981,10 @@ var require_socksclient = __commonJS({
     exports.SocksClient = SocksClient;
   }
 });
-
-// ../node_modules/socks/build/index.js
 var require_build = __commonJS({
   "../node_modules/socks/build/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -24632,7 +25992,7 @@ var require_build = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -24648,12 +26008,10 @@ var require_build = __commonJS({
     __exportStar(require_socksclient(), exports);
   }
 });
-
-// ../node_modules/telegram/extensions/socks.js
 var require_socks = __commonJS({
   "../node_modules/telegram/extensions/socks.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -24661,7 +26019,7 @@ var require_socks = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -24677,12 +26035,10 @@ var require_socks = __commonJS({
     __exportStar(require_build(), exports);
   }
 });
-
-// ../node_modules/telegram/extensions/PromisedNetSockets.js
 var require_PromisedNetSockets = __commonJS({
   "../node_modules/telegram/extensions/PromisedNetSockets.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -24690,7 +26046,7 @@ var require_PromisedNetSockets = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -24723,6 +26079,9 @@ var require_PromisedNetSockets = __commonJS({
     var PromisedNetSockets = class {
       static {
         __name(this, "PromisedNetSockets");
+      }
+      static {
+        __name2(this, "PromisedNetSockets");
       }
       constructor(proxy) {
         this.client = void 0;
@@ -24784,7 +26143,7 @@ var require_PromisedNetSockets = __commonJS({
        */
       async connect(port, ip) {
         this.stream = Buffer.alloc(0);
-        let connected2 = false;
+        let connected22 = false;
         if (this.proxy) {
           const info3 = await socks_1.SocksClient.createConnection({
             proxy: {
@@ -24802,7 +26161,7 @@ var require_PromisedNetSockets = __commonJS({
             }
           });
           this.client = info3.socket;
-          connected2 = true;
+          connected22 = true;
         } else {
           this.client = new net.Socket();
         }
@@ -24812,7 +26171,7 @@ var require_PromisedNetSockets = __commonJS({
         this.closed = false;
         return new Promise((resolve, reject) => {
           if (this.client) {
-            if (connected2) {
+            if (connected22) {
               this.receive();
               resolve(this);
             } else {
@@ -24871,12 +26230,10 @@ var require_PromisedNetSockets = __commonJS({
     exports.PromisedNetSockets = PromisedNetSockets;
   }
 });
-
-// ../node_modules/telegram/extensions/MessagePacker.js
 var require_MessagePacker = __commonJS({
   "../node_modules/telegram/extensions/MessagePacker.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -24895,6 +26252,9 @@ var require_MessagePacker = __commonJS({
     var MessagePacker = class {
       static {
         __name(this, "MessagePacker");
+      }
+      static {
+        __name2(this, "MessagePacker");
       }
       constructor(state, logger) {
         this._state = state;
@@ -25028,12 +26388,10 @@ var require_MessagePacker = __commonJS({
     exports.MessagePacker = MessagePacker;
   }
 });
-
-// ../node_modules/telegram/extensions/AsyncQueue.js
 var require_AsyncQueue = __commonJS({
   "../node_modules/telegram/extensions/AsyncQueue.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25042,6 +26400,9 @@ var require_AsyncQueue = __commonJS({
     var AsyncQueue = class {
       static {
         __name(this, "AsyncQueue");
+      }
+      static {
+        __name2(this, "AsyncQueue");
       }
       constructor() {
         this._queue = [];
@@ -25075,53 +26436,49 @@ var require_AsyncQueue = __commonJS({
     exports.AsyncQueue = AsyncQueue;
   }
 });
-
-// ../node_modules/telegram/extensions/index.js
 var require_extensions = __commonJS({
   "../node_modules/telegram/extensions/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsyncQueue = exports.MessagePacker = exports.PromisedNetSockets = exports.PromisedWebSockets = exports.BinaryReader = exports.BinaryWriter = exports.Logger = void 0;
     var Logger_1 = require_Logger();
-    Object.defineProperty(exports, "Logger", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "Logger", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return Logger_1.Logger;
     }, "get") });
     var BinaryWriter_1 = require_BinaryWriter();
-    Object.defineProperty(exports, "BinaryWriter", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "BinaryWriter", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return BinaryWriter_1.BinaryWriter;
     }, "get") });
     var BinaryReader_1 = require_BinaryReader();
-    Object.defineProperty(exports, "BinaryReader", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "BinaryReader", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return BinaryReader_1.BinaryReader;
     }, "get") });
     var PromisedWebSockets_1 = require_PromisedWebSockets();
-    Object.defineProperty(exports, "PromisedWebSockets", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "PromisedWebSockets", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return PromisedWebSockets_1.PromisedWebSockets;
     }, "get") });
     var PromisedNetSockets_1 = require_PromisedNetSockets();
-    Object.defineProperty(exports, "PromisedNetSockets", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "PromisedNetSockets", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return PromisedNetSockets_1.PromisedNetSockets;
     }, "get") });
     var MessagePacker_1 = require_MessagePacker();
-    Object.defineProperty(exports, "MessagePacker", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "MessagePacker", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return MessagePacker_1.MessagePacker;
     }, "get") });
     var AsyncQueue_1 = require_AsyncQueue();
-    Object.defineProperty(exports, "AsyncQueue", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "AsyncQueue", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return AsyncQueue_1.AsyncQueue;
     }, "get") });
   }
 });
-
-// ../node_modules/telegram/network/connection/Connection.js
 var require_Connection = __commonJS({
   "../node_modules/telegram/network/connection/Connection.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25131,6 +26488,9 @@ var require_Connection = __commonJS({
     var Connection = class {
       static {
         __name(this, "Connection");
+      }
+      static {
+        __name2(this, "Connection");
       }
       constructor({ ip, port, dcId, loggers, proxy, socket, testServers }) {
         this._ip = ip;
@@ -25240,6 +26600,9 @@ var require_Connection = __commonJS({
       static {
         __name(this, "ObfuscatedConnection");
       }
+      static {
+        __name2(this, "ObfuscatedConnection");
+      }
       constructor() {
         super(...arguments);
         this.ObfuscatedIO = void 0;
@@ -25261,6 +26624,9 @@ var require_Connection = __commonJS({
       static {
         __name(this, "PacketCodec");
       }
+      static {
+        __name2(this, "PacketCodec");
+      }
       constructor(connection) {
         this._conn = connection;
       }
@@ -25274,12 +26640,10 @@ var require_Connection = __commonJS({
     exports.PacketCodec = PacketCodec;
   }
 });
-
-// ../node_modules/telegram/network/connection/TCPFull.js
 var require_TCPFull = __commonJS({
   "../node_modules/telegram/network/connection/TCPFull.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25291,6 +26655,9 @@ var require_TCPFull = __commonJS({
     var FullPacketCodec = class extends Connection_1.PacketCodec {
       static {
         __name(this, "FullPacketCodec");
+      }
+      static {
+        __name2(this, "FullPacketCodec");
       }
       constructor(connection) {
         super(connection);
@@ -25337,6 +26704,9 @@ var require_TCPFull = __commonJS({
       static {
         __name(this, "ConnectionTCPFull");
       }
+      static {
+        __name2(this, "ConnectionTCPFull");
+      }
       constructor() {
         super(...arguments);
         this.PacketCodecClass = FullPacketCodec;
@@ -25345,12 +26715,10 @@ var require_TCPFull = __commonJS({
     exports.ConnectionTCPFull = ConnectionTCPFull;
   }
 });
-
-// ../node_modules/telegram/network/connection/TCPAbridged.js
 var require_TCPAbridged = __commonJS({
   "../node_modules/telegram/network/connection/TCPAbridged.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25364,7 +26732,10 @@ var require_TCPAbridged = __commonJS({
     var big_integer_1 = __importDefault(require_BigInteger());
     var AbridgedPacketCodec = class _AbridgedPacketCodec extends Connection_1.PacketCodec {
       static {
-        __name(this, "AbridgedPacketCodec");
+        __name(this, "_AbridgedPacketCodec");
+      }
+      static {
+        __name2(this, "AbridgedPacketCodec");
       }
       constructor(props) {
         super(props);
@@ -25405,6 +26776,9 @@ var require_TCPAbridged = __commonJS({
       static {
         __name(this, "ConnectionTCPAbridged");
       }
+      static {
+        __name2(this, "ConnectionTCPAbridged");
+      }
       constructor() {
         super(...arguments);
         this.PacketCodecClass = AbridgedPacketCodec;
@@ -25413,12 +26787,10 @@ var require_TCPAbridged = __commonJS({
     exports.ConnectionTCPAbridged = ConnectionTCPAbridged;
   }
 });
-
-// ../node_modules/@cryptography/aes/dist/cjs/aes.min.js
 var require_aes_min = __commonJS({
   "../node_modules/@cryptography/aes/dist/cjs/aes.min.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25449,11 +26821,13 @@ var require_aes_min = __commonJS({
       throw new Error("Unable to create 32-bit words");
     }
     __name(a, "a");
+    __name2(a, "a");
     function l(t2, e2, r2) {
       void 0 === r2 && (r2 = t2);
       for (var n2 = 0; n2 < t2.length; n2++) r2[n2] = t2[n2] ^ e2[n2];
     }
     __name(l, "l");
+    __name2(l, "l");
     !(function() {
       for (var a2, l2, f2, u2, g2, p = new Uint8Array(256), v = new Uint8Array(256), w = 0, A = 0, d = 0; d < 256; d++) p[d] = d << 1 ^ 283 * (d >> 7), v[p[d] ^ d] = d;
       for (; !t[w]; w ^= a2 || 1) f2 = (f2 = A ^ A << 1 ^ A << 2 ^ A << 3 ^ A << 4) >> 8 ^ 255 & f2 ^ 99, t[w] = f2, e[f2] = w, g2 = 16843009 * p[l2 = p[a2 = p[w]]] ^ 65537 * l2 ^ 257 * a2 ^ 16843008 * w, u2 = 257 * p[f2] ^ 16843008 * f2, r[w] = u2 = u2 << 24 ^ u2 >>> 8, n[w] = u2 = u2 << 24 ^ u2 >>> 8, i[w] = u2 = u2 << 24 ^ u2 >>> 8, h[w] = u2 = u2 << 24 ^ u2 >>> 8, o[f2] = g2 = g2 << 24 ^ g2 >>> 8, s[f2] = g2 = g2 << 24 ^ g2 >>> 8, c[f2] = g2 = g2 << 24 ^ g2 >>> 8, y[f2] = g2 = g2 << 24 ^ g2 >>> 8, A = v[A] || 1;
@@ -25466,7 +26840,8 @@ var require_aes_min = __commonJS({
         for (var n2, i2 = 1, h2 = r2.length; h2 < 4 * r2.length + 28; h2++) n2 = this.encKey[h2 - 1], (h2 % r2.length == 0 || 8 === r2.length && h2 % r2.length == 4) && (n2 = t[n2 >>> 24] << 24 ^ t[n2 >> 16 & 255] << 16 ^ t[n2 >> 8 & 255] << 8 ^ t[255 & n2], h2 % r2.length == 0 && (n2 = n2 << 8 ^ n2 >>> 24 ^ i2 << 24, i2 = i2 << 1 ^ 283 * (i2 >> 7))), this.encKey[h2] = this.encKey[h2 - r2.length] ^ n2;
         for (var l3 = 0; h2; l3++, h2--) n2 = this.encKey[3 & l3 ? h2 : h2 - 4], this.decKey[l3] = h2 <= 4 || l3 < 4 ? n2 : o[t[n2 >>> 24]] ^ s[t[n2 >> 16 & 255]] ^ c[t[n2 >> 8 & 255]] ^ y[t[255 & n2]];
       }
-      __name(l2, "l");
+      __name(l2, "l2");
+      __name2(l2, "l");
       return l2.prototype.encrypt = function(e2) {
         for (var o2, s2, c2, y2 = a(e2), l3 = new Uint32Array(4), f2 = y2[0] ^ this.encKey[0], u2 = y2[1] ^ this.encKey[1], g2 = y2[2] ^ this.encKey[2], p = y2[3] ^ this.encKey[3], v = this.encKey.length / 4 - 2, w = 4, A = 0; A < v; A++) o2 = r[f2 >>> 24] ^ n[u2 >> 16 & 255] ^ i[g2 >> 8 & 255] ^ h[255 & p] ^ this.encKey[w], s2 = r[u2 >>> 24] ^ n[g2 >> 16 & 255] ^ i[p >> 8 & 255] ^ h[255 & f2] ^ this.encKey[w + 1], c2 = r[g2 >>> 24] ^ n[p >> 16 & 255] ^ i[f2 >> 8 & 255] ^ h[255 & u2] ^ this.encKey[w + 2], p = r[p >>> 24] ^ n[f2 >> 16 & 255] ^ i[u2 >> 8 & 255] ^ h[255 & g2] ^ this.encKey[w + 3], f2 = o2, u2 = s2, g2 = c2, w += 4;
         for (A = 0; A < 4; A++) l3[A] = t[f2 >>> 24] << 24 ^ t[u2 >> 16 & 255] << 16 ^ t[g2 >> 8 & 255] << 8 ^ t[255 & p] ^ this.encKey[w++], o2 = f2, f2 = u2, u2 = g2, g2 = p, p = o2;
@@ -25481,7 +26856,8 @@ var require_aes_min = __commonJS({
       function t2(t3, e2, r2) {
         void 0 === r2 && (r2 = 16), this.key = a(t3), this.iv = a(e2), this.cipher = new f(t3), this.blockSize = r2 / 4;
       }
-      __name(t2, "t");
+      __name(t2, "t2");
+      __name2(t2, "t");
       return t2.prototype.encrypt = function(t3, e2) {
         for (var r2 = a(t3), n2 = e2 || new Uint32Array(r2.length), i2 = this.iv.subarray(this.blockSize, this.iv.length), h2 = this.iv.subarray(0, this.blockSize), o2 = new Uint32Array(this.blockSize), s2 = 0; s2 < r2.length; s2 += this.blockSize) {
           var c2 = r2.subarray(s2, s2 + this.blockSize);
@@ -25506,7 +26882,8 @@ var require_aes_min = __commonJS({
       function t2(t3, e2, r2) {
         if (void 0 === r2 && (r2 = 16), this.offset = 0, this.key = a(t3), this.counter = a(e2), this.cipher = new f(t3), this.blockSize = r2 / 4, 4 !== this.counter.length) throw new Error("AES-CTR mode counter must be 16 bytes length");
       }
-      __name(t2, "t");
+      __name(t2, "t2");
+      __name2(t2, "t");
       return t2.prototype.encrypt = function(t3, e2) {
         for (var r2 = a(t3), n2 = e2 || new Uint32Array(r2.length), i2 = this.offset, h2 = 0; h2 < r2.length; h2 += this.blockSize) {
           for (var o2 = this.cipher.encrypt(this.counter), s2 = h2, c2 = i2; s2 < r2.length && c2 < this.blockSize; s2++, c2++) n2[s2] = o2[c2] ^ r2[s2];
@@ -25522,12 +26899,10 @@ var require_aes_min = __commonJS({
     exports.CTR = g, exports.IGE = u, exports.default = f;
   }
 });
-
-// ../node_modules/telegram/crypto/converters.js
 var require_converters = __commonJS({
   "../node_modules/telegram/crypto/converters.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25550,10 +26925,12 @@ var require_converters = __commonJS({
       return uint8.buffer;
     }
     __name(i2abLow, "i2abLow");
+    __name2(i2abLow, "i2abLow");
     function i2abBig(buf) {
       return buf.buffer;
     }
     __name(i2abBig, "i2abBig");
+    __name2(i2abBig, "i2abBig");
     function ab2iLow(ab) {
       const uint8 = new Uint8Array(ab);
       const buf = new Uint32Array(uint8.length / 4);
@@ -25563,21 +26940,21 @@ var require_converters = __commonJS({
       return buf;
     }
     __name(ab2iLow, "ab2iLow");
+    __name2(ab2iLow, "ab2iLow");
     function ab2iBig(ab) {
       return new Uint32Array(ab);
     }
     __name(ab2iBig, "ab2iBig");
+    __name2(ab2iBig, "ab2iBig");
     exports.isBigEndian = new Uint8Array(new Uint32Array([16909060]))[0] === 1;
     exports.i2ab = exports.isBigEndian ? i2abBig : i2abLow;
     exports.ab2i = exports.isBigEndian ? ab2iBig : ab2iLow;
   }
 });
-
-// ../node_modules/telegram/crypto/words.js
 var require_words = __commonJS({
   "../node_modules/telegram/crypto/words.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25589,6 +26966,7 @@ var require_words = __commonJS({
       return str.charCodeAt(pos) << 24 ^ str.charCodeAt(pos + 1) << 16 ^ str.charCodeAt(pos + 2) << 8 ^ str.charCodeAt(pos + 3);
     }
     __name(s2i, "s2i");
+    __name2(s2i, "s2i");
     function getWords(key) {
       if (key instanceof Uint32Array) {
         return key;
@@ -25612,19 +26990,19 @@ var require_words = __commonJS({
       throw new Error("Unable to create 32-bit words");
     }
     __name(getWords, "getWords");
+    __name2(getWords, "getWords");
     function xor(left, right, to = left) {
       for (let i = 0; i < left.length; i++)
         to[i] = left[i] ^ right[i];
     }
     __name(xor, "xor");
+    __name2(xor, "xor");
   }
 });
-
-// ../node_modules/telegram/crypto/crypto.js
 var require_crypto2 = __commonJS({
   "../node_modules/telegram/crypto/crypto.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25645,6 +27023,9 @@ var require_crypto2 = __commonJS({
       static {
         __name(this, "Counter");
       }
+      static {
+        __name2(this, "Counter");
+      }
       constructor(initialValue) {
         this._counter = Buffer.from(initialValue);
       }
@@ -25663,6 +27044,9 @@ var require_crypto2 = __commonJS({
     var CTR = class {
       static {
         __name(this, "CTR");
+      }
+      static {
+        __name2(this, "CTR");
       }
       constructor(key, counter) {
         if (!(counter instanceof Counter)) {
@@ -25700,6 +27084,7 @@ var require_crypto2 = __commonJS({
       }
     }
     __name(createDecipheriv, "createDecipheriv");
+    __name2(createDecipheriv, "createDecipheriv");
     function createCipheriv(algorithm, key, iv) {
       if (algorithm.includes("ECB")) {
         throw new Error("Not supported");
@@ -25708,15 +27093,20 @@ var require_crypto2 = __commonJS({
       }
     }
     __name(createCipheriv, "createCipheriv");
+    __name2(createCipheriv, "createCipheriv");
     function randomBytes(count3) {
       const bytes = new Uint8Array(count3);
       crypto.getRandomValues(bytes);
       return bytes;
     }
     __name(randomBytes, "randomBytes");
+    __name2(randomBytes, "randomBytes");
     var Hash = class {
       static {
         __name(this, "Hash");
+      }
+      static {
+        __name2(this, "Hash");
       }
       constructor(algorithm) {
         this.algorithm = algorithm;
@@ -25746,18 +27136,18 @@ var require_crypto2 = __commonJS({
       }, passwordKey, 512));
     }
     __name(pbkdf2Sync, "pbkdf2Sync");
+    __name2(pbkdf2Sync, "pbkdf2Sync");
     function createHash(algorithm) {
       return new Hash(algorithm);
     }
     __name(createHash, "createHash");
+    __name2(createHash, "createHash");
   }
 });
-
-// ../node_modules/telegram/crypto/CTR.js
 var require_CTR = __commonJS({
   "../node_modules/telegram/crypto/CTR.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25765,7 +27155,7 @@ var require_CTR = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -25795,6 +27185,9 @@ var require_CTR = __commonJS({
       static {
         __name(this, "CTR");
       }
+      static {
+        __name2(this, "CTR");
+      }
       constructor(key, iv) {
         if (!Buffer.isBuffer(key) || !Buffer.isBuffer(iv) || iv.length !== 16) {
           throw new Error("Key and iv need to be a buffer");
@@ -25808,12 +27201,10 @@ var require_CTR = __commonJS({
     exports.CTR = CTR;
   }
 });
-
-// ../node_modules/telegram/network/connection/TCPObfuscated.js
 var require_TCPObfuscated = __commonJS({
   "../node_modules/telegram/network/connection/TCPObfuscated.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25826,6 +27217,9 @@ var require_TCPObfuscated = __commonJS({
     var ObfuscatedIO = class {
       static {
         __name(this, "ObfuscatedIO");
+      }
+      static {
+        __name2(this, "ObfuscatedIO");
       }
       constructor(connection) {
         this.header = void 0;
@@ -25887,7 +27281,10 @@ var require_TCPObfuscated = __commonJS({
     };
     var ConnectionTCPObfuscated2 = class extends Connection_1.ObfuscatedConnection {
       static {
-        __name(this, "ConnectionTCPObfuscated");
+        __name(this, "ConnectionTCPObfuscated2");
+      }
+      static {
+        __name2(this, "ConnectionTCPObfuscated");
       }
       constructor() {
         super(...arguments);
@@ -25898,41 +27295,37 @@ var require_TCPObfuscated = __commonJS({
     exports.ConnectionTCPObfuscated = ConnectionTCPObfuscated2;
   }
 });
-
-// ../node_modules/telegram/network/connection/index.js
 var require_connection = __commonJS({
   "../node_modules/telegram/network/connection/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ConnectionTCPObfuscated = exports.ConnectionTCPAbridged = exports.ConnectionTCPFull = exports.Connection = void 0;
     var Connection_1 = require_Connection();
-    Object.defineProperty(exports, "Connection", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "Connection", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return Connection_1.Connection;
     }, "get") });
     var TCPFull_1 = require_TCPFull();
-    Object.defineProperty(exports, "ConnectionTCPFull", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "ConnectionTCPFull", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return TCPFull_1.ConnectionTCPFull;
     }, "get") });
     var TCPAbridged_1 = require_TCPAbridged();
-    Object.defineProperty(exports, "ConnectionTCPAbridged", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "ConnectionTCPAbridged", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return TCPAbridged_1.ConnectionTCPAbridged;
     }, "get") });
     var TCPObfuscated_1 = require_TCPObfuscated();
-    Object.defineProperty(exports, "ConnectionTCPObfuscated", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "ConnectionTCPObfuscated", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return TCPObfuscated_1.ConnectionTCPObfuscated;
     }, "get") });
   }
 });
-
-// ../node_modules/telegram/sessions/Abstract.js
 var require_Abstract = __commonJS({
   "../node_modules/telegram/sessions/Abstract.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25942,16 +27335,17 @@ var require_Abstract = __commonJS({
       static {
         __name(this, "Session");
       }
+      static {
+        __name2(this, "Session");
+      }
     };
     exports.Session = Session;
   }
 });
-
-// ../node_modules/telegram/sessions/Memory.js
 var require_Memory = __commonJS({
   "../node_modules/telegram/sessions/Memory.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25969,6 +27363,9 @@ var require_Memory = __commonJS({
     var MemorySession = class extends Abstract_1.Session {
       static {
         __name(this, "MemorySession");
+      }
+      static {
+        __name2(this, "MemorySession");
       }
       constructor() {
         super();
@@ -26202,12 +27599,10 @@ var require_Memory = __commonJS({
     exports.MemorySession = MemorySession;
   }
 });
-
-// ../node_modules/telegram/crypto/AuthKey.js
 var require_AuthKey = __commonJS({
   "../node_modules/telegram/crypto/AuthKey.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -26218,7 +27613,10 @@ var require_AuthKey = __commonJS({
     var Helpers_2 = require_Helpers();
     var AuthKey = class _AuthKey {
       static {
-        __name(this, "AuthKey");
+        __name(this, "_AuthKey");
+      }
+      static {
+        __name2(this, "AuthKey");
       }
       constructor(value, hash) {
         if (!hash || !value) {
@@ -26287,12 +27685,10 @@ var require_AuthKey = __commonJS({
     exports.AuthKey = AuthKey;
   }
 });
-
-// ../node_modules/telegram/sessions/StringSession.js
 var require_StringSession = __commonJS({
   "../node_modules/telegram/sessions/StringSession.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -26304,7 +27700,10 @@ var require_StringSession = __commonJS({
     var CURRENT_VERSION = "1";
     var StringSession2 = class _StringSession extends Memory_1.MemorySession {
       static {
-        __name(this, "StringSession");
+        __name(this, "_StringSession");
+      }
+      static {
+        __name2(this, "StringSession");
       }
       /**
            * This session file can be easily saved and loaded as a string. According
@@ -26393,11 +27792,9 @@ var require_StringSession = __commonJS({
     exports.StringSession = StringSession2;
   }
 });
-
-// ../node_modules/store2/dist/store2.js
 var require_store2 = __commonJS({
   "../node_modules/store2/dist/store2.js"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -26408,7 +27805,7 @@ var require_store2 = __commonJS({
         apis: {},
         nsdelim: ".",
         // utilities
-        inherit: /* @__PURE__ */ __name(function(api, o) {
+        inherit: /* @__PURE__ */ __name2(function(api, o) {
           for (var p in api) {
             if (!o.hasOwnProperty(p)) {
               Object.defineProperty(o, p, Object.getOwnPropertyDescriptor(api, p));
@@ -26416,10 +27813,10 @@ var require_store2 = __commonJS({
           }
           return o;
         }, "inherit"),
-        stringify: /* @__PURE__ */ __name(function(d, fn) {
+        stringify: /* @__PURE__ */ __name2(function(d, fn) {
           return d === void 0 || typeof d === "function" ? d + "" : JSON.stringify(d, fn || _.replace);
         }, "stringify"),
-        parse: /* @__PURE__ */ __name(function(s, fn) {
+        parse: /* @__PURE__ */ __name2(function(s, fn) {
           try {
             return JSON.parse(s, fn || _.revive);
           } catch (e) {
@@ -26427,32 +27824,32 @@ var require_store2 = __commonJS({
           }
         }, "parse"),
         // extension hooks
-        fn: /* @__PURE__ */ __name(function(name, fn) {
+        fn: /* @__PURE__ */ __name2(function(name, fn) {
           _.storeAPI[name] = fn;
           for (var api in _.apis) {
             _.apis[api][name] = fn;
           }
         }, "fn"),
-        get: /* @__PURE__ */ __name(function(area, key) {
+        get: /* @__PURE__ */ __name2(function(area, key) {
           return area.getItem(key);
         }, "get"),
-        set: /* @__PURE__ */ __name(function(area, key, string) {
+        set: /* @__PURE__ */ __name2(function(area, key, string) {
           area.setItem(key, string);
         }, "set"),
-        remove: /* @__PURE__ */ __name(function(area, key) {
+        remove: /* @__PURE__ */ __name2(function(area, key) {
           area.removeItem(key);
         }, "remove"),
-        key: /* @__PURE__ */ __name(function(area, i) {
+        key: /* @__PURE__ */ __name2(function(area, i) {
           return area.key(i);
         }, "key"),
-        length: /* @__PURE__ */ __name(function(area) {
+        length: /* @__PURE__ */ __name2(function(area) {
           return area.length;
         }, "length"),
-        clear: /* @__PURE__ */ __name(function(area) {
+        clear: /* @__PURE__ */ __name2(function(area) {
           area.clear();
         }, "clear"),
         // core functions
-        Store: /* @__PURE__ */ __name(function(id, area, namespace) {
+        Store: /* @__PURE__ */ __name2(function(id, area, namespace) {
           var store2 = _.inherit(_.storeAPI, function(key, data, overwrite) {
             if (arguments.length === 0) {
               return store2.getAll();
@@ -26494,7 +27891,7 @@ var require_store2 = __commonJS({
         }, "Store"),
         storeAPI: {
           // admin functions
-          area: /* @__PURE__ */ __name(function(id, area) {
+          area: /* @__PURE__ */ __name2(function(id, area) {
             var store2 = this[id];
             if (!store2 || !store2.area) {
               store2 = _.Store(id, area, this._ns);
@@ -26504,7 +27901,7 @@ var require_store2 = __commonJS({
             }
             return store2;
           }, "area"),
-          namespace: /* @__PURE__ */ __name(function(namespace, singleArea, delim) {
+          namespace: /* @__PURE__ */ __name2(function(namespace, singleArea, delim) {
             delim = delim || this._delim || _.nsdelim;
             if (!namespace) {
               return this._ns ? this._ns.substring(0, this._ns.length - delim.length) : "";
@@ -26524,7 +27921,7 @@ var require_store2 = __commonJS({
             }
             return store2;
           }, "namespace"),
-          isFake: /* @__PURE__ */ __name(function(force) {
+          isFake: /* @__PURE__ */ __name2(function(force) {
             if (force) {
               this._real = this._area;
               this._area = _.storage("fake");
@@ -26533,20 +27930,20 @@ var require_store2 = __commonJS({
             }
             return this._area.name === "fake";
           }, "isFake"),
-          toString: /* @__PURE__ */ __name(function() {
+          toString: /* @__PURE__ */ __name2(function() {
             return "store" + (this._ns ? "." + this.namespace() : "") + "[" + this._id + "]";
           }, "toString"),
           // storage functions
-          has: /* @__PURE__ */ __name(function(key) {
+          has: /* @__PURE__ */ __name2(function(key) {
             if (this._area.has) {
               return this._area.has(this._in(key));
             }
             return !!(this._in(key) in this._area);
           }, "has"),
-          size: /* @__PURE__ */ __name(function() {
+          size: /* @__PURE__ */ __name2(function() {
             return this.keys().length;
           }, "size"),
-          each: /* @__PURE__ */ __name(function(fn, fill) {
+          each: /* @__PURE__ */ __name2(function(fn, fill) {
             for (var i = 0, m = _.length(this._area); i < m; i++) {
               var key = this._out(_.key(this._area, i));
               if (key !== void 0) {
@@ -26561,12 +27958,12 @@ var require_store2 = __commonJS({
             }
             return fill || this;
           }, "each"),
-          keys: /* @__PURE__ */ __name(function(fillList) {
+          keys: /* @__PURE__ */ __name2(function(fillList) {
             return this.each(function(k, v, list) {
               list.push(k);
             }, fillList || []);
           }, "keys"),
-          get: /* @__PURE__ */ __name(function(key, alt) {
+          get: /* @__PURE__ */ __name2(function(key, alt) {
             var s = _.get(this._area, this._in(key)), fn;
             if (typeof alt === "function") {
               fn = alt;
@@ -26574,17 +27971,17 @@ var require_store2 = __commonJS({
             }
             return s !== null ? _.parse(s, fn) : alt != null ? alt : s;
           }, "get"),
-          getAll: /* @__PURE__ */ __name(function(fillObj) {
+          getAll: /* @__PURE__ */ __name2(function(fillObj) {
             return this.each(function(k, v, all) {
               all[k] = v;
             }, fillObj || {});
           }, "getAll"),
-          transact: /* @__PURE__ */ __name(function(key, fn, alt) {
+          transact: /* @__PURE__ */ __name2(function(key, fn, alt) {
             var val = this.get(key, alt), ret = fn(val);
             this.set(key, ret === void 0 ? val : ret);
             return this;
           }, "transact"),
-          set: /* @__PURE__ */ __name(function(key, data, overwrite) {
+          set: /* @__PURE__ */ __name2(function(key, data, overwrite) {
             var d = this.get(key), replacer;
             if (d != null && overwrite === false) {
               return data;
@@ -26595,7 +27992,7 @@ var require_store2 = __commonJS({
             }
             return _.set(this._area, this._in(key), _.stringify(data, replacer), overwrite) || d;
           }, "set"),
-          setAll: /* @__PURE__ */ __name(function(data, overwrite) {
+          setAll: /* @__PURE__ */ __name2(function(data, overwrite) {
             var changed, val;
             for (var key in data) {
               val = data[key];
@@ -26605,7 +28002,7 @@ var require_store2 = __commonJS({
             }
             return changed;
           }, "setAll"),
-          add: /* @__PURE__ */ __name(function(key, data, replacer) {
+          add: /* @__PURE__ */ __name2(function(key, data, replacer) {
             var d = this.get(key);
             if (d instanceof Array) {
               data = d.concat(data);
@@ -26623,12 +28020,12 @@ var require_store2 = __commonJS({
             _.set(this._area, this._in(key), _.stringify(data, replacer));
             return data;
           }, "add"),
-          remove: /* @__PURE__ */ __name(function(key, alt) {
+          remove: /* @__PURE__ */ __name2(function(key, alt) {
             var d = this.get(key, alt);
             _.remove(this._area, this._in(key));
             return d;
           }, "remove"),
-          clear: /* @__PURE__ */ __name(function() {
+          clear: /* @__PURE__ */ __name2(function() {
             if (!this._ns) {
               _.clear(this._area);
             } else {
@@ -26638,7 +28035,7 @@ var require_store2 = __commonJS({
             }
             return this;
           }, "clear"),
-          clearAll: /* @__PURE__ */ __name(function() {
+          clearAll: /* @__PURE__ */ __name2(function() {
             var area = this._area;
             for (var id in _.areas) {
               if (_.areas.hasOwnProperty(id)) {
@@ -26650,13 +28047,13 @@ var require_store2 = __commonJS({
             return this;
           }, "clearAll"),
           // internal use functions
-          _in: /* @__PURE__ */ __name(function(k) {
+          _in: /* @__PURE__ */ __name2(function(k) {
             if (typeof k !== "string") {
               k = _.stringify(k);
             }
             return this._ns ? this._ns + k : k;
           }, "_in"),
-          _out: /* @__PURE__ */ __name(function(k) {
+          _out: /* @__PURE__ */ __name2(function(k) {
             return this._ns ? k && k.indexOf(this._ns) === 0 ? k.substring(this._ns.length) : void 0 : (
               // so each() knows to skip it
               k
@@ -26664,15 +28061,15 @@ var require_store2 = __commonJS({
           }, "_out")
         },
         // end _.storeAPI
-        storage: /* @__PURE__ */ __name(function(name) {
+        storage: /* @__PURE__ */ __name2(function(name) {
           return _.inherit(_.storageAPI, { items: {}, name });
         }, "storage"),
         storageAPI: {
           length: 0,
-          has: /* @__PURE__ */ __name(function(k) {
+          has: /* @__PURE__ */ __name2(function(k) {
             return this.items.hasOwnProperty(k);
           }, "has"),
-          key: /* @__PURE__ */ __name(function(i) {
+          key: /* @__PURE__ */ __name2(function(i) {
             var c = 0;
             for (var k in this.items) {
               if (this.has(k) && i === c++) {
@@ -26680,22 +28077,22 @@ var require_store2 = __commonJS({
               }
             }
           }, "key"),
-          setItem: /* @__PURE__ */ __name(function(k, v) {
+          setItem: /* @__PURE__ */ __name2(function(k, v) {
             if (!this.has(k)) {
               this.length++;
             }
             this.items[k] = v;
           }, "setItem"),
-          removeItem: /* @__PURE__ */ __name(function(k) {
+          removeItem: /* @__PURE__ */ __name2(function(k) {
             if (this.has(k)) {
               delete this.items[k];
               this.length--;
             }
           }, "removeItem"),
-          getItem: /* @__PURE__ */ __name(function(k) {
+          getItem: /* @__PURE__ */ __name2(function(k) {
             return this.has(k) ? this.items[k] : null;
           }, "getItem"),
-          clear: /* @__PURE__ */ __name(function() {
+          clear: /* @__PURE__ */ __name2(function() {
             for (var k in this.items) {
               this.removeItem(k);
             }
@@ -26736,128 +28133,208 @@ var require_store2 = __commonJS({
     })(exports, exports && exports.define);
   }
 });
-
-// node-built-in-modules:path
-import libDefault7 from "path";
 var require_path = __commonJS({
   "node-built-in-modules:path"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     module.exports = libDefault7;
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/fs/promises.mjs
-var access, copyFile, cp, open, opendir, rename, truncate, rm, rmdir, mkdir, readdir, readlink, symlink, lstat, stat, link, unlink, chmod, lchmod, lchown, chown, utimes, lutimes, realpath, mkdtemp, writeFile, appendFile, readFile, watch, statfs, glob;
+var access;
+var copyFile;
+var cp;
+var open;
+var opendir;
+var rename;
+var truncate;
+var rm;
+var rmdir;
+var mkdir;
+var readdir;
+var readlink;
+var symlink;
+var lstat;
+var stat;
+var link;
+var unlink;
+var chmod;
+var lchmod;
+var lchown;
+var chown;
+var utimes;
+var lutimes;
+var realpath;
+var mkdtemp;
+var writeFile;
+var appendFile;
+var readFile;
+var watch;
+var statfs;
+var glob;
 var init_promises = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/fs/promises.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     init_utils();
-    access = /* @__PURE__ */ notImplemented("fs.access");
-    copyFile = /* @__PURE__ */ notImplemented("fs.copyFile");
-    cp = /* @__PURE__ */ notImplemented("fs.cp");
-    open = /* @__PURE__ */ notImplemented("fs.open");
-    opendir = /* @__PURE__ */ notImplemented("fs.opendir");
-    rename = /* @__PURE__ */ notImplemented("fs.rename");
-    truncate = /* @__PURE__ */ notImplemented("fs.truncate");
-    rm = /* @__PURE__ */ notImplemented("fs.rm");
-    rmdir = /* @__PURE__ */ notImplemented("fs.rmdir");
-    mkdir = /* @__PURE__ */ notImplemented("fs.mkdir");
-    readdir = /* @__PURE__ */ notImplemented("fs.readdir");
-    readlink = /* @__PURE__ */ notImplemented("fs.readlink");
-    symlink = /* @__PURE__ */ notImplemented("fs.symlink");
-    lstat = /* @__PURE__ */ notImplemented("fs.lstat");
-    stat = /* @__PURE__ */ notImplemented("fs.stat");
-    link = /* @__PURE__ */ notImplemented("fs.link");
-    unlink = /* @__PURE__ */ notImplemented("fs.unlink");
-    chmod = /* @__PURE__ */ notImplemented("fs.chmod");
-    lchmod = /* @__PURE__ */ notImplemented("fs.lchmod");
-    lchown = /* @__PURE__ */ notImplemented("fs.lchown");
-    chown = /* @__PURE__ */ notImplemented("fs.chown");
-    utimes = /* @__PURE__ */ notImplemented("fs.utimes");
-    lutimes = /* @__PURE__ */ notImplemented("fs.lutimes");
-    realpath = /* @__PURE__ */ notImplemented("fs.realpath");
-    mkdtemp = /* @__PURE__ */ notImplemented("fs.mkdtemp");
-    writeFile = /* @__PURE__ */ notImplemented("fs.writeFile");
-    appendFile = /* @__PURE__ */ notImplemented("fs.appendFile");
-    readFile = /* @__PURE__ */ notImplemented("fs.readFile");
-    watch = /* @__PURE__ */ notImplemented("fs.watch");
-    statfs = /* @__PURE__ */ notImplemented("fs.statfs");
-    glob = /* @__PURE__ */ notImplemented("fs.glob");
+    access = /* @__PURE__ */ notImplemented2("fs.access");
+    copyFile = /* @__PURE__ */ notImplemented2("fs.copyFile");
+    cp = /* @__PURE__ */ notImplemented2("fs.cp");
+    open = /* @__PURE__ */ notImplemented2("fs.open");
+    opendir = /* @__PURE__ */ notImplemented2("fs.opendir");
+    rename = /* @__PURE__ */ notImplemented2("fs.rename");
+    truncate = /* @__PURE__ */ notImplemented2("fs.truncate");
+    rm = /* @__PURE__ */ notImplemented2("fs.rm");
+    rmdir = /* @__PURE__ */ notImplemented2("fs.rmdir");
+    mkdir = /* @__PURE__ */ notImplemented2("fs.mkdir");
+    readdir = /* @__PURE__ */ notImplemented2("fs.readdir");
+    readlink = /* @__PURE__ */ notImplemented2("fs.readlink");
+    symlink = /* @__PURE__ */ notImplemented2("fs.symlink");
+    lstat = /* @__PURE__ */ notImplemented2("fs.lstat");
+    stat = /* @__PURE__ */ notImplemented2("fs.stat");
+    link = /* @__PURE__ */ notImplemented2("fs.link");
+    unlink = /* @__PURE__ */ notImplemented2("fs.unlink");
+    chmod = /* @__PURE__ */ notImplemented2("fs.chmod");
+    lchmod = /* @__PURE__ */ notImplemented2("fs.lchmod");
+    lchown = /* @__PURE__ */ notImplemented2("fs.lchown");
+    chown = /* @__PURE__ */ notImplemented2("fs.chown");
+    utimes = /* @__PURE__ */ notImplemented2("fs.utimes");
+    lutimes = /* @__PURE__ */ notImplemented2("fs.lutimes");
+    realpath = /* @__PURE__ */ notImplemented2("fs.realpath");
+    mkdtemp = /* @__PURE__ */ notImplemented2("fs.mkdtemp");
+    writeFile = /* @__PURE__ */ notImplemented2("fs.writeFile");
+    appendFile = /* @__PURE__ */ notImplemented2("fs.appendFile");
+    readFile = /* @__PURE__ */ notImplemented2("fs.readFile");
+    watch = /* @__PURE__ */ notImplemented2("fs.watch");
+    statfs = /* @__PURE__ */ notImplemented2("fs.statfs");
+    glob = /* @__PURE__ */ notImplemented2("fs.glob");
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/fs/constants.mjs
 var constants_exports = {};
 __export(constants_exports, {
-  COPYFILE_EXCL: () => COPYFILE_EXCL,
-  COPYFILE_FICLONE: () => COPYFILE_FICLONE,
-  COPYFILE_FICLONE_FORCE: () => COPYFILE_FICLONE_FORCE,
-  EXTENSIONLESS_FORMAT_JAVASCRIPT: () => EXTENSIONLESS_FORMAT_JAVASCRIPT,
-  EXTENSIONLESS_FORMAT_WASM: () => EXTENSIONLESS_FORMAT_WASM,
-  F_OK: () => F_OK,
-  O_APPEND: () => O_APPEND,
-  O_CREAT: () => O_CREAT,
-  O_DIRECT: () => O_DIRECT,
-  O_DIRECTORY: () => O_DIRECTORY,
-  O_DSYNC: () => O_DSYNC,
-  O_EXCL: () => O_EXCL,
-  O_NOATIME: () => O_NOATIME,
-  O_NOCTTY: () => O_NOCTTY,
-  O_NOFOLLOW: () => O_NOFOLLOW,
-  O_NONBLOCK: () => O_NONBLOCK,
-  O_RDONLY: () => O_RDONLY,
-  O_RDWR: () => O_RDWR,
-  O_SYNC: () => O_SYNC,
-  O_TRUNC: () => O_TRUNC,
-  O_WRONLY: () => O_WRONLY,
-  R_OK: () => R_OK,
-  S_IFBLK: () => S_IFBLK,
-  S_IFCHR: () => S_IFCHR,
-  S_IFDIR: () => S_IFDIR,
-  S_IFIFO: () => S_IFIFO,
-  S_IFLNK: () => S_IFLNK,
-  S_IFMT: () => S_IFMT,
-  S_IFREG: () => S_IFREG,
-  S_IFSOCK: () => S_IFSOCK,
-  S_IRGRP: () => S_IRGRP,
-  S_IROTH: () => S_IROTH,
-  S_IRUSR: () => S_IRUSR,
-  S_IRWXG: () => S_IRWXG,
-  S_IRWXO: () => S_IRWXO,
-  S_IRWXU: () => S_IRWXU,
-  S_IWGRP: () => S_IWGRP,
-  S_IWOTH: () => S_IWOTH,
-  S_IWUSR: () => S_IWUSR,
-  S_IXGRP: () => S_IXGRP,
-  S_IXOTH: () => S_IXOTH,
-  S_IXUSR: () => S_IXUSR,
-  UV_DIRENT_BLOCK: () => UV_DIRENT_BLOCK,
-  UV_DIRENT_CHAR: () => UV_DIRENT_CHAR,
-  UV_DIRENT_DIR: () => UV_DIRENT_DIR,
-  UV_DIRENT_FIFO: () => UV_DIRENT_FIFO,
-  UV_DIRENT_FILE: () => UV_DIRENT_FILE,
-  UV_DIRENT_LINK: () => UV_DIRENT_LINK,
-  UV_DIRENT_SOCKET: () => UV_DIRENT_SOCKET,
-  UV_DIRENT_UNKNOWN: () => UV_DIRENT_UNKNOWN,
-  UV_FS_COPYFILE_EXCL: () => UV_FS_COPYFILE_EXCL,
-  UV_FS_COPYFILE_FICLONE: () => UV_FS_COPYFILE_FICLONE,
-  UV_FS_COPYFILE_FICLONE_FORCE: () => UV_FS_COPYFILE_FICLONE_FORCE,
-  UV_FS_O_FILEMAP: () => UV_FS_O_FILEMAP,
-  UV_FS_SYMLINK_DIR: () => UV_FS_SYMLINK_DIR,
-  UV_FS_SYMLINK_JUNCTION: () => UV_FS_SYMLINK_JUNCTION,
-  W_OK: () => W_OK,
-  X_OK: () => X_OK
+  COPYFILE_EXCL: /* @__PURE__ */ __name(() => COPYFILE_EXCL, "COPYFILE_EXCL"),
+  COPYFILE_FICLONE: /* @__PURE__ */ __name(() => COPYFILE_FICLONE, "COPYFILE_FICLONE"),
+  COPYFILE_FICLONE_FORCE: /* @__PURE__ */ __name(() => COPYFILE_FICLONE_FORCE, "COPYFILE_FICLONE_FORCE"),
+  EXTENSIONLESS_FORMAT_JAVASCRIPT: /* @__PURE__ */ __name(() => EXTENSIONLESS_FORMAT_JAVASCRIPT, "EXTENSIONLESS_FORMAT_JAVASCRIPT"),
+  EXTENSIONLESS_FORMAT_WASM: /* @__PURE__ */ __name(() => EXTENSIONLESS_FORMAT_WASM, "EXTENSIONLESS_FORMAT_WASM"),
+  F_OK: /* @__PURE__ */ __name(() => F_OK, "F_OK"),
+  O_APPEND: /* @__PURE__ */ __name(() => O_APPEND, "O_APPEND"),
+  O_CREAT: /* @__PURE__ */ __name(() => O_CREAT, "O_CREAT"),
+  O_DIRECT: /* @__PURE__ */ __name(() => O_DIRECT, "O_DIRECT"),
+  O_DIRECTORY: /* @__PURE__ */ __name(() => O_DIRECTORY, "O_DIRECTORY"),
+  O_DSYNC: /* @__PURE__ */ __name(() => O_DSYNC, "O_DSYNC"),
+  O_EXCL: /* @__PURE__ */ __name(() => O_EXCL, "O_EXCL"),
+  O_NOATIME: /* @__PURE__ */ __name(() => O_NOATIME, "O_NOATIME"),
+  O_NOCTTY: /* @__PURE__ */ __name(() => O_NOCTTY, "O_NOCTTY"),
+  O_NOFOLLOW: /* @__PURE__ */ __name(() => O_NOFOLLOW, "O_NOFOLLOW"),
+  O_NONBLOCK: /* @__PURE__ */ __name(() => O_NONBLOCK, "O_NONBLOCK"),
+  O_RDONLY: /* @__PURE__ */ __name(() => O_RDONLY, "O_RDONLY"),
+  O_RDWR: /* @__PURE__ */ __name(() => O_RDWR, "O_RDWR"),
+  O_SYNC: /* @__PURE__ */ __name(() => O_SYNC, "O_SYNC"),
+  O_TRUNC: /* @__PURE__ */ __name(() => O_TRUNC, "O_TRUNC"),
+  O_WRONLY: /* @__PURE__ */ __name(() => O_WRONLY, "O_WRONLY"),
+  R_OK: /* @__PURE__ */ __name(() => R_OK, "R_OK"),
+  S_IFBLK: /* @__PURE__ */ __name(() => S_IFBLK, "S_IFBLK"),
+  S_IFCHR: /* @__PURE__ */ __name(() => S_IFCHR, "S_IFCHR"),
+  S_IFDIR: /* @__PURE__ */ __name(() => S_IFDIR, "S_IFDIR"),
+  S_IFIFO: /* @__PURE__ */ __name(() => S_IFIFO, "S_IFIFO"),
+  S_IFLNK: /* @__PURE__ */ __name(() => S_IFLNK, "S_IFLNK"),
+  S_IFMT: /* @__PURE__ */ __name(() => S_IFMT, "S_IFMT"),
+  S_IFREG: /* @__PURE__ */ __name(() => S_IFREG, "S_IFREG"),
+  S_IFSOCK: /* @__PURE__ */ __name(() => S_IFSOCK, "S_IFSOCK"),
+  S_IRGRP: /* @__PURE__ */ __name(() => S_IRGRP, "S_IRGRP"),
+  S_IROTH: /* @__PURE__ */ __name(() => S_IROTH, "S_IROTH"),
+  S_IRUSR: /* @__PURE__ */ __name(() => S_IRUSR, "S_IRUSR"),
+  S_IRWXG: /* @__PURE__ */ __name(() => S_IRWXG, "S_IRWXG"),
+  S_IRWXO: /* @__PURE__ */ __name(() => S_IRWXO, "S_IRWXO"),
+  S_IRWXU: /* @__PURE__ */ __name(() => S_IRWXU, "S_IRWXU"),
+  S_IWGRP: /* @__PURE__ */ __name(() => S_IWGRP, "S_IWGRP"),
+  S_IWOTH: /* @__PURE__ */ __name(() => S_IWOTH, "S_IWOTH"),
+  S_IWUSR: /* @__PURE__ */ __name(() => S_IWUSR, "S_IWUSR"),
+  S_IXGRP: /* @__PURE__ */ __name(() => S_IXGRP, "S_IXGRP"),
+  S_IXOTH: /* @__PURE__ */ __name(() => S_IXOTH, "S_IXOTH"),
+  S_IXUSR: /* @__PURE__ */ __name(() => S_IXUSR, "S_IXUSR"),
+  UV_DIRENT_BLOCK: /* @__PURE__ */ __name(() => UV_DIRENT_BLOCK, "UV_DIRENT_BLOCK"),
+  UV_DIRENT_CHAR: /* @__PURE__ */ __name(() => UV_DIRENT_CHAR, "UV_DIRENT_CHAR"),
+  UV_DIRENT_DIR: /* @__PURE__ */ __name(() => UV_DIRENT_DIR, "UV_DIRENT_DIR"),
+  UV_DIRENT_FIFO: /* @__PURE__ */ __name(() => UV_DIRENT_FIFO, "UV_DIRENT_FIFO"),
+  UV_DIRENT_FILE: /* @__PURE__ */ __name(() => UV_DIRENT_FILE, "UV_DIRENT_FILE"),
+  UV_DIRENT_LINK: /* @__PURE__ */ __name(() => UV_DIRENT_LINK, "UV_DIRENT_LINK"),
+  UV_DIRENT_SOCKET: /* @__PURE__ */ __name(() => UV_DIRENT_SOCKET, "UV_DIRENT_SOCKET"),
+  UV_DIRENT_UNKNOWN: /* @__PURE__ */ __name(() => UV_DIRENT_UNKNOWN, "UV_DIRENT_UNKNOWN"),
+  UV_FS_COPYFILE_EXCL: /* @__PURE__ */ __name(() => UV_FS_COPYFILE_EXCL, "UV_FS_COPYFILE_EXCL"),
+  UV_FS_COPYFILE_FICLONE: /* @__PURE__ */ __name(() => UV_FS_COPYFILE_FICLONE, "UV_FS_COPYFILE_FICLONE"),
+  UV_FS_COPYFILE_FICLONE_FORCE: /* @__PURE__ */ __name(() => UV_FS_COPYFILE_FICLONE_FORCE, "UV_FS_COPYFILE_FICLONE_FORCE"),
+  UV_FS_O_FILEMAP: /* @__PURE__ */ __name(() => UV_FS_O_FILEMAP, "UV_FS_O_FILEMAP"),
+  UV_FS_SYMLINK_DIR: /* @__PURE__ */ __name(() => UV_FS_SYMLINK_DIR, "UV_FS_SYMLINK_DIR"),
+  UV_FS_SYMLINK_JUNCTION: /* @__PURE__ */ __name(() => UV_FS_SYMLINK_JUNCTION, "UV_FS_SYMLINK_JUNCTION"),
+  W_OK: /* @__PURE__ */ __name(() => W_OK, "W_OK"),
+  X_OK: /* @__PURE__ */ __name(() => X_OK, "X_OK")
 });
-var UV_FS_SYMLINK_DIR, UV_FS_SYMLINK_JUNCTION, O_RDONLY, O_WRONLY, O_RDWR, UV_DIRENT_UNKNOWN, UV_DIRENT_FILE, UV_DIRENT_DIR, UV_DIRENT_LINK, UV_DIRENT_FIFO, UV_DIRENT_SOCKET, UV_DIRENT_CHAR, UV_DIRENT_BLOCK, EXTENSIONLESS_FORMAT_JAVASCRIPT, EXTENSIONLESS_FORMAT_WASM, S_IFMT, S_IFREG, S_IFDIR, S_IFCHR, S_IFBLK, S_IFIFO, S_IFLNK, S_IFSOCK, O_CREAT, O_EXCL, UV_FS_O_FILEMAP, O_NOCTTY, O_TRUNC, O_APPEND, O_DIRECTORY, O_NOATIME, O_NOFOLLOW, O_SYNC, O_DSYNC, O_DIRECT, O_NONBLOCK, S_IRWXU, S_IRUSR, S_IWUSR, S_IXUSR, S_IRWXG, S_IRGRP, S_IWGRP, S_IXGRP, S_IRWXO, S_IROTH, S_IWOTH, S_IXOTH, F_OK, R_OK, W_OK, X_OK, UV_FS_COPYFILE_EXCL, COPYFILE_EXCL, UV_FS_COPYFILE_FICLONE, COPYFILE_FICLONE, UV_FS_COPYFILE_FICLONE_FORCE, COPYFILE_FICLONE_FORCE;
+var UV_FS_SYMLINK_DIR;
+var UV_FS_SYMLINK_JUNCTION;
+var O_RDONLY;
+var O_WRONLY;
+var O_RDWR;
+var UV_DIRENT_UNKNOWN;
+var UV_DIRENT_FILE;
+var UV_DIRENT_DIR;
+var UV_DIRENT_LINK;
+var UV_DIRENT_FIFO;
+var UV_DIRENT_SOCKET;
+var UV_DIRENT_CHAR;
+var UV_DIRENT_BLOCK;
+var EXTENSIONLESS_FORMAT_JAVASCRIPT;
+var EXTENSIONLESS_FORMAT_WASM;
+var S_IFMT;
+var S_IFREG;
+var S_IFDIR;
+var S_IFCHR;
+var S_IFBLK;
+var S_IFIFO;
+var S_IFLNK;
+var S_IFSOCK;
+var O_CREAT;
+var O_EXCL;
+var UV_FS_O_FILEMAP;
+var O_NOCTTY;
+var O_TRUNC;
+var O_APPEND;
+var O_DIRECTORY;
+var O_NOATIME;
+var O_NOFOLLOW;
+var O_SYNC;
+var O_DSYNC;
+var O_DIRECT;
+var O_NONBLOCK;
+var S_IRWXU;
+var S_IRUSR;
+var S_IWUSR;
+var S_IXUSR;
+var S_IRWXG;
+var S_IRGRP;
+var S_IWGRP;
+var S_IXGRP;
+var S_IRWXO;
+var S_IROTH;
+var S_IWOTH;
+var S_IXOTH;
+var F_OK;
+var R_OK;
+var W_OK;
+var X_OK;
+var UV_FS_COPYFILE_EXCL;
+var COPYFILE_EXCL;
+var UV_FS_COPYFILE_FICLONE;
+var COPYFILE_FICLONE;
+var UV_FS_COPYFILE_FICLONE_FORCE;
+var COPYFILE_FICLONE_FORCE;
 var init_constants = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/fs/constants.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -26921,12 +28398,10 @@ var init_constants = __esm({
     COPYFILE_FICLONE_FORCE = 4;
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/fs/promises.mjs
 var promises_default;
 var init_promises2 = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/fs/promises.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -26969,12 +28444,16 @@ var init_promises2 = __esm({
     };
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/fs/classes.mjs
-var Dir, Dirent, Stats, ReadStream2, WriteStream2, FileReadStream, FileWriteStream;
+var Dir;
+var Dirent;
+var Stats;
+var ReadStream22;
+var WriteStream22;
+var FileReadStream;
+var FileWriteStream;
 var init_classes = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/fs/classes.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -26982,16 +28461,14 @@ var init_classes = __esm({
     Dir = /* @__PURE__ */ notImplementedClass("fs.Dir");
     Dirent = /* @__PURE__ */ notImplementedClass("fs.Dirent");
     Stats = /* @__PURE__ */ notImplementedClass("fs.Stats");
-    ReadStream2 = /* @__PURE__ */ notImplementedClass("fs.ReadStream");
-    WriteStream2 = /* @__PURE__ */ notImplementedClass("fs.WriteStream");
-    FileReadStream = ReadStream2;
-    FileWriteStream = WriteStream2;
+    ReadStream22 = /* @__PURE__ */ notImplementedClass("fs.ReadStream");
+    WriteStream22 = /* @__PURE__ */ notImplementedClass("fs.WriteStream");
+    FileReadStream = ReadStream22;
+    FileWriteStream = WriteStream22;
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/fs/fs.mjs
 function callbackify(fn) {
-  const fnc = /* @__PURE__ */ __name(function(...args) {
+  const fnc = /* @__PURE__ */ __name2(function(...args) {
     const cb = args.pop();
     fn().catch((error3) => cb(error3)).then((val) => cb(void 0, val));
   }, "fnc");
@@ -26999,16 +28476,109 @@ function callbackify(fn) {
   fnc.native = fnc;
   return fnc;
 }
-var access2, appendFile2, chown2, chmod2, copyFile2, cp2, lchown2, lchmod2, link2, lstat2, lutimes2, mkdir2, mkdtemp2, realpath2, open2, opendir2, readdir2, readFile2, readlink2, rename2, rm2, rmdir2, stat2, symlink2, truncate2, unlink2, utimes2, writeFile2, statfs2, close, createReadStream, createWriteStream, exists, fchown, fchmod, fdatasync, fstat, fsync, ftruncate, futimes, lstatSync, read, readv, realpathSync, statSync, unwatchFile, watch2, watchFile, write, writev, _toUnixTimestamp, openAsBlob, glob2, appendFileSync, accessSync, chownSync, chmodSync, closeSync, copyFileSync, cpSync, existsSync, fchownSync, fchmodSync, fdatasyncSync, fstatSync, fsyncSync, ftruncateSync, futimesSync, lchownSync, lchmodSync, linkSync, lutimesSync, mkdirSync, mkdtempSync, openSync, opendirSync, readdirSync, readSync, readvSync, readFileSync, readlinkSync, renameSync, rmSync, rmdirSync, symlinkSync, truncateSync, unlinkSync, utimesSync, writeFileSync, writeSync, writevSync, statfsSync, globSync;
+__name(callbackify, "callbackify");
+var access2;
+var appendFile2;
+var chown2;
+var chmod2;
+var copyFile2;
+var cp2;
+var lchown2;
+var lchmod2;
+var link2;
+var lstat2;
+var lutimes2;
+var mkdir2;
+var mkdtemp2;
+var realpath2;
+var open2;
+var opendir2;
+var readdir2;
+var readFile2;
+var readlink2;
+var rename2;
+var rm2;
+var rmdir2;
+var stat2;
+var symlink2;
+var truncate2;
+var unlink2;
+var utimes2;
+var writeFile2;
+var statfs2;
+var close;
+var createReadStream;
+var createWriteStream;
+var exists;
+var fchown;
+var fchmod;
+var fdatasync;
+var fstat;
+var fsync;
+var ftruncate;
+var futimes;
+var lstatSync;
+var read;
+var readv;
+var realpathSync;
+var statSync;
+var unwatchFile;
+var watch2;
+var watchFile;
+var write;
+var writev;
+var _toUnixTimestamp;
+var openAsBlob;
+var glob2;
+var appendFileSync;
+var accessSync;
+var chownSync;
+var chmodSync;
+var closeSync;
+var copyFileSync;
+var cpSync;
+var existsSync;
+var fchownSync;
+var fchmodSync;
+var fdatasyncSync;
+var fstatSync;
+var fsyncSync;
+var ftruncateSync;
+var futimesSync;
+var lchownSync;
+var lchmodSync;
+var linkSync;
+var lutimesSync;
+var mkdirSync;
+var mkdtempSync;
+var openSync;
+var opendirSync;
+var readdirSync;
+var readSync;
+var readvSync;
+var readFileSync;
+var readlinkSync;
+var renameSync;
+var rmSync;
+var rmdirSync;
+var symlinkSync;
+var truncateSync;
+var unlinkSync;
+var utimesSync;
+var writeFileSync;
+var writeSync;
+var writevSync;
+var statfsSync;
+var globSync;
 var init_fs = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/fs/fs.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     init_utils();
     init_promises();
-    __name(callbackify, "callbackify");
+    __name2(callbackify, "callbackify");
     access2 = callbackify(access);
     appendFile2 = callbackify(appendFile);
     chown2 = callbackify(chown);
@@ -27062,54 +28632,52 @@ var init_fs = __esm({
     _toUnixTimestamp = /* @__PURE__ */ notImplementedAsync("fs._toUnixTimestamp");
     openAsBlob = /* @__PURE__ */ notImplementedAsync("fs.openAsBlob");
     glob2 = /* @__PURE__ */ notImplementedAsync("fs.glob");
-    appendFileSync = /* @__PURE__ */ notImplemented("fs.appendFileSync");
-    accessSync = /* @__PURE__ */ notImplemented("fs.accessSync");
-    chownSync = /* @__PURE__ */ notImplemented("fs.chownSync");
-    chmodSync = /* @__PURE__ */ notImplemented("fs.chmodSync");
-    closeSync = /* @__PURE__ */ notImplemented("fs.closeSync");
-    copyFileSync = /* @__PURE__ */ notImplemented("fs.copyFileSync");
-    cpSync = /* @__PURE__ */ notImplemented("fs.cpSync");
-    existsSync = /* @__PURE__ */ __name(() => false, "existsSync");
-    fchownSync = /* @__PURE__ */ notImplemented("fs.fchownSync");
-    fchmodSync = /* @__PURE__ */ notImplemented("fs.fchmodSync");
-    fdatasyncSync = /* @__PURE__ */ notImplemented("fs.fdatasyncSync");
-    fstatSync = /* @__PURE__ */ notImplemented("fs.fstatSync");
-    fsyncSync = /* @__PURE__ */ notImplemented("fs.fsyncSync");
-    ftruncateSync = /* @__PURE__ */ notImplemented("fs.ftruncateSync");
-    futimesSync = /* @__PURE__ */ notImplemented("fs.futimesSync");
-    lchownSync = /* @__PURE__ */ notImplemented("fs.lchownSync");
-    lchmodSync = /* @__PURE__ */ notImplemented("fs.lchmodSync");
-    linkSync = /* @__PURE__ */ notImplemented("fs.linkSync");
-    lutimesSync = /* @__PURE__ */ notImplemented("fs.lutimesSync");
-    mkdirSync = /* @__PURE__ */ notImplemented("fs.mkdirSync");
-    mkdtempSync = /* @__PURE__ */ notImplemented("fs.mkdtempSync");
-    openSync = /* @__PURE__ */ notImplemented("fs.openSync");
-    opendirSync = /* @__PURE__ */ notImplemented("fs.opendirSync");
-    readdirSync = /* @__PURE__ */ notImplemented("fs.readdirSync");
-    readSync = /* @__PURE__ */ notImplemented("fs.readSync");
-    readvSync = /* @__PURE__ */ notImplemented("fs.readvSync");
-    readFileSync = /* @__PURE__ */ notImplemented("fs.readFileSync");
-    readlinkSync = /* @__PURE__ */ notImplemented("fs.readlinkSync");
-    renameSync = /* @__PURE__ */ notImplemented("fs.renameSync");
-    rmSync = /* @__PURE__ */ notImplemented("fs.rmSync");
-    rmdirSync = /* @__PURE__ */ notImplemented("fs.rmdirSync");
-    symlinkSync = /* @__PURE__ */ notImplemented("fs.symlinkSync");
-    truncateSync = /* @__PURE__ */ notImplemented("fs.truncateSync");
-    unlinkSync = /* @__PURE__ */ notImplemented("fs.unlinkSync");
-    utimesSync = /* @__PURE__ */ notImplemented("fs.utimesSync");
-    writeFileSync = /* @__PURE__ */ notImplemented("fs.writeFileSync");
-    writeSync = /* @__PURE__ */ notImplemented("fs.writeSync");
-    writevSync = /* @__PURE__ */ notImplemented("fs.writevSync");
-    statfsSync = /* @__PURE__ */ notImplemented("fs.statfsSync");
-    globSync = /* @__PURE__ */ notImplemented("fs.globSync");
+    appendFileSync = /* @__PURE__ */ notImplemented2("fs.appendFileSync");
+    accessSync = /* @__PURE__ */ notImplemented2("fs.accessSync");
+    chownSync = /* @__PURE__ */ notImplemented2("fs.chownSync");
+    chmodSync = /* @__PURE__ */ notImplemented2("fs.chmodSync");
+    closeSync = /* @__PURE__ */ notImplemented2("fs.closeSync");
+    copyFileSync = /* @__PURE__ */ notImplemented2("fs.copyFileSync");
+    cpSync = /* @__PURE__ */ notImplemented2("fs.cpSync");
+    existsSync = /* @__PURE__ */ __name2(() => false, "existsSync");
+    fchownSync = /* @__PURE__ */ notImplemented2("fs.fchownSync");
+    fchmodSync = /* @__PURE__ */ notImplemented2("fs.fchmodSync");
+    fdatasyncSync = /* @__PURE__ */ notImplemented2("fs.fdatasyncSync");
+    fstatSync = /* @__PURE__ */ notImplemented2("fs.fstatSync");
+    fsyncSync = /* @__PURE__ */ notImplemented2("fs.fsyncSync");
+    ftruncateSync = /* @__PURE__ */ notImplemented2("fs.ftruncateSync");
+    futimesSync = /* @__PURE__ */ notImplemented2("fs.futimesSync");
+    lchownSync = /* @__PURE__ */ notImplemented2("fs.lchownSync");
+    lchmodSync = /* @__PURE__ */ notImplemented2("fs.lchmodSync");
+    linkSync = /* @__PURE__ */ notImplemented2("fs.linkSync");
+    lutimesSync = /* @__PURE__ */ notImplemented2("fs.lutimesSync");
+    mkdirSync = /* @__PURE__ */ notImplemented2("fs.mkdirSync");
+    mkdtempSync = /* @__PURE__ */ notImplemented2("fs.mkdtempSync");
+    openSync = /* @__PURE__ */ notImplemented2("fs.openSync");
+    opendirSync = /* @__PURE__ */ notImplemented2("fs.opendirSync");
+    readdirSync = /* @__PURE__ */ notImplemented2("fs.readdirSync");
+    readSync = /* @__PURE__ */ notImplemented2("fs.readSync");
+    readvSync = /* @__PURE__ */ notImplemented2("fs.readvSync");
+    readFileSync = /* @__PURE__ */ notImplemented2("fs.readFileSync");
+    readlinkSync = /* @__PURE__ */ notImplemented2("fs.readlinkSync");
+    renameSync = /* @__PURE__ */ notImplemented2("fs.renameSync");
+    rmSync = /* @__PURE__ */ notImplemented2("fs.rmSync");
+    rmdirSync = /* @__PURE__ */ notImplemented2("fs.rmdirSync");
+    symlinkSync = /* @__PURE__ */ notImplemented2("fs.symlinkSync");
+    truncateSync = /* @__PURE__ */ notImplemented2("fs.truncateSync");
+    unlinkSync = /* @__PURE__ */ notImplemented2("fs.unlinkSync");
+    utimesSync = /* @__PURE__ */ notImplemented2("fs.utimesSync");
+    writeFileSync = /* @__PURE__ */ notImplemented2("fs.writeFileSync");
+    writeSync = /* @__PURE__ */ notImplemented2("fs.writeSync");
+    writevSync = /* @__PURE__ */ notImplemented2("fs.writevSync");
+    statfsSync = /* @__PURE__ */ notImplemented2("fs.statfsSync");
+    globSync = /* @__PURE__ */ notImplemented2("fs.globSync");
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/fs.mjs
 var fs_default;
 var init_fs2 = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/fs.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -27131,9 +28699,9 @@ var init_fs2 = __esm({
       Dirent,
       FileReadStream,
       FileWriteStream,
-      ReadStream: ReadStream2,
+      ReadStream: ReadStream22,
       Stats,
-      WriteStream: WriteStream2,
+      WriteStream: WriteStream22,
       _toUnixTimestamp,
       access: access2,
       accessSync,
@@ -27230,11 +28798,9 @@ var init_fs2 = __esm({
     };
   }
 });
-
-// node-built-in-modules:fs
 var require_fs = __commonJS({
   "node-built-in-modules:fs"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -27242,48 +28808,43 @@ var require_fs = __commonJS({
     module.exports = fs_default;
   }
 });
-
-// node-built-in-modules:constants
-import libDefault8 from "constants";
 var require_constants5 = __commonJS({
   "node-built-in-modules:constants"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     module.exports = libDefault8;
   }
 });
-
-// ../node_modules/graceful-fs/polyfills.js
 var require_polyfills = __commonJS({
   "../node_modules/graceful-fs/polyfills.js"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     var constants2 = require_constants5();
     var origCwd = process.cwd;
-    var cwd2 = null;
+    var cwd22 = null;
     var platform3 = process.env.GRACEFUL_FS_PLATFORM || process.platform;
     process.cwd = function() {
-      if (!cwd2)
-        cwd2 = origCwd.call(process);
-      return cwd2;
+      if (!cwd22)
+        cwd22 = origCwd.call(process);
+      return cwd22;
     };
     try {
       process.cwd();
     } catch (er) {
     }
     if (typeof process.chdir === "function") {
-      chdir2 = process.chdir;
+      chdir22 = process.chdir;
       process.chdir = function(d) {
-        cwd2 = null;
-        chdir2.call(process, d);
+        cwd22 = null;
+        chdir22.call(process, d);
       };
-      if (Object.setPrototypeOf) Object.setPrototypeOf(process.chdir, chdir2);
+      if (Object.setPrototypeOf) Object.setPrototypeOf(process.chdir, chdir22);
     }
-    var chdir2;
+    var chdir22;
     module.exports = patch;
     function patch(fs) {
       if (constants2.hasOwnProperty("O_SYMLINK") && process.version.match(/^v0\.6\.[0-2]|^v0\.5\./)) {
@@ -27329,7 +28890,7 @@ var require_polyfills = __commonJS({
           function rename3(from, to, cb) {
             var start = Date.now();
             var backoff = 0;
-            fs$rename(from, to, /* @__PURE__ */ __name(function CB(er) {
+            fs$rename(from, to, /* @__PURE__ */ __name2(/* @__PURE__ */ __name(function CB(er) {
               if (er && (er.code === "EACCES" || er.code === "EPERM" || er.code === "EBUSY") && Date.now() - start < 6e4) {
                 setTimeout(function() {
                   fs.stat(to, function(stater, st) {
@@ -27344,9 +28905,10 @@ var require_polyfills = __commonJS({
                 return;
               }
               if (cb) cb(er);
-            }, "CB"));
+            }, "CB"), "CB"));
           }
-          __name(rename3, "rename");
+          __name(rename3, "rename3");
+          __name2(rename3, "rename");
           if (Object.setPrototypeOf) Object.setPrototypeOf(rename3, fs$rename);
           return rename3;
         })(fs.rename);
@@ -27356,7 +28918,7 @@ var require_polyfills = __commonJS({
           var callback;
           if (callback_ && typeof callback_ === "function") {
             var eagCounter = 0;
-            callback = /* @__PURE__ */ __name(function(er, _, __) {
+            callback = /* @__PURE__ */ __name2(function(er, _, __) {
               if (er && er.code === "EAGAIN" && eagCounter < 10) {
                 eagCounter++;
                 return fs$read.call(fs, fd, buffer, offset, length, position, callback);
@@ -27366,7 +28928,8 @@ var require_polyfills = __commonJS({
           }
           return fs$read.call(fs, fd, buffer, offset, length, position, callback);
         }
-        __name(read2, "read");
+        __name(read2, "read2");
+        __name2(read2, "read");
         if (Object.setPrototypeOf) Object.setPrototypeOf(read2, fs$read);
         return read2;
       })(fs.read);
@@ -27426,6 +28989,7 @@ var require_polyfills = __commonJS({
         };
       }
       __name(patchLchmod, "patchLchmod");
+      __name2(patchLchmod, "patchLchmod");
       function patchLutimes(fs2) {
         if (constants2.hasOwnProperty("O_SYMLINK") && fs2.futimes) {
           fs2.lutimes = function(path, at, mt, cb) {
@@ -27469,6 +29033,7 @@ var require_polyfills = __commonJS({
         }
       }
       __name(patchLutimes, "patchLutimes");
+      __name2(patchLutimes, "patchLutimes");
       function chmodFix(orig) {
         if (!orig) return orig;
         return function(target, mode, cb) {
@@ -27479,6 +29044,7 @@ var require_polyfills = __commonJS({
         };
       }
       __name(chmodFix, "chmodFix");
+      __name2(chmodFix, "chmodFix");
       function chmodFixSync(orig) {
         if (!orig) return orig;
         return function(target, mode) {
@@ -27490,6 +29056,7 @@ var require_polyfills = __commonJS({
         };
       }
       __name(chmodFixSync, "chmodFixSync");
+      __name2(chmodFixSync, "chmodFixSync");
       function chownFix(orig) {
         if (!orig) return orig;
         return function(target, uid, gid, cb) {
@@ -27500,6 +29067,7 @@ var require_polyfills = __commonJS({
         };
       }
       __name(chownFix, "chownFix");
+      __name2(chownFix, "chownFix");
       function chownFixSync(orig) {
         if (!orig) return orig;
         return function(target, uid, gid) {
@@ -27511,6 +29079,7 @@ var require_polyfills = __commonJS({
         };
       }
       __name(chownFixSync, "chownFixSync");
+      __name2(chownFixSync, "chownFixSync");
       function statFix(orig) {
         if (!orig) return orig;
         return function(target, options, cb) {
@@ -27526,10 +29095,12 @@ var require_polyfills = __commonJS({
             if (cb) cb.apply(this, arguments);
           }
           __name(callback, "callback");
+          __name2(callback, "callback");
           return options ? orig.call(fs, target, options, callback) : orig.call(fs, target, callback);
         };
       }
       __name(statFix, "statFix");
+      __name2(statFix, "statFix");
       function statFixSync(orig) {
         if (!orig) return orig;
         return function(target, options) {
@@ -27542,6 +29113,7 @@ var require_polyfills = __commonJS({
         };
       }
       __name(statFixSync, "statFixSync");
+      __name2(statFixSync, "statFixSync");
       function chownErOk(er) {
         if (!er)
           return true;
@@ -27555,15 +29127,15 @@ var require_polyfills = __commonJS({
         return false;
       }
       __name(chownErOk, "chownErOk");
+      __name2(chownErOk, "chownErOk");
     }
     __name(patch, "patch");
+    __name2(patch, "patch");
   }
 });
-
-// ../node_modules/graceful-fs/legacy-streams.js
 var require_legacy_streams = __commonJS({
   "../node_modules/graceful-fs/legacy-streams.js"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -27623,7 +29195,8 @@ var require_legacy_streams = __commonJS({
           self2._read();
         });
       }
-      __name(ReadStream3, "ReadStream");
+      __name(ReadStream3, "ReadStream3");
+      __name2(ReadStream3, "ReadStream");
       function WriteStream3(path, options) {
         if (!(this instanceof WriteStream3)) return new WriteStream3(path, options);
         Stream.call(this);
@@ -27657,17 +29230,17 @@ var require_legacy_streams = __commonJS({
           this.flush();
         }
       }
-      __name(WriteStream3, "WriteStream");
+      __name(WriteStream3, "WriteStream3");
+      __name2(WriteStream3, "WriteStream");
     }
     __name(legacy, "legacy");
+    __name2(legacy, "legacy");
   }
 });
-
-// ../node_modules/graceful-fs/clone.js
 var require_clone = __commonJS({
   "../node_modules/graceful-fs/clone.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -27688,25 +29261,21 @@ var require_clone = __commonJS({
       return copy;
     }
     __name(clone, "clone");
+    __name2(clone, "clone");
   }
 });
-
-// node-built-in-modules:assert
-import libDefault9 from "assert";
 var require_assert = __commonJS({
   "node-built-in-modules:assert"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     module.exports = libDefault9;
   }
 });
-
-// ../node_modules/graceful-fs/graceful-fs.js
 var require_graceful_fs = __commonJS({
   "../node_modules/graceful-fs/graceful-fs.js"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -27727,19 +29296,21 @@ var require_graceful_fs = __commonJS({
     function noop() {
     }
     __name(noop, "noop");
+    __name2(noop, "noop");
     function publishQueue(context2, queue2) {
       Object.defineProperty(context2, gracefulQueue, {
-        get: /* @__PURE__ */ __name(function() {
+        get: /* @__PURE__ */ __name2(function() {
           return queue2;
         }, "get")
       });
     }
     __name(publishQueue, "publishQueue");
+    __name2(publishQueue, "publishQueue");
     var debug3 = noop;
     if (util.debuglog)
       debug3 = util.debuglog("gfs4");
     else if (/\bgfs4\b/i.test(process.env.NODE_DEBUG || ""))
-      debug3 = /* @__PURE__ */ __name(function() {
+      debug3 = /* @__PURE__ */ __name2(function() {
         var m = util.format.apply(util, arguments);
         m = "GFS4: " + m.split(/\n/).join("\nGFS4: ");
         console.error(m);
@@ -27757,7 +29328,8 @@ var require_graceful_fs = __commonJS({
               cb.apply(this, arguments);
           });
         }
-        __name(close2, "close");
+        __name(close2, "close2");
+        __name2(close2, "close");
         Object.defineProperty(close2, previousSymbol, {
           value: fs$close
         });
@@ -27768,7 +29340,8 @@ var require_graceful_fs = __commonJS({
           fs$closeSync.apply(fs, arguments);
           resetQueue();
         }
-        __name(closeSync2, "closeSync");
+        __name(closeSync2, "closeSync2");
+        __name2(closeSync2, "closeSync");
         Object.defineProperty(closeSync2, previousSymbol, {
           value: fs$closeSync
         });
@@ -27812,8 +29385,10 @@ var require_graceful_fs = __commonJS({
           });
         }
         __name(go$readFile, "go$readFile");
+        __name2(go$readFile, "go$readFile");
       }
-      __name(readFile3, "readFile");
+      __name(readFile3, "readFile3");
+      __name2(readFile3, "readFile");
       var fs$writeFile = fs2.writeFile;
       fs2.writeFile = writeFile3;
       function writeFile3(path, data, options, cb) {
@@ -27831,8 +29406,10 @@ var require_graceful_fs = __commonJS({
           });
         }
         __name(go$writeFile, "go$writeFile");
+        __name2(go$writeFile, "go$writeFile");
       }
-      __name(writeFile3, "writeFile");
+      __name(writeFile3, "writeFile3");
+      __name2(writeFile3, "writeFile");
       var fs$appendFile = fs2.appendFile;
       if (fs$appendFile)
         fs2.appendFile = appendFile3;
@@ -27851,8 +29428,10 @@ var require_graceful_fs = __commonJS({
           });
         }
         __name(go$appendFile, "go$appendFile");
+        __name2(go$appendFile, "go$appendFile");
       }
-      __name(appendFile3, "appendFile");
+      __name(appendFile3, "appendFile3");
+      __name2(appendFile3, "appendFile");
       var fs$copyFile = fs2.copyFile;
       if (fs$copyFile)
         fs2.copyFile = copyFile3;
@@ -27873,29 +29452,31 @@ var require_graceful_fs = __commonJS({
           });
         }
         __name(go$copyFile, "go$copyFile");
+        __name2(go$copyFile, "go$copyFile");
       }
-      __name(copyFile3, "copyFile");
+      __name(copyFile3, "copyFile3");
+      __name2(copyFile3, "copyFile");
       var fs$readdir = fs2.readdir;
       fs2.readdir = readdir3;
       var noReaddirOptionVersions = /^v[0-5]\./;
       function readdir3(path, options, cb) {
         if (typeof options === "function")
           cb = options, options = null;
-        var go$readdir = noReaddirOptionVersions.test(process.version) ? /* @__PURE__ */ __name(function go$readdir2(path2, options2, cb2, startTime) {
+        var go$readdir = noReaddirOptionVersions.test(process.version) ? /* @__PURE__ */ __name2(/* @__PURE__ */ __name(function go$readdir2(path2, options2, cb2, startTime) {
           return fs$readdir(path2, fs$readdirCallback(
             path2,
             options2,
             cb2,
             startTime
           ));
-        }, "go$readdir") : /* @__PURE__ */ __name(function go$readdir2(path2, options2, cb2, startTime) {
+        }, "go$readdir2"), "go$readdir") : /* @__PURE__ */ __name2(/* @__PURE__ */ __name(function go$readdir2(path2, options2, cb2, startTime) {
           return fs$readdir(path2, options2, fs$readdirCallback(
             path2,
             options2,
             cb2,
             startTime
           ));
-        }, "go$readdir");
+        }, "go$readdir2"), "go$readdir");
         return go$readdir(path, options, cb);
         function fs$readdirCallback(path2, options2, cb2, startTime) {
           return function(err, files) {
@@ -27916,8 +29497,10 @@ var require_graceful_fs = __commonJS({
           };
         }
         __name(fs$readdirCallback, "fs$readdirCallback");
+        __name2(fs$readdirCallback, "fs$readdirCallback");
       }
-      __name(readdir3, "readdir");
+      __name(readdir3, "readdir3");
+      __name2(readdir3, "readdir");
       if (process.version.substr(0, 4) === "v0.8") {
         var legStreams = legacy(fs2);
         ReadStream3 = legStreams.ReadStream;
@@ -27934,20 +29517,20 @@ var require_graceful_fs = __commonJS({
         WriteStream3.prototype.open = WriteStream$open;
       }
       Object.defineProperty(fs2, "ReadStream", {
-        get: /* @__PURE__ */ __name(function() {
+        get: /* @__PURE__ */ __name2(function() {
           return ReadStream3;
         }, "get"),
-        set: /* @__PURE__ */ __name(function(val) {
+        set: /* @__PURE__ */ __name2(function(val) {
           ReadStream3 = val;
         }, "set"),
         enumerable: true,
         configurable: true
       });
       Object.defineProperty(fs2, "WriteStream", {
-        get: /* @__PURE__ */ __name(function() {
+        get: /* @__PURE__ */ __name2(function() {
           return WriteStream3;
         }, "get"),
-        set: /* @__PURE__ */ __name(function(val) {
+        set: /* @__PURE__ */ __name2(function(val) {
           WriteStream3 = val;
         }, "set"),
         enumerable: true,
@@ -27955,10 +29538,10 @@ var require_graceful_fs = __commonJS({
       });
       var FileReadStream2 = ReadStream3;
       Object.defineProperty(fs2, "FileReadStream", {
-        get: /* @__PURE__ */ __name(function() {
+        get: /* @__PURE__ */ __name2(function() {
           return FileReadStream2;
         }, "get"),
-        set: /* @__PURE__ */ __name(function(val) {
+        set: /* @__PURE__ */ __name2(function(val) {
           FileReadStream2 = val;
         }, "set"),
         enumerable: true,
@@ -27966,10 +29549,10 @@ var require_graceful_fs = __commonJS({
       });
       var FileWriteStream2 = WriteStream3;
       Object.defineProperty(fs2, "FileWriteStream", {
-        get: /* @__PURE__ */ __name(function() {
+        get: /* @__PURE__ */ __name2(function() {
           return FileWriteStream2;
         }, "get"),
-        set: /* @__PURE__ */ __name(function(val) {
+        set: /* @__PURE__ */ __name2(function(val) {
           FileWriteStream2 = val;
         }, "set"),
         enumerable: true,
@@ -27981,7 +29564,8 @@ var require_graceful_fs = __commonJS({
         else
           return ReadStream3.apply(Object.create(ReadStream3.prototype), arguments);
       }
-      __name(ReadStream3, "ReadStream");
+      __name(ReadStream3, "ReadStream3");
+      __name2(ReadStream3, "ReadStream");
       function ReadStream$open() {
         var that = this;
         open3(that.path, that.flags, that.mode, function(err, fd) {
@@ -27997,13 +29581,15 @@ var require_graceful_fs = __commonJS({
         });
       }
       __name(ReadStream$open, "ReadStream$open");
+      __name2(ReadStream$open, "ReadStream$open");
       function WriteStream3(path, options) {
         if (this instanceof WriteStream3)
           return fs$WriteStream.apply(this, arguments), this;
         else
           return WriteStream3.apply(Object.create(WriteStream3.prototype), arguments);
       }
-      __name(WriteStream3, "WriteStream");
+      __name(WriteStream3, "WriteStream3");
+      __name2(WriteStream3, "WriteStream");
       function WriteStream$open() {
         var that = this;
         open3(that.path, that.flags, that.mode, function(err, fd) {
@@ -28017,14 +29603,17 @@ var require_graceful_fs = __commonJS({
         });
       }
       __name(WriteStream$open, "WriteStream$open");
+      __name2(WriteStream$open, "WriteStream$open");
       function createReadStream2(path, options) {
         return new fs2.ReadStream(path, options);
       }
-      __name(createReadStream2, "createReadStream");
+      __name(createReadStream2, "createReadStream2");
+      __name2(createReadStream2, "createReadStream");
       function createWriteStream2(path, options) {
         return new fs2.WriteStream(path, options);
       }
-      __name(createWriteStream2, "createWriteStream");
+      __name(createWriteStream2, "createWriteStream2");
+      __name2(createWriteStream2, "createWriteStream");
       var fs$open = fs2.open;
       fs2.open = open3;
       function open3(path, flags2, mode, cb) {
@@ -28042,17 +29631,21 @@ var require_graceful_fs = __commonJS({
           });
         }
         __name(go$open, "go$open");
+        __name2(go$open, "go$open");
       }
-      __name(open3, "open");
+      __name(open3, "open3");
+      __name2(open3, "open");
       return fs2;
     }
     __name(patch, "patch");
+    __name2(patch, "patch");
     function enqueue(elem) {
       debug3("ENQUEUE", elem[0].name, elem[1]);
       fs[gracefulQueue].push(elem);
       retry();
     }
     __name(enqueue, "enqueue");
+    __name2(enqueue, "enqueue");
     var retryTimer;
     function resetQueue() {
       var now = Date.now();
@@ -28065,6 +29658,7 @@ var require_graceful_fs = __commonJS({
       retry();
     }
     __name(resetQueue, "resetQueue");
+    __name2(resetQueue, "resetQueue");
     function retry() {
       clearTimeout(retryTimer);
       retryTimer = void 0;
@@ -28100,13 +29694,12 @@ var require_graceful_fs = __commonJS({
       }
     }
     __name(retry, "retry");
+    __name2(retry, "retry");
   }
 });
-
-// ../node_modules/slide/lib/async-map.js
 var require_async_map = __commonJS({
   "../node_modules/slide/lib/async-map.js"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28141,6 +29734,7 @@ var require_async_map = __commonJS({
         if (--a === 0) cb_.apply(null, [errState].concat(data));
       }
       __name(cb, "cb");
+      __name2(cb, "cb");
       list.forEach(function(ar) {
         steps.forEach(function(fn) {
           fn(ar, cb);
@@ -28148,13 +29742,12 @@ var require_async_map = __commonJS({
       });
     }
     __name(asyncMap, "asyncMap");
+    __name2(asyncMap, "asyncMap");
   }
 });
-
-// ../node_modules/slide/lib/bind-actor.js
 var require_bind_actor = __commonJS({
   "../node_modules/slide/lib/bind-actor.js"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28172,13 +29765,12 @@ var require_bind_actor = __commonJS({
       };
     }
     __name(bindActor, "bindActor");
+    __name2(bindActor, "bindActor");
   }
 });
-
-// ../node_modules/slide/lib/chain.js
 var require_chain = __commonJS({
   "../node_modules/slide/lib/chain.js"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28188,7 +29780,7 @@ var require_chain = __commonJS({
     chain.last = {};
     function chain(things, cb) {
       var res = [];
-      (/* @__PURE__ */ __name((function LOOP(i, len) {
+      (/* @__PURE__ */ __name2(/* @__PURE__ */ __name((function LOOP(i, len) {
         if (i >= len) return cb(null, res);
         if (Array.isArray(things[i]))
           things[i] = bindActor.apply(
@@ -28203,16 +29795,15 @@ var require_chain = __commonJS({
           if (data !== void 0) res = res.concat(data);
           LOOP(i + 1, len);
         });
-      }), "LOOP"))(0, things.length);
+      }), "LOOP"), "LOOP"))(0, things.length);
     }
     __name(chain, "chain");
+    __name2(chain, "chain");
   }
 });
-
-// ../node_modules/slide/lib/slide.js
 var require_slide = __commonJS({
   "../node_modules/slide/lib/slide.js"(exports) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28221,11 +29812,9 @@ var require_slide = __commonJS({
     exports.chain = require_chain();
   }
 });
-
-// ../node_modules/imurmurhash/imurmurhash.js
 var require_imurmurhash = __commonJS({
   "../node_modules/imurmurhash/imurmurhash.js"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28242,6 +29831,7 @@ var require_imurmurhash = __commonJS({
         }
       }
       __name(MurmurHash3, "MurmurHash3");
+      __name2(MurmurHash3, "MurmurHash3");
       ;
       MurmurHash3.prototype.hash = function(key) {
         var h1, k1, i, top, len;
@@ -28324,12 +29914,10 @@ var require_imurmurhash = __commonJS({
     })();
   }
 });
-
-// ../node_modules/write-file-atomic/index.js
 var require_write_file_atomic = __commonJS({
   "../node_modules/write-file-atomic/index.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28345,6 +29933,7 @@ var require_write_file_atomic = __commonJS({
       return filename + "." + MurmurHash3(__filename).hash(String(process.pid)).hash(String(++invocations)).result();
     }
     __name(getTmpname, "getTmpname");
+    __name2(getTmpname, "getTmpname");
     function writeFile3(filename, data, options, callback) {
       if (options instanceof Function) {
         callback = options;
@@ -28355,7 +29944,8 @@ var require_write_file_atomic = __commonJS({
         _writeFile(realname || filename, data, options, callback);
       });
     }
-    __name(writeFile3, "writeFile");
+    __name(writeFile3, "writeFile3");
+    __name2(writeFile3, "writeFile");
     function _writeFile(filename, data, options, callback) {
       var tmpfile = getTmpname(filename);
       if (options.mode && options.chown) {
@@ -28386,6 +29976,7 @@ var require_write_file_atomic = __commonJS({
         });
       }
       __name(thenWriteFile, "thenWriteFile");
+      __name2(thenWriteFile, "thenWriteFile");
       function writeFileAsync(file, data2, mode, encoding, cb) {
         fs.open(file, "w", options.mode, function(err, fd) {
           if (err) return cb(err);
@@ -28404,11 +29995,14 @@ var require_write_file_atomic = __commonJS({
             });
           }
           __name(syncAndClose, "syncAndClose");
+          __name2(syncAndClose, "syncAndClose");
         });
       }
       __name(writeFileAsync, "writeFileAsync");
+      __name2(writeFileAsync, "writeFileAsync");
     }
     __name(_writeFile, "_writeFile");
+    __name2(_writeFile, "_writeFile");
     function writeFileSync2(filename, data, options) {
       if (!options) options = {};
       try {
@@ -28449,19 +30043,18 @@ var require_write_file_atomic = __commonJS({
         throw err;
       }
     }
-    __name(writeFileSync2, "writeFileSync");
+    __name(writeFileSync2, "writeFileSync2");
+    __name2(writeFileSync2, "writeFileSync");
   }
 });
-
-// ../node_modules/node-localstorage/LocalStorage.js
 var require_LocalStorage = __commonJS({
   "../node_modules/node-localstorage/LocalStorage.js"(exports) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     (function() {
-      var JSONStorage, KEY_FOR_EMPTY_STRING, LocalStorage, MetaKey, QUOTA_EXCEEDED_ERR, StorageEvent, _emptyDirectory, _escapeKey, _rm, createMap, events, fs, path, writeSync2, extend = /* @__PURE__ */ __name(function(child, parent) {
+      var JSONStorage, KEY_FOR_EMPTY_STRING, LocalStorage, MetaKey, QUOTA_EXCEEDED_ERR, StorageEvent, _emptyDirectory, _escapeKey, _rm, createMap, events, fs, path, writeSync2, extend = /* @__PURE__ */ __name2(function(child, parent) {
         for (var key in parent) {
           if (hasProp.call(parent, key)) child[key] = parent[key];
         }
@@ -28469,6 +30062,7 @@ var require_LocalStorage = __commonJS({
           this.constructor = child;
         }
         __name(ctor, "ctor");
+        __name2(ctor, "ctor");
         ctor.prototype = parent.prototype;
         child.prototype = new ctor();
         child.__super__ = parent.prototype;
@@ -28479,17 +30073,17 @@ var require_LocalStorage = __commonJS({
       events = require_events();
       writeSync2 = require_write_file_atomic().sync;
       KEY_FOR_EMPTY_STRING = "---.EMPTY_STRING.---";
-      _emptyDirectory = /* @__PURE__ */ __name(function(target) {
-        var i, len, p, ref2, results;
-        ref2 = fs.readdirSync(target);
+      _emptyDirectory = /* @__PURE__ */ __name2(function(target) {
+        var i, len, p, ref22, results;
+        ref22 = fs.readdirSync(target);
         results = [];
-        for (i = 0, len = ref2.length; i < len; i++) {
-          p = ref2[i];
+        for (i = 0, len = ref22.length; i < len; i++) {
+          p = ref22[i];
           results.push(_rm(path.join(target, p)));
         }
         return results;
       }, "_emptyDirectory");
-      _rm = /* @__PURE__ */ __name(function(target) {
+      _rm = /* @__PURE__ */ __name2(function(target) {
         if (fs.statSync(target).isDirectory()) {
           _emptyDirectory(target);
           return fs.rmdirSync(target);
@@ -28497,7 +30091,7 @@ var require_LocalStorage = __commonJS({
           return fs.unlinkSync(target);
         }
       }, "_rm");
-      _escapeKey = /* @__PURE__ */ __name(function(key) {
+      _escapeKey = /* @__PURE__ */ __name2(function(key) {
         var newKey;
         if (key === "") {
           newKey = KEY_FOR_EMPTY_STRING;
@@ -28516,7 +30110,8 @@ var require_LocalStorage = __commonJS({
           }
           this.name = this.constructor.name;
         }
-        __name(QUOTA_EXCEEDED_ERR2, "QUOTA_EXCEEDED_ERR");
+        __name(QUOTA_EXCEEDED_ERR2, "QUOTA_EXCEEDED_ERR2");
+        __name2(QUOTA_EXCEEDED_ERR2, "QUOTA_EXCEEDED_ERR");
         QUOTA_EXCEEDED_ERR2.prototype.toString = function() {
           return this.name + ": " + this.message;
         };
@@ -28530,7 +30125,8 @@ var require_LocalStorage = __commonJS({
           this.url = url;
           this.storageArea = storageArea != null ? storageArea : "localStorage";
         }
-        __name(StorageEvent2, "StorageEvent");
+        __name(StorageEvent2, "StorageEvent2");
+        __name2(StorageEvent2, "StorageEvent");
         return StorageEvent2;
       })();
       MetaKey = /* @__PURE__ */ (function() {
@@ -28541,12 +30137,13 @@ var require_LocalStorage = __commonJS({
             return new MetaKey2(this.key, this.index);
           }
         }
-        __name(MetaKey2, "MetaKey");
+        __name(MetaKey2, "MetaKey2");
+        __name2(MetaKey2, "MetaKey");
         return MetaKey2;
       })();
-      createMap = /* @__PURE__ */ __name(function() {
+      createMap = /* @__PURE__ */ __name2(function() {
         var Map2;
-        Map2 = /* @__PURE__ */ __name(function() {
+        Map2 = /* @__PURE__ */ __name2(function() {
         }, "Map");
         Map2.prototype = /* @__PURE__ */ Object.create(null);
         return new Map2();
@@ -28601,7 +30198,8 @@ var require_LocalStorage = __commonJS({
           instanceMap[this._location] = this;
           return instanceMap[this._location];
         }
-        __name(LocalStorage2, "LocalStorage");
+        __name(LocalStorage2, "LocalStorage2");
+        __name2(LocalStorage2, "LocalStorage");
         LocalStorage2.prototype._init = function() {
           var _MetaKey, _decodedKey, _keys, e, i, index, k, len, stat3;
           try {
@@ -28701,7 +30299,7 @@ var require_LocalStorage = __commonJS({
           }
         };
         LocalStorage2.prototype.removeItem = function(key) {
-          var evnt, filename, hasListeners, k, meta, metaKey, oldValue, ref2, v;
+          var evnt, filename, hasListeners, k, meta, metaKey, oldValue, ref22, v;
           key = _escapeKey(key);
           metaKey = this._metaKeyMap[key];
           if (!!metaKey) {
@@ -28715,9 +30313,9 @@ var require_LocalStorage = __commonJS({
             this._bytesInUse -= metaKey.size;
             filename = path.join(this._location, metaKey.key);
             this._keys.splice(metaKey.index, 1);
-            ref2 = this._metaKeyMap;
-            for (k in ref2) {
-              v = ref2[k];
+            ref22 = this._metaKeyMap;
+            for (k in ref22) {
+              v = ref22[k];
               meta = this._metaKeyMap[k];
               if (meta.index > metaKey.index) {
                 meta.index -= 1;
@@ -28769,7 +30367,8 @@ var require_LocalStorage = __commonJS({
         function JSONStorage2() {
           return JSONStorage2.__super__.constructor.apply(this, arguments);
         }
-        __name(JSONStorage2, "JSONStorage");
+        __name(JSONStorage2, "JSONStorage2");
+        __name2(JSONStorage2, "JSONStorage");
         JSONStorage2.prototype.setItem = function(key, value) {
           var newValue;
           newValue = JSON.stringify(value);
@@ -28786,12 +30385,10 @@ var require_LocalStorage = __commonJS({
     }).call(exports);
   }
 });
-
-// ../node_modules/telegram/sessions/localStorage.js
 var require_localStorage = __commonJS({
   "../node_modules/telegram/sessions/localStorage.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28800,12 +30397,10 @@ var require_localStorage = __commonJS({
     exports.LocalStorage = require_LocalStorage().LocalStorage;
   }
 });
-
-// ../node_modules/telegram/sessions/StoreSession.js
 var require_StoreSession = __commonJS({
   "../node_modules/telegram/sessions/StoreSession.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28820,6 +30415,9 @@ var require_StoreSession = __commonJS({
     var StoreSession = class extends Memory_1.MemorySession {
       static {
         __name(this, "StoreSession");
+      }
+      static {
+        __name2(this, "StoreSession");
       }
       constructor(sessionName, divider = ":") {
         super();
@@ -28889,46 +30487,46 @@ var require_StoreSession = __commonJS({
     exports.StoreSession = StoreSession;
   }
 });
-
-// ../node_modules/telegram/sessions/index.js
 var require_sessions = __commonJS({
   "../node_modules/telegram/sessions/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Session = exports.StoreSession = exports.StringSession = exports.MemorySession = void 0;
     var Memory_1 = require_Memory();
-    Object.defineProperty(exports, "MemorySession", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "MemorySession", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return Memory_1.MemorySession;
     }, "get") });
     var StringSession_1 = require_StringSession();
-    Object.defineProperty(exports, "StringSession", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "StringSession", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return StringSession_1.StringSession;
     }, "get") });
     var StoreSession_1 = require_StoreSession();
-    Object.defineProperty(exports, "StoreSession", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "StoreSession", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return StoreSession_1.StoreSession;
     }, "get") });
     var Abstract_1 = require_Abstract();
-    Object.defineProperty(exports, "Session", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "Session", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return Abstract_1.Session;
     }, "get") });
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/os/constants.mjs
-var UV_UDP_REUSEADDR, dlopen2, errno, signals, priority;
+var UV_UDP_REUSEADDR;
+var dlopen22;
+var errno;
+var signals;
+var priority;
 var init_constants2 = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/os/constants.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     UV_UDP_REUSEADDR = 4;
-    dlopen2 = {
+    dlopen22 = {
       RTLD_LAZY: 1,
       RTLD_NOW: 2,
       RTLD_GLOBAL: 256,
@@ -29061,12 +30659,34 @@ var init_constants2 = __esm({
     };
   }
 });
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/os.mjs
-var constants, NUM_CPUS, availableParallelism, arch2, machine, endianness, cpus, getPriority, setPriority, homedir, tmpdir, devNull, freemem, totalmem, loadavg, uptime2, hostname, networkInterfaces, platform2, type, release2, version2, userInfo, EOL, os_default;
+var constants;
+var NUM_CPUS;
+var availableParallelism;
+var arch22;
+var machine;
+var endianness;
+var cpus;
+var getPriority;
+var setPriority;
+var homedir;
+var tmpdir;
+var devNull;
+var freemem;
+var totalmem;
+var loadavg;
+var uptime22;
+var hostname;
+var networkInterfaces;
+var platform22;
+var type;
+var release22;
+var version22;
+var userInfo;
+var EOL;
+var os_default;
 var init_os = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/os.mjs"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29074,17 +30694,17 @@ var init_os = __esm({
     init_constants2();
     constants = {
       UV_UDP_REUSEADDR,
-      dlopen: dlopen2,
+      dlopen: dlopen22,
       errno,
       signals,
       priority
     };
     NUM_CPUS = 8;
-    availableParallelism = /* @__PURE__ */ __name(() => NUM_CPUS, "availableParallelism");
-    arch2 = /* @__PURE__ */ __name(() => "", "arch");
-    machine = /* @__PURE__ */ __name(() => "", "machine");
-    endianness = /* @__PURE__ */ __name(() => "LE", "endianness");
-    cpus = /* @__PURE__ */ __name(() => {
+    availableParallelism = /* @__PURE__ */ __name2(() => NUM_CPUS, "availableParallelism");
+    arch22 = /* @__PURE__ */ __name2(() => "", "arch");
+    machine = /* @__PURE__ */ __name2(() => "", "machine");
+    endianness = /* @__PURE__ */ __name2(() => "LE", "endianness");
+    cpus = /* @__PURE__ */ __name2(() => {
       const info3 = {
         model: "",
         speed: 0,
@@ -29098,21 +30718,21 @@ var init_os = __esm({
       };
       return Array.from({ length: NUM_CPUS }, () => info3);
     }, "cpus");
-    getPriority = /* @__PURE__ */ __name(() => 0, "getPriority");
-    setPriority = /* @__PURE__ */ notImplemented("os.setPriority");
-    homedir = /* @__PURE__ */ __name(() => "/", "homedir");
-    tmpdir = /* @__PURE__ */ __name(() => "/tmp", "tmpdir");
+    getPriority = /* @__PURE__ */ __name2(() => 0, "getPriority");
+    setPriority = /* @__PURE__ */ notImplemented2("os.setPriority");
+    homedir = /* @__PURE__ */ __name2(() => "/", "homedir");
+    tmpdir = /* @__PURE__ */ __name2(() => "/tmp", "tmpdir");
     devNull = "/dev/null";
-    freemem = /* @__PURE__ */ __name(() => 0, "freemem");
-    totalmem = /* @__PURE__ */ __name(() => 0, "totalmem");
-    loadavg = /* @__PURE__ */ __name(() => [
+    freemem = /* @__PURE__ */ __name2(() => 0, "freemem");
+    totalmem = /* @__PURE__ */ __name2(() => 0, "totalmem");
+    loadavg = /* @__PURE__ */ __name2(() => [
       0,
       0,
       0
     ], "loadavg");
-    uptime2 = /* @__PURE__ */ __name(() => 0, "uptime");
-    hostname = /* @__PURE__ */ __name(() => "", "hostname");
-    networkInterfaces = /* @__PURE__ */ __name(() => {
+    uptime22 = /* @__PURE__ */ __name2(() => 0, "uptime");
+    hostname = /* @__PURE__ */ __name2(() => "", "hostname");
+    networkInterfaces = /* @__PURE__ */ __name2(() => {
       return { lo0: [
         {
           address: "127.0.0.1",
@@ -29142,12 +30762,12 @@ var init_os = __esm({
         }
       ] };
     }, "networkInterfaces");
-    platform2 = /* @__PURE__ */ __name(() => "linux", "platform");
-    type = /* @__PURE__ */ __name(() => "Linux", "type");
-    release2 = /* @__PURE__ */ __name(() => "", "release");
-    version2 = /* @__PURE__ */ __name(() => "", "version");
-    userInfo = /* @__PURE__ */ __name((opts) => {
-      const encode = /* @__PURE__ */ __name((str) => {
+    platform22 = /* @__PURE__ */ __name2(() => "linux", "platform");
+    type = /* @__PURE__ */ __name2(() => "Linux", "type");
+    release22 = /* @__PURE__ */ __name2(() => "", "release");
+    version22 = /* @__PURE__ */ __name2(() => "", "version");
+    userInfo = /* @__PURE__ */ __name2((opts) => {
+      const encode = /* @__PURE__ */ __name2((str) => {
         if (opts?.encoding) {
           const buff = Buffer.from(str);
           return opts.encoding === "buffer" ? buff : buff.toString(opts.encoding);
@@ -29164,7 +30784,7 @@ var init_os = __esm({
     }, "userInfo");
     EOL = "\n";
     os_default = {
-      arch: arch2,
+      arch: arch22,
       availableParallelism,
       constants,
       cpus,
@@ -29178,23 +30798,21 @@ var init_os = __esm({
       loadavg,
       machine,
       networkInterfaces,
-      platform: platform2,
-      release: release2,
+      platform: platform22,
+      release: release22,
       setPriority,
       tmpdir,
       totalmem,
       type,
-      uptime: uptime2,
+      uptime: uptime22,
       userInfo,
-      version: version2
+      version: version22
     };
   }
 });
-
-// node-built-in-modules:os
 var require_os = __commonJS({
   "node-built-in-modules:os"(exports, module) {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29202,12 +30820,10 @@ var require_os = __commonJS({
     module.exports = os_default;
   }
 });
-
-// ../node_modules/telegram/client/os.js
 var require_os2 = __commonJS({
   "../node_modules/telegram/client/os.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29215,7 +30831,7 @@ var require_os2 = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -29243,12 +30859,10 @@ var require_os2 = __commonJS({
     exports.default = os;
   }
 });
-
-// ../node_modules/telegram/entityCache.js
 var require_entityCache = __commonJS({
   "../node_modules/telegram/entityCache.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29264,6 +30878,9 @@ var require_entityCache = __commonJS({
     var EntityCache = class {
       static {
         __name(this, "EntityCache");
+      }
+      static {
+        __name2(this, "EntityCache");
       }
       constructor() {
         this.cacheMap = /* @__PURE__ */ new Map();
@@ -29292,9 +30909,9 @@ var require_entityCache = __commonJS({
         }
         for (const entity of entities) {
           try {
-            const pid2 = (0, Utils_1.getPeerId)(entity);
-            if (!this.cacheMap.has(pid2.toString())) {
-              this.cacheMap.set(pid2.toString(), (0, Utils_1.getInputPeer)(entity));
+            const pid22 = (0, Utils_1.getPeerId)(entity);
+            if (!this.cacheMap.has(pid22.toString())) {
+              this.cacheMap.set(pid22.toString(), (0, Utils_1.getInputPeer)(entity));
             }
           } catch (e) {
           }
@@ -29332,12 +30949,10 @@ var require_entityCache = __commonJS({
     exports.EntityCache = EntityCache;
   }
 });
-
-// ../node_modules/telegram/crypto/IGE.js
 var require_IGE = __commonJS({
   "../node_modules/telegram/crypto/IGE.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29348,6 +30963,9 @@ var require_IGE = __commonJS({
     var IGENEW = class {
       static {
         __name(this, "IGENEW");
+      }
+      static {
+        __name2(this, "IGENEW");
       }
       constructor(key, iv) {
         this.ige = new aes_ige(key, iv);
@@ -29379,12 +30997,10 @@ var require_IGE = __commonJS({
     exports.IGE = IGENEW;
   }
 });
-
-// ../node_modules/telegram/network/MTProtoState.js
 var require_MTProtoState = __commonJS({
   "../node_modules/telegram/network/MTProtoState.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29404,6 +31020,9 @@ var require_MTProtoState = __commonJS({
     var MTProtoState = class {
       static {
         __name(this, "MTProtoState");
+      }
+      static {
+        __name2(this, "MTProtoState");
       }
       /**
            *
@@ -29643,12 +31262,10 @@ var require_MTProtoState = __commonJS({
     exports.MTProtoState = MTProtoState;
   }
 });
-
-// ../node_modules/telegram/network/MTProtoPlainSender.js
 var require_MTProtoPlainSender = __commonJS({
   "../node_modules/telegram/network/MTProtoPlainSender.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29665,6 +31282,9 @@ var require_MTProtoPlainSender = __commonJS({
     var MTProtoPlainSender = class {
       static {
         __name(this, "MTProtoPlainSender");
+      }
+      static {
+        __name2(this, "MTProtoPlainSender");
       }
       /**
        * Initializes the MTProto plain sender.
@@ -29713,12 +31333,10 @@ var require_MTProtoPlainSender = __commonJS({
     exports.MTProtoPlainSender = MTProtoPlainSender;
   }
 });
-
-// ../node_modules/telegram/crypto/Factorizator.js
 var require_Factorizator = __commonJS({
   "../node_modules/telegram/crypto/Factorizator.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29731,7 +31349,10 @@ var require_Factorizator = __commonJS({
     var Helpers_1 = require_Helpers();
     var Factorizator = class _Factorizator {
       static {
-        __name(this, "Factorizator");
+        __name(this, "_Factorizator");
+      }
+      static {
+        __name2(this, "Factorizator");
       }
       /**
        * Calculates the greatest common divisor
@@ -29800,12 +31421,10 @@ var require_Factorizator = __commonJS({
     exports.Factorizator = Factorizator;
   }
 });
-
-// ../node_modules/telegram/crypto/RSA.js
 var require_RSA = __commonJS({
   "../node_modules/telegram/crypto/RSA.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29857,14 +31476,13 @@ var require_RSA = __commonJS({
       return (0, Helpers_1.readBufferFromBigInt)(encrypted, 256, false);
     }
     __name(encrypt, "encrypt");
+    __name2(encrypt, "encrypt");
   }
 });
-
-// ../node_modules/telegram/network/Authenticator.js
 var require_Authenticator = __commonJS({
   "../node_modules/telegram/network/Authenticator.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -30050,14 +31668,13 @@ var require_Authenticator = __commonJS({
       return { authKey, timeOffset };
     }
     __name(doAuthentication, "doAuthentication");
+    __name2(doAuthentication, "doAuthentication");
   }
 });
-
-// ../node_modules/telegram/extensions/PendingState.js
 var require_PendingState = __commonJS({
   "../node_modules/telegram/extensions/PendingState.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -30066,6 +31683,9 @@ var require_PendingState = __commonJS({
     var PendingState = class {
       static {
         __name(this, "PendingState");
+      }
+      static {
+        __name2(this, "PendingState");
       }
       constructor() {
         this._pending = /* @__PURE__ */ new Map();
@@ -30094,12 +31714,10 @@ var require_PendingState = __commonJS({
     exports.PendingState = PendingState;
   }
 });
-
-// ../node_modules/telegram/network/MTProtoSender.js
 var require_MTProtoSender = __commonJS({
   "../node_modules/telegram/network/MTProtoSender.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -30126,7 +31744,10 @@ var require_MTProtoSender = __commonJS({
     var MsgsAck = tl_1.Api.MsgsAck;
     var MTProtoSender = class _MTProtoSender {
       static {
-        __name(this, "MTProtoSender");
+        __name(this, "_MTProtoSender");
+      }
+      static {
+        __name2(this, "MTProtoSender");
       }
       /**
        * @param authKey
@@ -30350,7 +31971,7 @@ var require_MTProtoSender = __commonJS({
         this._sendQueue.prepend(this._pendingState.values());
         this._pendingState.clear();
         while (this._userConnected && !this.isReconnecting) {
-          const appendAcks = /* @__PURE__ */ __name(() => {
+          const appendAcks = /* @__PURE__ */ __name2(() => {
             if (this._pendingAck.size) {
               const ack = new RequestState_1.RequestState(new MsgsAck({ msgIds: Array(...this._pendingAck) }));
               this._sendQueue.append(ack);
@@ -30853,32 +32474,33 @@ var require_MTProtoSender = __commonJS({
     };
   }
 });
-
-// ../node_modules/telegram/network/index.js
 var require_network = __commonJS({
   "../node_modules/telegram/network/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ConnectionTCPObfuscated = exports.ConnectionTCPAbridged = exports.ConnectionTCPFull = exports.Connection = exports.UpdateConnectionState = exports.MTProtoSender = exports.doAuthentication = exports.MTProtoPlainSender = void 0;
     var MTProtoPlainSender_1 = require_MTProtoPlainSender();
-    Object.defineProperty(exports, "MTProtoPlainSender", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "MTProtoPlainSender", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return MTProtoPlainSender_1.MTProtoPlainSender;
     }, "get") });
     var Authenticator_1 = require_Authenticator();
-    Object.defineProperty(exports, "doAuthentication", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "doAuthentication", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return Authenticator_1.doAuthentication;
     }, "get") });
     var MTProtoSender_1 = require_MTProtoSender();
-    Object.defineProperty(exports, "MTProtoSender", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "MTProtoSender", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return MTProtoSender_1.MTProtoSender;
     }, "get") });
     var UpdateConnectionState = class {
       static {
         __name(this, "UpdateConnectionState");
+      }
+      static {
+        __name2(this, "UpdateConnectionState");
       }
       constructor(state) {
         this.state = state;
@@ -30889,26 +32511,24 @@ var require_network = __commonJS({
     UpdateConnectionState.connected = 1;
     UpdateConnectionState.broken = 0;
     var connection_1 = require_connection();
-    Object.defineProperty(exports, "Connection", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "Connection", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return connection_1.Connection;
     }, "get") });
-    Object.defineProperty(exports, "ConnectionTCPFull", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "ConnectionTCPFull", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return connection_1.ConnectionTCPFull;
     }, "get") });
-    Object.defineProperty(exports, "ConnectionTCPAbridged", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "ConnectionTCPAbridged", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return connection_1.ConnectionTCPAbridged;
     }, "get") });
-    Object.defineProperty(exports, "ConnectionTCPObfuscated", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "ConnectionTCPObfuscated", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return connection_1.ConnectionTCPObfuscated;
     }, "get") });
   }
 });
-
-// ../node_modules/telegram/network/connection/TCPMTProxy.js
 var require_TCPMTProxy = __commonJS({
   "../node_modules/telegram/network/connection/TCPMTProxy.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -30921,6 +32541,9 @@ var require_TCPMTProxy = __commonJS({
     var MTProxyIO = class {
       static {
         __name(this, "MTProxyIO");
+      }
+      static {
+        __name2(this, "MTProxyIO");
       }
       constructor(connection) {
         this.header = void 0;
@@ -30999,6 +32622,9 @@ var require_TCPMTProxy = __commonJS({
       static {
         __name(this, "TCPMTProxy");
       }
+      static {
+        __name2(this, "TCPMTProxy");
+      }
       constructor({ ip, port, dcId, loggers, proxy, socket, testServers }) {
         super({
           ip: proxy.ip,
@@ -31028,6 +32654,9 @@ var require_TCPMTProxy = __commonJS({
       static {
         __name(this, "ConnectionTCPMTProxyAbridged");
       }
+      static {
+        __name2(this, "ConnectionTCPMTProxyAbridged");
+      }
       constructor() {
         super(...arguments);
         this.PacketCodecClass = TCPAbridged_1.AbridgedPacketCodec;
@@ -31036,12 +32665,10 @@ var require_TCPMTProxy = __commonJS({
     exports.ConnectionTCPMTProxyAbridged = ConnectionTCPMTProxyAbridged;
   }
 });
-
-// ../node_modules/telegram/client/telegramBaseClient.js
 var require_telegramBaseClient = __commonJS({
   "../node_modules/telegram/client/telegramBaseClient.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -31095,6 +32722,9 @@ var require_telegramBaseClient = __commonJS({
     var TelegramBaseClient = class {
       static {
         __name(this, "TelegramBaseClient");
+      }
+      static {
+        __name2(this, "TelegramBaseClient");
       }
       constructor(session, apiId, apiHash, clientParams) {
         this.__version__ = __1.version;
@@ -31398,12 +33028,10 @@ var require_telegramBaseClient = __commonJS({
     exports.TelegramBaseClient = TelegramBaseClient;
   }
 });
-
-// ../node_modules/telegram/client/auth.js
 var require_auth = __commonJS({
   "../node_modules/telegram/client/auth.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -31411,7 +33039,7 @@ var require_auth = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -31462,6 +33090,7 @@ var require_auth = __commonJS({
       await _authFlow(client, apiCredentials, authParams);
     }
     __name(start, "start");
+    __name2(start, "start");
     async function checkAuthorization(client) {
       try {
         await client.invoke(new tl_1.Api.updates.GetState());
@@ -31471,6 +33100,7 @@ var require_auth = __commonJS({
       }
     }
     __name(checkAuthorization, "checkAuthorization");
+    __name2(checkAuthorization, "checkAuthorization");
     async function signInUser(client, apiCredentials, authParams) {
       let phoneNumber;
       let phoneCodeHash;
@@ -31580,6 +33210,7 @@ var require_auth = __commonJS({
       return client.signInUser(apiCredentials, authParams);
     }
     __name(signInUser, "signInUser");
+    __name2(signInUser, "signInUser");
     async function signInUserWithQrCode(client, apiCredentials, authParams) {
       let isScanningComplete = false;
       if (authParams.qrCode == void 0) {
@@ -31653,6 +33284,7 @@ var require_auth = __commonJS({
       throw new Error("QR auth failed");
     }
     __name(signInUserWithQrCode, "signInUserWithQrCode");
+    __name2(signInUserWithQrCode, "signInUserWithQrCode");
     async function sendCode(client, apiCredentials, phoneNumber, forceSMS = false) {
       try {
         const { apiId, apiHash } = apiCredentials;
@@ -31689,6 +33321,7 @@ var require_auth = __commonJS({
       }
     }
     __name(sendCode, "sendCode");
+    __name2(sendCode, "sendCode");
     async function signInWithPassword2(client, apiCredentials, authParams) {
       let emptyPassword = false;
       while (1) {
@@ -31719,7 +33352,8 @@ var require_auth = __commonJS({
       }
       return void 0;
     }
-    __name(signInWithPassword2, "signInWithPassword");
+    __name(signInWithPassword2, "signInWithPassword2");
+    __name2(signInWithPassword2, "signInWithPassword");
     async function signInBot(client, apiCredentials, authParams) {
       const { apiId, apiHash } = apiCredentials;
       let { botAuthToken } = authParams;
@@ -31744,19 +33378,19 @@ var require_auth = __commonJS({
       return user;
     }
     __name(signInBot, "signInBot");
+    __name2(signInBot, "signInBot");
     async function _authFlow(client, apiCredentials, authParams) {
       const me = "phoneNumber" in authParams ? await client.signInUser(apiCredentials, authParams) : await client.signInBot(apiCredentials, authParams);
       client._log.info("Signed in successfully as " + utils.getDisplayName(me));
     }
     __name(_authFlow, "_authFlow");
+    __name2(_authFlow, "_authFlow");
   }
 });
-
-// ../node_modules/telegram/tl/custom/inlineResult.js
 var require_inlineResult = __commonJS({
   "../node_modules/telegram/tl/custom/inlineResult.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -31769,6 +33403,9 @@ var require_inlineResult = __commonJS({
     var InlineResult = class {
       static {
         __name(this, "InlineResult");
+      }
+      static {
+        __name2(this, "InlineResult");
       }
       [inspect_1.inspect.custom]() {
         return (0, Helpers_1.betterConsoleLog)(this);
@@ -31847,12 +33484,10 @@ var require_inlineResult = __commonJS({
     exports.InlineResult = InlineResult;
   }
 });
-
-// ../node_modules/telegram/tl/custom/inlineResults.js
 var require_inlineResults = __commonJS({
   "../node_modules/telegram/tl/custom/inlineResults.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -31864,6 +33499,9 @@ var require_inlineResults = __commonJS({
     var InlineResults = class extends Array {
       static {
         __name(this, "InlineResults");
+      }
+      static {
+        __name2(this, "InlineResults");
       }
       [inspect_1.inspect.custom]() {
         return (0, Helpers_1.betterConsoleLog)(this);
@@ -31886,12 +33524,10 @@ var require_inlineResults = __commonJS({
     exports.InlineResults = InlineResults;
   }
 });
-
-// ../node_modules/telegram/client/bots.js
 var require_bots = __commonJS({
   "../node_modules/telegram/client/bots.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -31916,14 +33552,13 @@ var require_bots = __commonJS({
       return new inlineResults_1.InlineResults(client, result, entity ? peer : void 0);
     }
     __name(inlineQuery, "inlineQuery");
+    __name2(inlineQuery, "inlineQuery");
   }
 });
-
-// ../node_modules/telegram/client/buttons.js
 var require_buttons = __commonJS({
   "../node_modules/telegram/client/buttons.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -32004,14 +33639,13 @@ var require_buttons = __commonJS({
       });
     }
     __name(buildReplyMarkup, "buildReplyMarkup");
+    __name2(buildReplyMarkup, "buildReplyMarkup");
   }
 });
-
-// ../node_modules/telegram/requestIter.js
 var require_requestIter = __commonJS({
   "../node_modules/telegram/requestIter.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -32029,12 +33663,14 @@ var require_requestIter = __commonJS({
         };
       }
       __name(verb, "verb");
+      __name2(verb, "verb");
       function settle(resolve, reject, d, v) {
         Promise.resolve(v).then(function(v2) {
           resolve({ value: v2, done: d });
         }, reject);
       }
       __name(settle, "settle");
+      __name2(settle, "settle");
     };
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RequestIter = void 0;
@@ -32043,6 +33679,9 @@ var require_requestIter = __commonJS({
     var RequestIter = class {
       static {
         __name(this, "RequestIter");
+      }
+      static {
+        __name2(this, "RequestIter");
       }
       constructor(client, limit, params = {}, args = {}) {
         this.client = client;
@@ -32064,7 +33703,7 @@ var require_requestIter = __commonJS({
         this.lastLoad = 0;
         this.left = this.limit;
         return {
-          next: /* @__PURE__ */ __name(async () => {
+          next: /* @__PURE__ */ __name2(async () => {
             if (this.buffer == void 0) {
               this.buffer = [];
               if (await this._init(this.kwargs)) {
@@ -32140,12 +33779,10 @@ var require_requestIter = __commonJS({
     exports.RequestIter = RequestIter;
   }
 });
-
-// ../node_modules/telegram/client/fs.js
 var require_fs2 = __commonJS({
   "../node_modules/telegram/client/fs.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -32153,7 +33790,7 @@ var require_fs2 = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -32169,12 +33806,10 @@ var require_fs2 = __commonJS({
     __exportStar(require_fs(), exports);
   }
 });
-
-// ../node_modules/telegram/client/path.js
 var require_path2 = __commonJS({
   "../node_modules/telegram/client/path.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -32186,12 +33821,10 @@ var require_path2 = __commonJS({
     exports.default = path_1.default;
   }
 });
-
-// ../node_modules/telegram/client/downloads.js
 var require_downloads = __commonJS({
   "../node_modules/telegram/client/downloads.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -32199,7 +33832,7 @@ var require_downloads = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -32236,12 +33869,14 @@ var require_downloads = __commonJS({
         };
       }
       __name(verb, "verb");
+      __name2(verb, "verb");
       function settle(resolve, reject, d, v) {
         Promise.resolve(v).then(function(v2) {
           resolve({ value: v2, done: d });
         }, reject);
       }
       __name(settle, "settle");
+      __name2(settle, "settle");
     };
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -32275,6 +33910,9 @@ var require_downloads = __commonJS({
     var DirectDownloadIter = class extends requestIter_1.RequestIter {
       static {
         __name(this, "DirectDownloadIter");
+      }
+      static {
+        __name2(this, "DirectDownloadIter");
       }
       constructor() {
         super(...arguments);
@@ -32345,6 +33983,9 @@ var require_downloads = __commonJS({
     var GenericDownloadIter = class extends DirectDownloadIter {
       static {
         __name(this, "GenericDownloadIter");
+      }
+      static {
+        __name2(this, "GenericDownloadIter");
       }
       async _loadNextChunk() {
         let data = Buffer.alloc(0);
@@ -32421,6 +34062,7 @@ var require_downloads = __commonJS({
       });
     }
     __name(iterDownload, "iterDownload");
+    __name2(iterDownload, "iterDownload");
     function getWriter(outputFile) {
       if (!outputFile || Buffer.isBuffer(outputFile)) {
         return new extensions_1.BinaryWriter(Buffer.alloc(0));
@@ -32431,12 +34073,14 @@ var require_downloads = __commonJS({
       }
     }
     __name(getWriter, "getWriter");
+    __name2(getWriter, "getWriter");
     function closeWriter(writer) {
       if ("close" in writer && writer.close) {
         writer.close();
       }
     }
     __name(closeWriter, "closeWriter");
+    __name2(closeWriter, "closeWriter");
     function returnWriterValue(writer) {
       if (writer instanceof extensions_1.BinaryWriter) {
         return writer.getValue();
@@ -32450,6 +34094,7 @@ var require_downloads = __commonJS({
       }
     }
     __name(returnWriterValue, "returnWriterValue");
+    __name2(returnWriterValue, "returnWriterValue");
     async function downloadFileV2(client, inputLocation, { outputFile = void 0, partSizeKb = void 0, fileSize = void 0, progressCallback = void 0, dcId = void 0, msgData = void 0 }) {
       var _a, e_1, _b, _c;
       if (!partSizeKb) {
@@ -32497,6 +34142,7 @@ var require_downloads = __commonJS({
       }
     }
     __name(downloadFileV2, "downloadFileV2");
+    __name2(downloadFileV2, "downloadFileV2");
     async function downloadMedia(client, messageOrMedia, outputFile, thumb, progressCallback) {
       let msgData;
       let date;
@@ -32530,6 +34176,7 @@ var require_downloads = __commonJS({
       }
     }
     __name(downloadMedia, "downloadMedia");
+    __name2(downloadMedia, "downloadMedia");
     async function _downloadDocument(client, doc, outputFile, date, thumb, progressCallback, msgData) {
       if (doc instanceof tl_1.Api.MessageMediaDocument) {
         if (!doc.document) {
@@ -32563,14 +34210,17 @@ var require_downloads = __commonJS({
       });
     }
     __name(_downloadDocument, "_downloadDocument");
+    __name2(_downloadDocument, "_downloadDocument");
     async function _downloadContact(client, media, args) {
       throw new Error("not implemented");
     }
     __name(_downloadContact, "_downloadContact");
+    __name2(_downloadContact, "_downloadContact");
     async function _downloadWebDocument(client, media, args) {
       throw new Error("not implemented");
     }
     __name(_downloadWebDocument, "_downloadWebDocument");
+    __name2(_downloadWebDocument, "_downloadWebDocument");
     function getThumb(thumbs, thumb) {
       function sortThumb(thumb2) {
         if (thumb2 instanceof tl_1.Api.PhotoStrippedSize) {
@@ -32591,6 +34241,7 @@ var require_downloads = __commonJS({
         return 0;
       }
       __name(sortThumb, "sortThumb");
+      __name2(sortThumb, "sortThumb");
       thumbs = thumbs.sort((a, b) => sortThumb(a) - sortThumb(b));
       const correctThumbs = [];
       for (const t of thumbs) {
@@ -32613,6 +34264,7 @@ var require_downloads = __commonJS({
       }
     }
     __name(getThumb, "getThumb");
+    __name2(getThumb, "getThumb");
     async function _downloadCachedPhotoSize(size, outputFile) {
       let data;
       if (size instanceof tl_1.Api.PhotoStrippedSize) {
@@ -32629,6 +34281,7 @@ var require_downloads = __commonJS({
       return returnWriterValue(writer);
     }
     __name(_downloadCachedPhotoSize, "_downloadCachedPhotoSize");
+    __name2(_downloadCachedPhotoSize, "_downloadCachedPhotoSize");
     function getProperFilename(file, fileType, extension, date) {
       if (!file || typeof file != "string") {
         return file;
@@ -32640,6 +34293,7 @@ var require_downloads = __commonJS({
       return file;
     }
     __name(getProperFilename, "getProperFilename");
+    __name2(getProperFilename, "getProperFilename");
     async function _downloadPhoto(client, photo, file, date, thumb, progressCallback) {
       if (photo instanceof tl_1.Api.MessageMediaPhoto) {
         if (photo.photo instanceof tl_1.Api.PhotoEmpty || !photo.photo) {
@@ -32681,6 +34335,7 @@ var require_downloads = __commonJS({
       });
     }
     __name(_downloadPhoto, "_downloadPhoto");
+    __name2(_downloadPhoto, "_downloadPhoto");
     async function downloadProfilePhoto(client, entity, fileParams) {
       let photo;
       if (typeof entity == "object" && "photo" in entity) {
@@ -32711,14 +34366,13 @@ var require_downloads = __commonJS({
       });
     }
     __name(downloadProfilePhoto, "downloadProfilePhoto");
+    __name2(downloadProfilePhoto, "downloadProfilePhoto");
   }
 });
-
-// ../node_modules/telegram/client/uploads.js
 var require_uploads = __commonJS({
   "../node_modules/telegram/client/uploads.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -32742,7 +34396,10 @@ var require_uploads = __commonJS({
     var big_integer_1 = __importDefault(require_BigInteger());
     var CustomFile3 = class {
       static {
-        __name(this, "CustomFile");
+        __name(this, "CustomFile3");
+      }
+      static {
+        __name2(this, "CustomFile");
       }
       constructor(name, size, path, buffer) {
         this.name = name;
@@ -32755,6 +34412,9 @@ var require_uploads = __commonJS({
     var CustomBuffer = class {
       static {
         __name(this, "CustomBuffer");
+      }
+      static {
+        __name2(this, "CustomBuffer");
       }
       constructor(options) {
         this.options = options;
@@ -32793,6 +34453,7 @@ var require_uploads = __commonJS({
       return new CustomBuffer(options);
     }
     __name(getFileBuffer, "getFileBuffer");
+    __name2(getFileBuffer, "getFileBuffer");
     async function uploadFile(client, fileParams) {
       const { file, onProgress } = fileParams;
       let { workers } = fileParams;
@@ -32879,6 +34540,7 @@ var require_uploads = __commonJS({
       });
     }
     __name(uploadFile, "uploadFile");
+    __name2(uploadFile, "uploadFile");
     async function _fileToMedia(client, { file, forceDocument, fileSize, progressCallback, attributes, thumb, voiceNote = false, videoNote = false, supportsStreaming = false, mimeType, asImage, workers = 1 }) {
       if (!file) {
         return { fileHandle: void 0, media: void 0, image: void 0 };
@@ -33008,6 +34670,7 @@ var require_uploads = __commonJS({
       };
     }
     __name(_fileToMedia, "_fileToMedia");
+    __name2(_fileToMedia, "_fileToMedia");
     async function _sendAlbum(client, entity, { file, caption, forceDocument = false, fileSize, clearDraft = false, progressCallback, replyTo, attributes, thumb, parseMode, voiceNote = false, videoNote = false, silent, supportsStreaming = false, scheduleDate, workers = 1, noforwards, commentTo, topMsgId }) {
       entity = await client.getInputEntity(entity);
       let files = [];
@@ -33101,6 +34764,7 @@ var require_uploads = __commonJS({
       return client._getResponseMessage(randomIds, result, entity);
     }
     __name(_sendAlbum, "_sendAlbum");
+    __name2(_sendAlbum, "_sendAlbum");
     async function sendFile(client, entity, { file, caption, forceDocument = false, fileSize, clearDraft = false, progressCallback, replyTo, attributes, thumb, parseMode, formattingEntities, voiceNote = false, videoNote = false, buttons, silent, supportsStreaming = false, scheduleDate, workers = 1, noforwards, commentTo, topMsgId }) {
       if (!file) {
         throw new Error("You need to specify a file");
@@ -33181,6 +34845,7 @@ var require_uploads = __commonJS({
       return client._getResponseMessage(request, result, entity);
     }
     __name(sendFile, "sendFile");
+    __name2(sendFile, "sendFile");
     function fileToBuffer(file) {
       if (typeof File !== "undefined" && file instanceof File) {
         return new Response(file).arrayBuffer();
@@ -33195,14 +34860,13 @@ var require_uploads = __commonJS({
       }
     }
     __name(fileToBuffer, "fileToBuffer");
+    __name2(fileToBuffer, "fileToBuffer");
   }
 });
-
-// ../node_modules/telegram/client/messages.js
 var require_messages2 = __commonJS({
   "../node_modules/telegram/client/messages.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -33220,12 +34884,14 @@ var require_messages2 = __commonJS({
         };
       }
       __name(verb, "verb");
+      __name2(verb, "verb");
       function settle(resolve, reject, d, v) {
         Promise.resolve(v).then(function(v2) {
           resolve({ value: v2, done: d });
         }, reject);
       }
       __name(settle, "settle");
+      __name2(settle, "settle");
     };
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -33256,6 +34922,9 @@ var require_messages2 = __commonJS({
     var _MessagesIter = class extends requestIter_1.RequestIter {
       static {
         __name(this, "_MessagesIter");
+      }
+      static {
+        __name2(this, "_MessagesIter");
       }
       async _init({ entity, offsetId, minId, maxId, fromUser, offsetDate, addOffset, filter, search, replyTo }) {
         var _a, e_1, _b, _c;
@@ -33490,6 +35159,9 @@ var require_messages2 = __commonJS({
       static {
         __name(this, "_IDsIter");
       }
+      static {
+        __name2(this, "_IDsIter");
+      }
       async _init({ entity, ids }) {
         this.total = ids.length;
         this._ids = this.reverse ? ids.reverse() : ids;
@@ -33607,6 +35279,7 @@ var require_messages2 = __commonJS({
       });
     }
     __name(iterMessages, "iterMessages");
+    __name2(iterMessages, "iterMessages");
     async function getMessages(client, entity, params) {
       var _a, e_2, _b, _c;
       if (Object.keys(params).length == 1 && params.limit === void 0) {
@@ -33640,6 +35313,7 @@ var require_messages2 = __commonJS({
       return await it.collect();
     }
     __name(getMessages, "getMessages");
+    __name2(getMessages, "getMessages");
     async function sendMessage(client, entity, { message, replyTo, attributes, parseMode, formattingEntities, linkPreview = true, file, thumb, forceDocument, clearDraft, buttons, silent, supportStreaming, schedule, noforwards, commentTo, topMsgId } = {}) {
       if (file) {
         return client.sendFile(entity, {
@@ -33747,6 +35421,7 @@ var require_messages2 = __commonJS({
       return client._getResponseMessage(request, result, entity);
     }
     __name(sendMessage, "sendMessage");
+    __name2(sendMessage, "sendMessage");
     async function forwardMessages(client, entity, { messages, fromPeer, silent, schedule, noforwards, dropAuthor }) {
       if (!(0, Helpers_1.isArrayLike)(messages)) {
         messages = [messages];
@@ -33757,7 +35432,7 @@ var require_messages2 = __commonJS({
         fromPeer = await client.getInputEntity(fromPeer);
         fromPeerId = await client.getPeerId(fromPeer);
       }
-      const getKey = /* @__PURE__ */ __name((m) => {
+      const getKey = /* @__PURE__ */ __name2((m) => {
         if (m instanceof tl_1.Api.Message) {
           return m.chatId;
         }
@@ -33798,6 +35473,7 @@ var require_messages2 = __commonJS({
       return sent;
     }
     __name(forwardMessages, "forwardMessages");
+    __name2(forwardMessages, "forwardMessages");
     async function editMessage(client, entity, { message, text, parseMode, formattingEntities, linkPreview = true, file, forceDocument, buttons, schedule }) {
       if (typeof message === "number" && typeof text === "undefined" && !file && !schedule) {
         throw Error("You have to provide either file or text or schedule property.");
@@ -33852,6 +35528,7 @@ var require_messages2 = __commonJS({
       return client._getResponseMessage(request, result, entity);
     }
     __name(editMessage, "editMessage");
+    __name2(editMessage, "editMessage");
     async function deleteMessages(client, entity, messageIds, { revoke = false }) {
       let ty = Helpers_1._EntityType.USER;
       if (entity) {
@@ -33887,14 +35564,17 @@ var require_messages2 = __commonJS({
       return Promise.all(results);
     }
     __name(deleteMessages, "deleteMessages");
+    __name2(deleteMessages, "deleteMessages");
     async function pinMessage(client, entity, message, pinMessageParams) {
       return await _pin(client, entity, message, false, pinMessageParams === null || pinMessageParams === void 0 ? void 0 : pinMessageParams.notify, pinMessageParams === null || pinMessageParams === void 0 ? void 0 : pinMessageParams.pmOneSide);
     }
     __name(pinMessage, "pinMessage");
+    __name2(pinMessage, "pinMessage");
     async function unpinMessage(client, entity, message, unpinMessageParams) {
       return await _pin(client, entity, message, true, unpinMessageParams === null || unpinMessageParams === void 0 ? void 0 : unpinMessageParams.notify, unpinMessageParams === null || unpinMessageParams === void 0 ? void 0 : unpinMessageParams.pmOneSide);
     }
     __name(unpinMessage, "unpinMessage");
+    __name2(unpinMessage, "unpinMessage");
     async function _pin(client, entity, message, unpin, notify = false, pmOneSide = false) {
       message = __1.utils.getMessageId(message) || 0;
       if (message === 0) {
@@ -33917,6 +35597,7 @@ var require_messages2 = __commonJS({
       return client._getResponseMessage(request, result, entity);
     }
     __name(_pin, "_pin");
+    __name2(_pin, "_pin");
     async function markAsRead(client, entity, message, markAsReadParams) {
       let maxId = (markAsReadParams === null || markAsReadParams === void 0 ? void 0 : markAsReadParams.maxId) || 0;
       const maxIdIsUndefined = (markAsReadParams === null || markAsReadParams === void 0 ? void 0 : markAsReadParams.maxId) === void 0;
@@ -33944,6 +35625,7 @@ var require_messages2 = __commonJS({
       }
     }
     __name(markAsRead, "markAsRead");
+    __name2(markAsRead, "markAsRead");
     async function getCommentData(client, entity, message) {
       const result = await client.invoke(new tl_1.Api.messages.GetDiscussionMessage({
         peer: entity,
@@ -33963,31 +35645,28 @@ var require_messages2 = __commonJS({
       };
     }
     __name(getCommentData, "getCommentData");
+    __name2(getCommentData, "getCommentData");
   }
 });
-
-// ../node_modules/telegram/tl/custom/index.js
 var require_custom = __commonJS({
   "../node_modules/telegram/tl/custom/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ChatGetter = void 0;
     var chatGetter_1 = require_chatGetter();
-    Object.defineProperty(exports, "ChatGetter", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "ChatGetter", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return chatGetter_1.ChatGetter;
     }, "get") });
   }
 });
-
-// ../node_modules/telegram/events/common.js
 var require_common3 = __commonJS({
   "../node_modules/telegram/events/common.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -34041,9 +35720,13 @@ var require_common3 = __commonJS({
       return Array.from(result);
     }
     __name(_intoIdSet, "_intoIdSet");
+    __name2(_intoIdSet, "_intoIdSet");
     var EventBuilder = class {
       static {
         __name(this, "EventBuilder");
+      }
+      static {
+        __name2(this, "EventBuilder");
       }
       constructor(eventParams) {
         var _a;
@@ -34090,6 +35773,9 @@ var require_common3 = __commonJS({
       static {
         __name(this, "EventCommon");
       }
+      static {
+        __name2(this, "EventCommon");
+      }
       constructor({ chatPeer = void 0, msgId = void 0, broadcast = void 0 }) {
         super();
         this._eventName = "Event";
@@ -34110,6 +35796,9 @@ var require_common3 = __commonJS({
       static {
         __name(this, "EventCommonSender");
       }
+      static {
+        __name2(this, "EventCommonSender");
+      }
       constructor({ chatPeer = void 0, msgId = void 0, broadcast = void 0 }) {
         super();
         this._eventName = "Event";
@@ -34129,12 +35818,10 @@ var require_common3 = __commonJS({
     exports.EventCommonSender = EventCommonSender;
   }
 });
-
-// ../node_modules/telegram/events/Raw.js
 var require_Raw = __commonJS({
   "../node_modules/telegram/events/Raw.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -34144,6 +35831,9 @@ var require_Raw = __commonJS({
     var Raw = class extends common_1.EventBuilder {
       static {
         __name(this, "Raw");
+      }
+      static {
+        __name2(this, "Raw");
       }
       constructor(params) {
         super({ func: params.func });
@@ -34174,18 +35864,16 @@ var require_Raw = __commonJS({
     exports.Raw = Raw;
   }
 });
-
-// ../node_modules/telegram/client/updates.js
 var require_updates = __commonJS({
   "../node_modules/telegram/client/updates.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.StopPropagation = void 0;
-    exports.on = on2;
+    exports.on = on22;
     exports.addEventHandler = addEventHandler;
     exports.removeEventHandler = removeEventHandler;
     exports.listEventHandlers = listEventHandlers;
@@ -34211,15 +35899,19 @@ var require_updates = __commonJS({
       static {
         __name(this, "StopPropagation");
       }
+      static {
+        __name2(this, "StopPropagation");
+      }
     };
     exports.StopPropagation = StopPropagation;
-    function on2(client, event) {
+    function on22(client, event) {
       return (f) => {
         client.addEventHandler(f, event);
         return f;
       };
     }
-    __name(on2, "on");
+    __name(on22, "on2");
+    __name2(on22, "on");
     function addEventHandler(client, callback, event) {
       if (event == void 0) {
         const raw = require_Raw().Raw;
@@ -34229,19 +35921,23 @@ var require_updates = __commonJS({
       client._eventBuilders.push([event, callback]);
     }
     __name(addEventHandler, "addEventHandler");
+    __name2(addEventHandler, "addEventHandler");
     function removeEventHandler(client, callback, event) {
       client._eventBuilders = client._eventBuilders.filter(function(item) {
         return item[0] !== event && item[1] !== callback;
       });
     }
     __name(removeEventHandler, "removeEventHandler");
+    __name2(removeEventHandler, "removeEventHandler");
     function listEventHandlers(client) {
       return client._eventBuilders;
     }
     __name(listEventHandlers, "listEventHandlers");
+    __name2(listEventHandlers, "listEventHandlers");
     function catchUp() {
     }
     __name(catchUp, "catchUp");
+    __name2(catchUp, "catchUp");
     function _handleUpdate(client, update) {
       if (typeof update === "number") {
         if ([-1, 0, 1].includes(update)) {
@@ -34268,6 +35964,7 @@ var require_updates = __commonJS({
       }
     }
     __name(_handleUpdate, "_handleUpdate");
+    __name2(_handleUpdate, "_handleUpdate");
     function _processUpdate(client, update, others, entities) {
       update._entities = entities || /* @__PURE__ */ new Map();
       const args = {
@@ -34277,6 +35974,7 @@ var require_updates = __commonJS({
       _dispatchUpdate(client, args);
     }
     __name(_processUpdate, "_processUpdate");
+    __name2(_processUpdate, "_processUpdate");
     async function _dispatchUpdate(client, args) {
       for (const [builder, callback] of client._eventBuilders) {
         if (!builder || !callback) {
@@ -34325,6 +36023,7 @@ var require_updates = __commonJS({
       }
     }
     __name(_dispatchUpdate, "_dispatchUpdate");
+    __name2(_dispatchUpdate, "_dispatchUpdate");
     async function _updateLoop(client) {
       let lastPongAt;
       while (!client._destroyed) {
@@ -34336,7 +36035,7 @@ var require_updates = __commonJS({
           continue;
         }
         try {
-          const ping = /* @__PURE__ */ __name(() => {
+          const ping = /* @__PURE__ */ __name2(() => {
             return client._sender.send(new tl_1.Api.PingDelayDisconnect({
               pingId: (0, Helpers_1.returnBigInt)((0, Helpers_1.getRandomInt)(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)),
               disconnectDelay: PING_DISCONNECT_DELAY
@@ -34383,6 +36082,7 @@ var require_updates = __commonJS({
       await client.disconnect();
     }
     __name(_updateLoop, "_updateLoop");
+    __name2(_updateLoop, "_updateLoop");
     async function attempts(cb, times, pause) {
       for (let i = 0; i < times; i++) {
         try {
@@ -34397,6 +36097,7 @@ var require_updates = __commonJS({
       return void 0;
     }
     __name(attempts, "attempts");
+    __name2(attempts, "attempts");
     function timeout(cb, ms) {
       let isResolved = false;
       return Promise.race([
@@ -34407,14 +36108,13 @@ var require_updates = __commonJS({
       });
     }
     __name(timeout, "timeout");
+    __name2(timeout, "timeout");
   }
 });
-
-// ../node_modules/telegram/client/chats.js
 var require_chats = __commonJS({
   "../node_modules/telegram/client/chats.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -34438,6 +36138,9 @@ var require_chats = __commonJS({
     var _ChatAction = class {
       static {
         __name(this, "_ChatAction");
+      }
+      static {
+        __name2(this, "_ChatAction");
       }
       [inspect_1.inspect.custom]() {
         return (0, Helpers_1.betterConsoleLog)(this);
@@ -34513,6 +36216,9 @@ var require_chats = __commonJS({
       static {
         __name(this, "_ParticipantsIter");
       }
+      static {
+        __name2(this, "_ParticipantsIter");
+      }
       [inspect_1.inspect.custom]() {
         return (0, Helpers_1.betterConsoleLog)(this);
       }
@@ -34548,11 +36254,11 @@ var require_chats = __commonJS({
         this.requests = [];
         if (ty == __1.helpers._EntityType.CHANNEL) {
           if (showTotal) {
-            const channel2 = await this.client.invoke(new tl_1.Api.channels.GetFullChannel({
+            const channel22 = await this.client.invoke(new tl_1.Api.channels.GetFullChannel({
               channel: entity
             }));
-            if (!(channel2.fullChat instanceof tl_1.Api.ChatFull)) {
-              this.total = channel2.fullChat.participantsCount;
+            if (!(channel22.fullChat instanceof tl_1.Api.ChatFull)) {
+              this.total = channel22.fullChat.participantsCount;
             }
           }
           if (this.total && this.total <= 0) {
@@ -34651,6 +36357,9 @@ var require_chats = __commonJS({
       static {
         __name(this, "_AdminLogIter");
       }
+      static {
+        __name2(this, "_AdminLogIter");
+      }
       [inspect_1.inspect.custom]() {
         return (0, Helpers_1.betterConsoleLog)(this);
       }
@@ -34707,11 +36416,13 @@ var require_chats = __commonJS({
       });
     }
     __name(iterParticipants, "iterParticipants");
+    __name2(iterParticipants, "iterParticipants");
     async function getParticipants(client, entity, params) {
       const it = client.iterParticipants(entity, params);
       return await it.collect();
     }
     __name(getParticipants, "getParticipants");
+    __name2(getParticipants, "getParticipants");
     async function kickParticipant(client, entity, participant) {
       const peer = await client.getInputEntity(entity);
       const user = await client.getInputEntity(participant);
@@ -34753,14 +36464,13 @@ var require_chats = __commonJS({
       return client._getResponseMessage(request, resp, entity);
     }
     __name(kickParticipant, "kickParticipant");
+    __name2(kickParticipant, "kickParticipant");
   }
 });
-
-// ../node_modules/telegram/tl/custom/draft.js
 var require_draft = __commonJS({
   "../node_modules/telegram/tl/custom/draft.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -34773,6 +36483,9 @@ var require_draft = __commonJS({
     var Draft = class {
       static {
         __name(this, "Draft");
+      }
+      static {
+        __name2(this, "Draft");
       }
       [inspect_1.inspect.custom]() {
         return (0, Helpers_1.betterConsoleLog)(this);
@@ -34814,12 +36527,10 @@ var require_draft = __commonJS({
     exports.Draft = Draft;
   }
 });
-
-// ../node_modules/telegram/tl/custom/dialog.js
 var require_dialog = __commonJS({
   "../node_modules/telegram/tl/custom/dialog.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -34833,6 +36544,9 @@ var require_dialog = __commonJS({
     var Dialog = class {
       static {
         __name(this, "Dialog");
+      }
+      static {
+        __name2(this, "Dialog");
       }
       [inspect_1.inspect.custom]() {
         return (0, Helpers_1.betterConsoleLog)(this);
@@ -34865,12 +36579,10 @@ var require_dialog = __commonJS({
     exports.Dialog = Dialog;
   }
 });
-
-// ../node_modules/telegram/client/dialogs.js
 var require_dialogs = __commonJS({
   "../node_modules/telegram/client/dialogs.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -34895,9 +36607,13 @@ var require_dialogs = __commonJS({
       ];
     }
     __name(_dialogMessageKey, "_dialogMessageKey");
+    __name2(_dialogMessageKey, "_dialogMessageKey");
     var _DialogsIter = class extends requestIter_1.RequestIter {
       static {
         __name(this, "_DialogsIter");
+      }
+      static {
+        __name2(this, "_DialogsIter");
       }
       async _init({ offsetDate, offsetId, offsetPeer, ignorePinned, ignoreMigrated, folder }) {
         this.request = new tl_1.Api.messages.GetDialogs({
@@ -35020,18 +36736,18 @@ var require_dialogs = __commonJS({
       });
     }
     __name(iterDialogs, "iterDialogs");
+    __name2(iterDialogs, "iterDialogs");
     async function getDialogs(client, params) {
       return await client.iterDialogs(params).collect();
     }
     __name(getDialogs, "getDialogs");
+    __name2(getDialogs, "getDialogs");
   }
 });
-
-// ../node_modules/telegram/client/2fa.js
 var require_fa = __commonJS({
   "../node_modules/telegram/client/2fa.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -35098,14 +36814,13 @@ var require_fa = __commonJS({
       }
     }
     __name(updateTwoFaSettings, "updateTwoFaSettings");
+    __name2(updateTwoFaSettings, "updateTwoFaSettings");
   }
 });
-
-// ../node_modules/telegram/events/NewMessage.js
 var require_NewMessage = __commonJS({
   "../node_modules/telegram/events/NewMessage.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -35117,6 +36832,9 @@ var require_NewMessage = __commonJS({
     var NewMessage = class extends common_1.EventBuilder {
       static {
         __name(this, "NewMessage");
+      }
+      static {
+        __name2(this, "NewMessage");
       }
       constructor(newMessageParams = {}) {
         let { chats, func, incoming, outgoing, fromUsers, forwards, pattern, blacklistChats = false } = newMessageParams;
@@ -35235,6 +36953,9 @@ var require_NewMessage = __commonJS({
       static {
         __name(this, "NewMessageEvent");
       }
+      static {
+        __name2(this, "NewMessageEvent");
+      }
       constructor(message, originalUpdate) {
         super({
           msgId: message.id,
@@ -35263,36 +36984,32 @@ var require_NewMessage = __commonJS({
     exports.NewMessageEvent = NewMessageEvent;
   }
 });
-
-// ../node_modules/telegram/events/index.js
 var require_events2 = __commonJS({
   "../node_modules/telegram/events/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.NewMessageEvent = exports.NewMessage = exports.Raw = void 0;
     var Raw_1 = require_Raw();
-    Object.defineProperty(exports, "Raw", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "Raw", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return Raw_1.Raw;
     }, "get") });
     var NewMessage_1 = require_NewMessage();
-    Object.defineProperty(exports, "NewMessage", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "NewMessage", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return NewMessage_1.NewMessage;
     }, "get") });
-    Object.defineProperty(exports, "NewMessageEvent", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "NewMessageEvent", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return NewMessage_1.NewMessageEvent;
     }, "get") });
   }
 });
-
-// ../node_modules/telegram/client/TelegramClient.js
 var require_TelegramClient = __commonJS({
   "../node_modules/telegram/client/TelegramClient.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -35300,7 +37017,7 @@ var require_TelegramClient = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -35349,7 +37066,10 @@ var require_TelegramClient = __commonJS({
     var platform_1 = require_platform();
     var TelegramClient2 = class extends telegramBaseClient_1.TelegramBaseClient {
       static {
-        __name(this, "TelegramClient");
+        __name(this, "TelegramClient2");
+      }
+      static {
+        __name2(this, "TelegramClient");
       }
       /**
        * @param session - a session to be used to save the connection and auth key to. This can be a custom session that inherits MemorySession.
@@ -36496,12 +38216,10 @@ var require_TelegramClient = __commonJS({
     exports.TelegramClient = TelegramClient2;
   }
 });
-
-// ../node_modules/telegram/Version.js
 var require_Version = __commonJS({
   "../node_modules/telegram/Version.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -36510,12 +38228,10 @@ var require_Version = __commonJS({
     exports.version = "2.26.21";
   }
 });
-
-// ../node_modules/telegram/client/index.js
 var require_client = __commonJS({
   "../node_modules/telegram/client/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -36523,7 +38239,7 @@ var require_client = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -36578,12 +38294,10 @@ var require_client = __commonJS({
     exports.users = users;
   }
 });
-
-// ../node_modules/telegram/index.js
 var require_telegram = __commonJS({
   "../node_modules/telegram/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -36591,7 +38305,7 @@ var require_telegram = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name2(function() {
           return m[k];
         }, "get") };
       }
@@ -36617,25 +38331,25 @@ var require_telegram = __commonJS({
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.client = exports.password = exports.tl = exports.helpers = exports.extensions = exports.sessions = exports.errors = exports.utils = exports.Logger = exports.version = exports.Connection = exports.TelegramClient = exports.Api = void 0;
     var tl_1 = require_tl();
-    Object.defineProperty(exports, "Api", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "Api", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return tl_1.Api;
     }, "get") });
     var tl = __importStar(require_tl());
     exports.tl = tl;
     var TelegramClient_1 = require_TelegramClient();
-    Object.defineProperty(exports, "TelegramClient", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "TelegramClient", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return TelegramClient_1.TelegramClient;
     }, "get") });
     var network_1 = require_network();
-    Object.defineProperty(exports, "Connection", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "Connection", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return network_1.Connection;
     }, "get") });
     var Version_1 = require_Version();
-    Object.defineProperty(exports, "version", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "version", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return Version_1.version;
     }, "get") });
     var Logger_1 = require_Logger();
-    Object.defineProperty(exports, "Logger", { enumerable: true, get: /* @__PURE__ */ __name(function() {
+    Object.defineProperty(exports, "Logger", { enumerable: true, get: /* @__PURE__ */ __name2(function() {
       return Logger_1.Logger;
     }, "get") });
     var utils = __importStar(require_Utils());
@@ -36654,8 +38368,6 @@ var require_telegram = __commonJS({
     exports.password = password;
   }
 });
-
-// api/tg/_lib/http.js
 function json2(payload, init = {}) {
   const headers = new Headers(init.headers || {});
   Object.entries(JSON_HEADERS).forEach(([key, value]) => {
@@ -36666,6 +38378,7 @@ function json2(payload, init = {}) {
     headers
   });
 }
+__name(json2, "json2");
 async function readJsonBody(request) {
   const contentType = request.headers.get("content-type") || "";
   if (!contentType.includes("application/json")) return {};
@@ -36675,6 +38388,7 @@ async function readJsonBody(request) {
     return {};
   }
 }
+__name(readJsonBody, "readJsonBody");
 function toBoolean(value, fallback = false) {
   if (typeof value === "boolean") return value;
   if (typeof value === "string") {
@@ -36684,33 +38398,33 @@ function toBoolean(value, fallback = false) {
   }
   return fallback;
 }
+__name(toBoolean, "toBoolean");
 function toInt(value, fallback = 0) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return fallback;
   return Math.trunc(numeric);
 }
+__name(toInt, "toInt");
 var JSON_HEADERS;
 var init_http = __esm({
   "api/tg/_lib/http.js"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     JSON_HEADERS = {
       "content-type": "application/json; charset=utf-8"
     };
-    __name(json2, "json");
-    __name(readJsonBody, "readJsonBody");
-    __name(toBoolean, "toBoolean");
-    __name(toInt, "toInt");
+    __name2(json2, "json");
+    __name2(readJsonBody, "readJsonBody");
+    __name2(toBoolean, "toBoolean");
+    __name2(toInt, "toInt");
   }
 });
-
-// api/tg/_lib/telegram.js
-import { Buffer as Buffer3 } from "node:buffer";
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+__name(delay, "delay");
 function withTimeout(promise, timeoutMs, code = "TELEGRAM_REQUEST_TIMEOUT") {
   let timeoutId = 0;
   const timeoutPromise = new Promise((_, reject) => {
@@ -36724,11 +38438,13 @@ function withTimeout(promise, timeoutMs, code = "TELEGRAM_REQUEST_TIMEOUT") {
     clearTimeout(timeoutId);
   });
 }
+__name(withTimeout, "withTimeout");
 function toSafeInt(value, fallback = 0) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return fallback;
   return Math.trunc(numeric);
 }
+__name(toSafeInt, "toSafeInt");
 function toSafeId(value) {
   if (value === void 0 || value === null) return null;
   try {
@@ -36737,10 +38453,12 @@ function toSafeId(value) {
     return null;
   }
 }
+__name(toSafeId, "toSafeId");
 function toSafeText3(value, fallback = "") {
   if (typeof value === "string") return value;
   return fallback;
 }
+__name(toSafeText3, "toSafeText3");
 function readConfigText3(value) {
   const raw = toSafeText3(value).trim();
   if (!raw) return "";
@@ -36749,6 +38467,7 @@ function readConfigText3(value) {
   }
   return raw;
 }
+__name(readConfigText3, "readConfigText3");
 function getWebDcHost(dcId) {
   switch (Number(dcId)) {
     case 1:
@@ -36765,9 +38484,11 @@ function getWebDcHost(dcId) {
       return "";
   }
 }
+__name(getWebDcHost, "getWebDcHost");
 function isIpv4Address(value) {
   return /^\d{1,3}(?:\.\d{1,3}){3}$/.test(String(value || ""));
 }
+__name(isIpv4Address, "isIpv4Address");
 function extractErrorCode(err) {
   const numericCode = Number(err?.code);
   const preferredCandidates = [
@@ -36802,6 +38523,7 @@ function extractErrorCode(err) {
   }
   return "TELEGRAM_UNKNOWN_ERROR";
 }
+__name(extractErrorCode, "extractErrorCode");
 function toApiError(err) {
   if (err instanceof ApiError) return err;
   const code = extractErrorCode(err);
@@ -36815,15 +38537,16 @@ function toApiError(err) {
   }
   return wrapped;
 }
-function getApiConfig(env2) {
-  const apiIdRaw = readConfigText3(env2?.TELEGRAM_API_ID) || readConfigText3(env2?.VITE_TELEGRAM_API_ID);
-  const apiHash = readConfigText3(env2?.TELEGRAM_API_HASH) || readConfigText3(env2?.VITE_TELEGRAM_API_HASH);
+__name(toApiError, "toApiError");
+function getApiConfig(env22) {
+  const apiIdRaw = readConfigText3(env22?.TELEGRAM_API_ID) || readConfigText3(env22?.VITE_TELEGRAM_API_ID);
+  const apiHash = readConfigText3(env22?.TELEGRAM_API_HASH) || readConfigText3(env22?.VITE_TELEGRAM_API_HASH);
   const apiId = Number(apiIdRaw);
   if (!Number.isFinite(apiId) || apiId <= 0 || !apiHash) {
-    const hasTelegramApiId = Boolean(readConfigText3(env2?.TELEGRAM_API_ID));
-    const hasTelegramApiHash = Boolean(readConfigText3(env2?.TELEGRAM_API_HASH));
-    const hasLegacyViteApiId = Boolean(readConfigText3(env2?.VITE_TELEGRAM_API_ID));
-    const hasLegacyViteApiHash = Boolean(readConfigText3(env2?.VITE_TELEGRAM_API_HASH));
+    const hasTelegramApiId = Boolean(readConfigText3(env22?.TELEGRAM_API_ID));
+    const hasTelegramApiHash = Boolean(readConfigText3(env22?.TELEGRAM_API_HASH));
+    const hasLegacyViteApiId = Boolean(readConfigText3(env22?.VITE_TELEGRAM_API_ID));
+    const hasLegacyViteApiHash = Boolean(readConfigText3(env22?.VITE_TELEGRAM_API_HASH));
     throw new ApiError(
       "TELEGRAM_CONFIG_MISSING",
       500,
@@ -36832,6 +38555,7 @@ function getApiConfig(env2) {
   }
   return { apiId, apiHash };
 }
+__name(getApiConfig, "getApiConfig");
 async function safeDisconnect(client) {
   try {
     if (client?.connected) {
@@ -36842,8 +38566,9 @@ async function safeDisconnect(client) {
   } catch {
   }
 }
-async function runWithTelegramClient(env2, sessionString, fn) {
-  const { apiId, apiHash } = getApiConfig(env2);
+__name(safeDisconnect, "safeDisconnect");
+async function runWithTelegramClient(env22, sessionString, fn) {
+  const { apiId, apiHash } = getApiConfig(env22);
   const session = new import_sessions.StringSession(sessionString || "");
   const dcId = Number(session.dcId) || 4;
   const webDcHost = getWebDcHost(dcId) || getWebDcHost(4);
@@ -36884,6 +38609,7 @@ async function runWithTelegramClient(env2, sessionString, fn) {
     await safeDisconnect(client);
   }
 }
+__name(runWithTelegramClient, "runWithTelegramClient");
 async function sendCodeWithClient(client, apiId, apiHash, phoneNumber) {
   const result = await withTimeout(
     client.invoke(
@@ -36899,6 +38625,7 @@ async function sendCodeWithClient(client, apiId, apiHash, phoneNumber) {
   );
   return { phoneCodeHash: result.phoneCodeHash };
 }
+__name(sendCodeWithClient, "sendCodeWithClient");
 async function signInWithCode(client, phoneNumber, phoneCodeHash, phoneCode) {
   return withTimeout(
     client.invoke(
@@ -36912,20 +38639,23 @@ async function signInWithCode(client, phoneNumber, phoneCodeHash, phoneCode) {
     "TELEGRAM_SIGN_IN_TIMEOUT"
   );
 }
+__name(signInWithCode, "signInWithCode");
 function normalizePassword(value) {
   if (typeof value === "string") return value.normalize("NFKC");
   return String(value ?? "").normalize("NFKC");
 }
+__name(normalizePassword, "normalizePassword");
 function isAuthKeyUnregisteredError(err) {
   const message = String(err?.message || "").toUpperCase();
   return message.includes("AUTH_KEY_UNREGISTERED");
 }
+__name(isAuthKeyUnregisteredError, "isAuthKeyUnregisteredError");
 async function signInWithPassword(client, password, apiId, apiHash) {
   const normalizedPassword = normalizePassword(password);
   if (!normalizedPassword.trim()) {
     throw new ApiError("CLOUD_PASSWORD_REQUIRED", 400, "Cloud password is required");
   }
-  const runSrpCheck = /* @__PURE__ */ __name(async () => {
+  const runSrpCheck = /* @__PURE__ */ __name2(async () => {
     const passwordInfo = await withTimeout(
       client.invoke(new import_telegram.Api.account.GetPassword()),
       REQUEST_TIMEOUT_MS,
@@ -36956,13 +38686,13 @@ async function signInWithPassword(client, password, apiId, apiHash) {
       "TELEGRAM_2FA_CHECK_TIMEOUT"
     );
   }, "runSrpCheck");
-  const runBuiltInCheck = /* @__PURE__ */ __name(async () => {
+  const runBuiltInCheck = /* @__PURE__ */ __name2(async () => {
     const user = await withTimeout(
       client.signInWithPassword(
         { apiId, apiHash },
         {
-          password: /* @__PURE__ */ __name(async () => normalizedPassword, "password"),
-          onError: /* @__PURE__ */ __name(async (err) => {
+          password: /* @__PURE__ */ __name2(async () => normalizedPassword, "password"),
+          onError: /* @__PURE__ */ __name2(async (err) => {
             throw err;
           }, "onError")
         }
@@ -36994,6 +38724,7 @@ async function signInWithPassword(client, password, apiId, apiHash) {
   }
   throw new ApiError("TWO_FA_SESSION_EXPIRED", 401, "2FA auth session expired");
 }
+__name(signInWithPassword, "signInWithPassword");
 async function resolvePeerEntity(client, chatId, context2 = "resolvePeerEntity") {
   let peerId = chatId;
   if (typeof chatId === "string" && /^-?\d+$/.test(chatId)) {
@@ -37017,6 +38748,7 @@ async function resolvePeerEntity(client, chatId, context2 = "resolvePeerEntity")
     throw err;
   }
 }
+__name(resolvePeerEntity, "resolvePeerEntity");
 function serializeStatus(status) {
   if (!status) return null;
   return {
@@ -37025,6 +38757,7 @@ function serializeStatus(status) {
     expires: toSafeInt(status.expires, 0) || null
   };
 }
+__name(serializeStatus, "serializeStatus");
 function serializeMigratedTo(migratedTo) {
   if (!migratedTo) return null;
   return {
@@ -37032,6 +38765,7 @@ function serializeMigratedTo(migratedTo) {
     channelId: toSafeId(migratedTo.channelId || migratedTo.id)
   };
 }
+__name(serializeMigratedTo, "serializeMigratedTo");
 function serializeEntity(entity) {
   if (!entity) return null;
   return {
@@ -37049,6 +38783,7 @@ function serializeEntity(entity) {
     status: serializeStatus(entity.status)
   };
 }
+__name(serializeEntity, "serializeEntity");
 function serializePeerId(peerId) {
   if (!peerId) return null;
   return {
@@ -37058,6 +38793,7 @@ function serializePeerId(peerId) {
     channelId: toSafeId(peerId.channelId)
   };
 }
+__name(serializePeerId, "serializePeerId");
 function serializeDocumentAttributes(attributes) {
   if (!Array.isArray(attributes)) return [];
   return attributes.map((attr) => {
@@ -37075,6 +38811,7 @@ function serializeDocumentAttributes(attributes) {
     return serialized;
   });
 }
+__name(serializeDocumentAttributes, "serializeDocumentAttributes");
 function serializeMedia(media) {
   if (!media) return null;
   const result = {
@@ -37111,6 +38848,7 @@ function serializeMedia(media) {
   }
   return result;
 }
+__name(serializeMedia, "serializeMedia");
 function serializeSender(sender) {
   if (!sender) return null;
   return {
@@ -37121,6 +38859,7 @@ function serializeSender(sender) {
     username: toSafeText3(sender.username, "")
   };
 }
+__name(serializeSender, "serializeSender");
 function serializeMessage(message) {
   if (!message) return null;
   return {
@@ -37137,6 +38876,7 @@ function serializeMessage(message) {
     media: serializeMedia(message.media)
   };
 }
+__name(serializeMessage, "serializeMessage");
 async function enrichMessagesWithSenders(messages) {
   if (!Array.isArray(messages) || messages.length === 0) return messages;
   await Promise.all(
@@ -37150,12 +38890,14 @@ async function enrichMessagesWithSenders(messages) {
   );
   return messages;
 }
+__name(enrichMessagesWithSenders, "enrichMessagesWithSenders");
 function serializeNotifySettings(notifySettings) {
   if (!notifySettings) return null;
   return {
     muteUntil: toSafeInt(notifySettings.muteUntil, 0)
   };
 }
+__name(serializeNotifySettings, "serializeNotifySettings");
 function serializeDialog(dialog) {
   return {
     id: toSafeId(dialog?.id || dialog?.entity?.id),
@@ -37172,19 +38914,21 @@ function serializeDialog(dialog) {
     }
   };
 }
+__name(serializeDialog, "serializeDialog");
 function getPeerId(peer) {
   if (!peer) return null;
   return toSafeId(peer.userId || peer.chatId || peer.channelId || peer.id || peer.peerId);
 }
+__name(getPeerId, "getPeerId");
 function serializeChatFolder(folder) {
-  let title2 = folder?.title;
-  if (title2 && typeof title2 === "object") {
-    title2 = title2.text || title2.className || "Folder";
+  let title22 = folder?.title;
+  if (title22 && typeof title22 === "object") {
+    title22 = title22.text || title22.className || "Folder";
   }
   const emoji = typeof folder?.emoticon === "string" ? folder.emoticon : null;
   return {
     id: toSafeInt(folder?.id, 0),
-    title: typeof title2 === "string" ? title2 : "Folder",
+    title: typeof title22 === "string" ? title22 : "Folder",
     emoji,
     includePeers: (folder?.includePeers || []).map(getPeerId).filter(Boolean),
     excludePeers: (folder?.excludePeers || []).map(getPeerId).filter(Boolean),
@@ -37199,6 +38943,7 @@ function serializeChatFolder(folder) {
     excludeArchived: Boolean(folder?.excludeArchived)
   };
 }
+__name(serializeChatFolder, "serializeChatFolder");
 function mapApiError(err) {
   const mapped = toApiError(err);
   return {
@@ -37209,10 +38954,19 @@ function mapApiError(err) {
     tgSession: mapped.tgSession || ""
   };
 }
-var import_telegram, import_sessions, import_uploads, import_network, import_extensions, CONNECT_TIMEOUT_MS, REQUEST_TIMEOUT_MS, KNOWN_STATUS_CODES, ApiError;
+__name(mapApiError, "mapApiError");
+var import_telegram;
+var import_sessions;
+var import_uploads;
+var import_network;
+var import_extensions;
+var CONNECT_TIMEOUT_MS;
+var REQUEST_TIMEOUT_MS;
+var KNOWN_STATUS_CODES;
+var ApiError;
 var init_telegram = __esm({
   "api/tg/_lib/telegram.js"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -37257,18 +39011,21 @@ var init_telegram = __esm({
       ["NO_FILE_PROVIDED", 400],
       ["INVALID_REQUEST", 400]
     ]);
-    __name(delay, "delay");
-    __name(withTimeout, "withTimeout");
-    __name(toSafeInt, "toSafeInt");
-    __name(toSafeId, "toSafeId");
-    __name(toSafeText3, "toSafeText");
-    __name(readConfigText3, "readConfigText");
-    __name(getWebDcHost, "getWebDcHost");
-    __name(isIpv4Address, "isIpv4Address");
-    __name(extractErrorCode, "extractErrorCode");
+    __name2(delay, "delay");
+    __name2(withTimeout, "withTimeout");
+    __name2(toSafeInt, "toSafeInt");
+    __name2(toSafeId, "toSafeId");
+    __name2(toSafeText3, "toSafeText");
+    __name2(readConfigText3, "readConfigText");
+    __name2(getWebDcHost, "getWebDcHost");
+    __name2(isIpv4Address, "isIpv4Address");
+    __name2(extractErrorCode, "extractErrorCode");
     ApiError = class extends Error {
       static {
         __name(this, "ApiError");
+      }
+      static {
+        __name2(this, "ApiError");
       }
       constructor(code, status = 500, message = code, details = null) {
         super(message || code);
@@ -37278,35 +39035,32 @@ var init_telegram = __esm({
         this.details = details;
       }
     };
-    __name(toApiError, "toApiError");
-    __name(getApiConfig, "getApiConfig");
-    __name(safeDisconnect, "safeDisconnect");
-    __name(runWithTelegramClient, "runWithTelegramClient");
-    __name(sendCodeWithClient, "sendCodeWithClient");
-    __name(signInWithCode, "signInWithCode");
-    __name(normalizePassword, "normalizePassword");
-    __name(isAuthKeyUnregisteredError, "isAuthKeyUnregisteredError");
-    __name(signInWithPassword, "signInWithPassword");
-    __name(resolvePeerEntity, "resolvePeerEntity");
-    __name(serializeStatus, "serializeStatus");
-    __name(serializeMigratedTo, "serializeMigratedTo");
-    __name(serializeEntity, "serializeEntity");
-    __name(serializePeerId, "serializePeerId");
-    __name(serializeDocumentAttributes, "serializeDocumentAttributes");
-    __name(serializeMedia, "serializeMedia");
-    __name(serializeSender, "serializeSender");
-    __name(serializeMessage, "serializeMessage");
-    __name(enrichMessagesWithSenders, "enrichMessagesWithSenders");
-    __name(serializeNotifySettings, "serializeNotifySettings");
-    __name(serializeDialog, "serializeDialog");
-    __name(getPeerId, "getPeerId");
-    __name(serializeChatFolder, "serializeChatFolder");
-    __name(mapApiError, "mapApiError");
+    __name2(toApiError, "toApiError");
+    __name2(getApiConfig, "getApiConfig");
+    __name2(safeDisconnect, "safeDisconnect");
+    __name2(runWithTelegramClient, "runWithTelegramClient");
+    __name2(sendCodeWithClient, "sendCodeWithClient");
+    __name2(signInWithCode, "signInWithCode");
+    __name2(normalizePassword, "normalizePassword");
+    __name2(isAuthKeyUnregisteredError, "isAuthKeyUnregisteredError");
+    __name2(signInWithPassword, "signInWithPassword");
+    __name2(resolvePeerEntity, "resolvePeerEntity");
+    __name2(serializeStatus, "serializeStatus");
+    __name2(serializeMigratedTo, "serializeMigratedTo");
+    __name2(serializeEntity, "serializeEntity");
+    __name2(serializePeerId, "serializePeerId");
+    __name2(serializeDocumentAttributes, "serializeDocumentAttributes");
+    __name2(serializeMedia, "serializeMedia");
+    __name2(serializeSender, "serializeSender");
+    __name2(serializeMessage, "serializeMessage");
+    __name2(enrichMessagesWithSenders, "enrichMessagesWithSenders");
+    __name2(serializeNotifySettings, "serializeNotifySettings");
+    __name2(serializeDialog, "serializeDialog");
+    __name2(getPeerId, "getPeerId");
+    __name2(serializeChatFolder, "serializeChatFolder");
+    __name2(mapApiError, "mapApiError");
   }
 });
-
-// api/tg/_lib/session.js
-import { Buffer as Buffer4 } from "node:buffer";
 function emptyState() {
   return {
     session: "",
@@ -37314,9 +39068,11 @@ function emptyState() {
     updatedAt: Date.now()
   };
 }
+__name(emptyState, "emptyState");
 function isObject(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
+__name(isObject, "isObject");
 function normalizePendingAuth(value) {
   if (!isObject(value)) return null;
   const phoneNumber = typeof value.phoneNumber === "string" ? value.phoneNumber : "";
@@ -37328,6 +39084,7 @@ function normalizePendingAuth(value) {
     createdAt: toInt(value.createdAt, Date.now())
   };
 }
+__name(normalizePendingAuth, "normalizePendingAuth");
 function normalizeState(raw) {
   const state = emptyState();
   if (!isObject(raw)) return state;
@@ -37336,6 +39093,7 @@ function normalizeState(raw) {
   state.updatedAt = toInt(raw.updatedAt, Date.now());
   return state;
 }
+__name(normalizeState, "normalizeState");
 function parseCookies2(cookieHeader) {
   const result = {};
   if (!cookieHeader) return result;
@@ -37348,17 +39106,20 @@ function parseCookies2(cookieHeader) {
   });
   return result;
 }
+__name(parseCookies2, "parseCookies2");
 function toBase64Url2(bufferLike) {
   const base64 = Buffer4.from(bufferLike).toString("base64");
   return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
+__name(toBase64Url2, "toBase64Url2");
 function fromBase64Url(value) {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
   const padded = normalized + "=".repeat((4 - (normalized.length % 4 || 4)) % 4);
   return Buffer4.from(padded, "base64");
 }
-async function getSessionKey(env2) {
-  const secret = String(env2?.TELEGRAM_SESSION_SECRET || "").trim();
+__name(fromBase64Url, "fromBase64Url");
+async function getSessionKey(env22) {
+  const secret = String(env22?.TELEGRAM_SESSION_SECRET || "").trim();
   if (!secret) {
     throw new Error("SESSION_SECRET_MISSING");
   }
@@ -37374,8 +39135,9 @@ async function getSessionKey(env2) {
   cachedSecret = secret;
   return cachedKey;
 }
-async function encryptPayload(payload, env2) {
-  const key = await getSessionKey(env2);
+__name(getSessionKey, "getSessionKey");
+async function encryptPayload(payload, env22) {
+  const key = await getSessionKey(env22);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const plaintext = textEncoder.encode(JSON.stringify(payload));
   const ciphertext = await crypto.subtle.encrypt(
@@ -37385,10 +39147,11 @@ async function encryptPayload(payload, env2) {
   );
   return `${toBase64Url2(iv)}.${toBase64Url2(new Uint8Array(ciphertext))}`;
 }
-async function decryptPayload(token, env2) {
+__name(encryptPayload, "encryptPayload");
+async function decryptPayload(token, env22) {
   const [ivPart, cipherPart] = String(token || "").split(".");
   if (!ivPart || !cipherPart) return null;
-  const key = await getSessionKey(env2);
+  const key = await getSessionKey(env22);
   const iv = fromBase64Url(ivPart);
   const ciphertext = fromBase64Url(cipherPart);
   const plaintext = await crypto.subtle.decrypt(
@@ -37398,22 +39161,24 @@ async function decryptPayload(token, env2) {
   );
   return JSON.parse(textDecoder.decode(plaintext));
 }
-async function readSessionState(request, env2) {
+__name(decryptPayload, "decryptPayload");
+async function readSessionState(request, env22) {
   const cookieHeader = request.headers.get("cookie");
   const cookies = parseCookies2(cookieHeader);
   const token = cookies[COOKIE_NAME];
   if (!token) return emptyState();
   try {
-    const raw = await decryptPayload(token, env2);
+    const raw = await decryptPayload(token, env22);
     return normalizeState(raw);
   } catch {
     return emptyState();
   }
 }
-async function buildSessionCookie(state, env2) {
+__name(readSessionState, "readSessionState");
+async function buildSessionCookie(state, env22) {
   const normalized = normalizeState(state);
   normalized.updatedAt = Date.now();
-  const token = await encryptPayload(normalized, env2);
+  const token = await encryptPayload(normalized, env22);
   return [
     `${COOKIE_NAME}=${token}`,
     `Max-Age=${COOKIE_MAX_AGE_SECONDS}`,
@@ -37423,6 +39188,7 @@ async function buildSessionCookie(state, env2) {
     "SameSite=Lax"
   ].join("; ");
 }
+__name(buildSessionCookie, "buildSessionCookie");
 function buildClearedSessionCookie() {
   return [
     `${COOKIE_NAME}=`,
@@ -37433,6 +39199,7 @@ function buildClearedSessionCookie() {
     "SameSite=Lax"
   ].join("; ");
 }
+__name(buildClearedSessionCookie, "buildClearedSessionCookie");
 function clearPendingAuth(state) {
   return {
     ...normalizeState(state),
@@ -37440,10 +39207,16 @@ function clearPendingAuth(state) {
     updatedAt: Date.now()
   };
 }
-var COOKIE_NAME, COOKIE_MAX_AGE_SECONDS, textEncoder, textDecoder, cachedSecret, cachedKey;
+__name(clearPendingAuth, "clearPendingAuth");
+var COOKIE_NAME;
+var COOKIE_MAX_AGE_SECONDS;
+var textEncoder;
+var textDecoder;
+var cachedSecret;
+var cachedKey;
 var init_session = __esm({
   "api/tg/_lib/session.js"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -37454,25 +39227,22 @@ var init_session = __esm({
     textDecoder = new TextDecoder();
     cachedSecret = "";
     cachedKey = null;
-    __name(emptyState, "emptyState");
-    __name(isObject, "isObject");
-    __name(normalizePendingAuth, "normalizePendingAuth");
-    __name(normalizeState, "normalizeState");
-    __name(parseCookies2, "parseCookies");
-    __name(toBase64Url2, "toBase64Url");
-    __name(fromBase64Url, "fromBase64Url");
-    __name(getSessionKey, "getSessionKey");
-    __name(encryptPayload, "encryptPayload");
-    __name(decryptPayload, "decryptPayload");
-    __name(readSessionState, "readSessionState");
-    __name(buildSessionCookie, "buildSessionCookie");
-    __name(buildClearedSessionCookie, "buildClearedSessionCookie");
-    __name(clearPendingAuth, "clearPendingAuth");
+    __name2(emptyState, "emptyState");
+    __name2(isObject, "isObject");
+    __name2(normalizePendingAuth, "normalizePendingAuth");
+    __name2(normalizeState, "normalizeState");
+    __name2(parseCookies2, "parseCookies");
+    __name2(toBase64Url2, "toBase64Url");
+    __name2(fromBase64Url, "fromBase64Url");
+    __name2(getSessionKey, "getSessionKey");
+    __name2(encryptPayload, "encryptPayload");
+    __name2(decryptPayload, "decryptPayload");
+    __name2(readSessionState, "readSessionState");
+    __name2(buildSessionCookie, "buildSessionCookie");
+    __name2(buildClearedSessionCookie, "buildClearedSessionCookie");
+    __name2(clearPendingAuth, "clearPendingAuth");
   }
 });
-
-// api/tg/_lib/storage.js
-import { Buffer as Buffer5 } from "node:buffer";
 function readConfigText4(value) {
   const raw = typeof value === "string" ? value.trim() : "";
   if (!raw) return "";
@@ -37481,24 +39251,28 @@ function readConfigText4(value) {
   }
   return raw;
 }
-function getStorageSecret(env2) {
-  const dedicated = readConfigText4(env2?.TELEGRAM_DB_SESSION_SECRET);
+__name(readConfigText4, "readConfigText4");
+function getStorageSecret(env22) {
+  const dedicated = readConfigText4(env22?.TELEGRAM_DB_SESSION_SECRET);
   if (dedicated) return dedicated;
-  const fallback = readConfigText4(env2?.TELEGRAM_SESSION_SECRET);
+  const fallback = readConfigText4(env22?.TELEGRAM_SESSION_SECRET);
   if (fallback) return fallback;
   throw new Error("SESSION_SECRET_MISSING");
 }
+__name(getStorageSecret, "getStorageSecret");
 function toBase64Url3(bufferLike) {
   const base64 = Buffer5.from(bufferLike).toString("base64");
   return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
+__name(toBase64Url3, "toBase64Url3");
 function fromBase64Url2(value) {
   const normalized = String(value || "").replace(/-/g, "+").replace(/_/g, "/");
   const padding = "=".repeat((4 - (normalized.length % 4 || 4)) % 4);
   return Buffer5.from(normalized + padding, "base64");
 }
-async function getEncryptionKey(env2) {
-  const secret = getStorageSecret(env2);
+__name(fromBase64Url2, "fromBase64Url2");
+async function getEncryptionKey(env22) {
+  const secret = getStorageSecret(env22);
   if (cachedKey2 && cachedSecret2 === secret) return cachedKey2;
   const digest = await crypto.subtle.digest("SHA-256", textEncoder2.encode(secret));
   cachedKey2 = await crypto.subtle.importKey(
@@ -37511,8 +39285,9 @@ async function getEncryptionKey(env2) {
   cachedSecret2 = secret;
   return cachedKey2;
 }
-async function encryptSessionValue(session, env2) {
-  const key = await getEncryptionKey(env2);
+__name(getEncryptionKey, "getEncryptionKey");
+async function encryptSessionValue(session, env22) {
+  const key = await getEncryptionKey(env22);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const plaintext = textEncoder2.encode(String(session || ""));
   const ciphertext = await crypto.subtle.encrypt(
@@ -37522,10 +39297,11 @@ async function encryptSessionValue(session, env2) {
   );
   return `${toBase64Url3(iv)}.${toBase64Url3(new Uint8Array(ciphertext))}`;
 }
-async function decryptSessionValue(payload, env2) {
+__name(encryptSessionValue, "encryptSessionValue");
+async function decryptSessionValue(payload, env22) {
   const [ivPart, cipherPart] = String(payload || "").split(".");
   if (!ivPart || !cipherPart) return "";
-  const key = await getEncryptionKey(env2);
+  const key = await getEncryptionKey(env22);
   const iv = fromBase64Url2(ivPart);
   const ciphertext = fromBase64Url2(cipherPart);
   const plaintext = await crypto.subtle.decrypt(
@@ -37535,20 +39311,23 @@ async function decryptSessionValue(payload, env2) {
   );
   return textDecoder2.decode(plaintext);
 }
+__name(decryptSessionValue, "decryptSessionValue");
 function toSafeUserId(userId) {
   const numeric = Number(userId);
   if (!Number.isFinite(numeric) || numeric <= 0) return 0;
   return Math.trunc(numeric);
 }
+__name(toSafeUserId, "toSafeUserId");
 function isSessionSecretMissingError(err) {
   const code = typeof err?.code === "string" ? err.code : "";
   const message = typeof err?.message === "string" ? err.message : "";
   const normalized = `${code} ${message}`.toUpperCase();
   return normalized.includes("SESSION_SECRET_MISSING");
 }
-async function deleteTelegramSessionRow(env2, safeUserId) {
+__name(isSessionSecretMissingError, "isSessionSecretMissingError");
+async function deleteTelegramSessionRow(env22, safeUserId) {
   if (!safeUserId) return;
-  await supabaseRequest(env2, "telegram_sessions", {
+  await supabaseRequest(env22, "telegram_sessions", {
     method: "DELETE",
     query: {
       user_id: `eq.${safeUserId}`
@@ -37558,14 +39337,16 @@ async function deleteTelegramSessionRow(env2, safeUserId) {
     }
   });
 }
+__name(deleteTelegramSessionRow, "deleteTelegramSessionRow");
 function incrementCorruptedSessionCleanupCount() {
   corruptedSessionCleanupCount += 1;
   return corruptedSessionCleanupCount;
 }
-async function loadTelegramSessionForUser(env2, userId) {
+__name(incrementCorruptedSessionCleanupCount, "incrementCorruptedSessionCleanupCount");
+async function loadTelegramSessionForUser(env22, userId) {
   const safeUserId = toSafeUserId(userId);
   if (!safeUserId) return "";
-  const rows = await supabaseRequest(env2, "telegram_sessions", {
+  const rows = await supabaseRequest(env22, "telegram_sessions", {
     query: {
       select: "session_encrypted",
       user_id: `eq.${safeUserId}`,
@@ -37575,13 +39356,13 @@ async function loadTelegramSessionForUser(env2, userId) {
   const encrypted = Array.isArray(rows) ? String(rows[0]?.session_encrypted || "") : "";
   if (!encrypted) return "";
   try {
-    return await decryptSessionValue(encrypted, env2);
+    return await decryptSessionValue(encrypted, env22);
   } catch (err) {
     if (isSessionSecretMissingError(err)) {
       throw err;
     }
     try {
-      await deleteTelegramSessionRow(env2, safeUserId);
+      await deleteTelegramSessionRow(env22, safeUserId);
       const cleanupCount = incrementCorruptedSessionCleanupCount();
       console.info("[TG STORAGE] Auto-cleared corrupted telegram session row:", {
         userId: safeUserId,
@@ -37598,17 +39379,18 @@ async function loadTelegramSessionForUser(env2, userId) {
     return "";
   }
 }
-async function saveTelegramSessionForUser(env2, userId, session) {
+__name(loadTelegramSessionForUser, "loadTelegramSessionForUser");
+async function saveTelegramSessionForUser(env22, userId, session) {
   const safeUserId = toSafeUserId(userId);
   if (!safeUserId) return;
   const value = typeof session === "string" ? session : String(session || "");
   const now = Date.now();
   if (!value) {
-    await deleteTelegramSessionRow(env2, safeUserId);
+    await deleteTelegramSessionRow(env22, safeUserId);
     return;
   }
-  const encrypted = await encryptSessionValue(value, env2);
-  await supabaseRequest(env2, "telegram_sessions", {
+  const encrypted = await encryptSessionValue(value, env22);
+  await supabaseRequest(env22, "telegram_sessions", {
     method: "POST",
     query: {
       on_conflict: "user_id"
@@ -37623,41 +39405,44 @@ async function saveTelegramSessionForUser(env2, userId, session) {
     }
   });
 }
-async function clearTelegramSessionForUser(env2, userId) {
-  return saveTelegramSessionForUser(env2, userId, "");
+__name(saveTelegramSessionForUser, "saveTelegramSessionForUser");
+async function clearTelegramSessionForUser(env22, userId) {
+  return saveTelegramSessionForUser(env22, userId, "");
 }
-var textEncoder2, textDecoder2, cachedSecret2, cachedKey2, corruptedSessionCleanupCount;
+__name(clearTelegramSessionForUser, "clearTelegramSessionForUser");
+var textEncoder2;
+var textDecoder2;
+var cachedSecret2;
+var cachedKey2;
+var corruptedSessionCleanupCount;
 var init_storage = __esm({
   "api/tg/_lib/storage.js"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
     init_supabase();
-    __name(readConfigText4, "readConfigText");
-    __name(getStorageSecret, "getStorageSecret");
-    __name(toBase64Url3, "toBase64Url");
-    __name(fromBase64Url2, "fromBase64Url");
+    __name2(readConfigText4, "readConfigText");
+    __name2(getStorageSecret, "getStorageSecret");
+    __name2(toBase64Url3, "toBase64Url");
+    __name2(fromBase64Url2, "fromBase64Url");
     textEncoder2 = new TextEncoder();
     textDecoder2 = new TextDecoder();
     cachedSecret2 = "";
     cachedKey2 = null;
     corruptedSessionCleanupCount = 0;
-    __name(getEncryptionKey, "getEncryptionKey");
-    __name(encryptSessionValue, "encryptSessionValue");
-    __name(decryptSessionValue, "decryptSessionValue");
-    __name(toSafeUserId, "toSafeUserId");
-    __name(isSessionSecretMissingError, "isSessionSecretMissingError");
-    __name(deleteTelegramSessionRow, "deleteTelegramSessionRow");
-    __name(incrementCorruptedSessionCleanupCount, "incrementCorruptedSessionCleanupCount");
-    __name(loadTelegramSessionForUser, "loadTelegramSessionForUser");
-    __name(saveTelegramSessionForUser, "saveTelegramSessionForUser");
-    __name(clearTelegramSessionForUser, "clearTelegramSessionForUser");
+    __name2(getEncryptionKey, "getEncryptionKey");
+    __name2(encryptSessionValue, "encryptSessionValue");
+    __name2(decryptSessionValue, "decryptSessionValue");
+    __name2(toSafeUserId, "toSafeUserId");
+    __name2(isSessionSecretMissingError, "isSessionSecretMissingError");
+    __name2(deleteTelegramSessionRow, "deleteTelegramSessionRow");
+    __name2(incrementCorruptedSessionCleanupCount, "incrementCorruptedSessionCleanupCount");
+    __name2(loadTelegramSessionForUser, "loadTelegramSessionForUser");
+    __name2(saveTelegramSessionForUser, "saveTelegramSessionForUser");
+    __name2(clearTelegramSessionForUser, "clearTelegramSessionForUser");
   }
 });
-
-// api/tg/[action].js
-import { Buffer as Buffer6 } from "node:buffer";
 function routeNotFoundResponse() {
   return json2(
     {
@@ -37667,18 +39452,22 @@ function routeNotFoundResponse() {
     { status: 404 }
   );
 }
+__name(routeNotFoundResponse, "routeNotFoundResponse");
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
+__name(clamp, "clamp");
 function toText(value, fallback = "") {
   if (typeof value === "string") return value.trim();
   return fallback;
 }
+__name(toText, "toText");
 function toPositiveInt(value) {
   const parsed = toInt(value, 0);
   if (!Number.isFinite(parsed) || parsed <= 0) return 0;
   return parsed;
 }
+__name(toPositiveInt, "toPositiveInt");
 function getFileExtension(value) {
   const text = toText(value).toLowerCase();
   if (!text) return "";
@@ -37687,6 +39476,7 @@ function getFileExtension(value) {
   if (idx <= 0 || idx >= clean.length - 1) return "";
   return clean.slice(idx + 1);
 }
+__name(getFileExtension, "getFileExtension");
 function inferImageMimeByExtension(ext) {
   if (!ext) return "";
   if (ext === "jpg" || ext === "jpeg") return "image/jpeg";
@@ -37699,6 +39489,7 @@ function inferImageMimeByExtension(ext) {
   if (ext === "avif") return "image/avif";
   return "";
 }
+__name(inferImageMimeByExtension, "inferImageMimeByExtension");
 function inferVideoMimeByExtension(ext) {
   if (!ext) return "";
   if (ext === "webm") return "video/webm";
@@ -37717,17 +39508,20 @@ function inferVideoMimeByExtension(ext) {
   if (ext === "mp4" || ext === "m4v") return "video/mp4";
   return "";
 }
+__name(inferVideoMimeByExtension, "inferVideoMimeByExtension");
 function isGenericBinaryMime(value) {
   const mime = toText(value).toLowerCase();
   if (!mime) return false;
   return GENERIC_BINARY_MIMES.has(mime);
 }
+__name(isGenericBinaryMime, "isGenericBinaryMime");
 function isLikelyVideoMime(value) {
   const mime = toText(value).toLowerCase();
   if (!mime) return false;
   if (mime.startsWith("video/")) return true;
   return mime.includes("matroska") || mime.includes("x-msvideo") || mime.includes("msvideo") || mime.includes("quicktime") || mime.includes("x-ms-wmv") || mime.includes("x-ms-asf") || mime.includes("x-flv") || mime.includes("3gpp") || mime.includes("3gpp2") || mime.includes("mp2t") || mime.includes("vnd.dlna.mpeg-tts");
 }
+__name(isLikelyVideoMime, "isLikelyVideoMime");
 function resolveVideoPreviewMime(documentMime, fileExtension) {
   const mime = toText(documentMime).toLowerCase();
   if (mime && !isGenericBinaryMime(mime) && isLikelyVideoMime(mime)) {
@@ -37735,6 +39529,7 @@ function resolveVideoPreviewMime(documentMime, fileExtension) {
   }
   return inferVideoMimeByExtension(fileExtension) || "";
 }
+__name(resolveVideoPreviewMime, "resolveVideoPreviewMime");
 function detectMediaContentType(bytes, fallback = "") {
   if (!bytes || bytes.length < 12) return fallback;
   const b0 = bytes[0];
@@ -37770,6 +39565,7 @@ function detectMediaContentType(bytes, fallback = "") {
   if (bytes.length > 376 && bytes[0] === 71 && bytes[188] === 71) return "video/mp2t";
   return fallback;
 }
+__name(detectMediaContentType, "detectMediaContentType");
 function concatBinaryChunks(chunks) {
   const safeChunks = Array.isArray(chunks) ? chunks.filter((chunk) => chunk && chunk.length) : [];
   if (safeChunks.length === 0) return null;
@@ -37786,11 +39582,14 @@ function concatBinaryChunks(chunks) {
   });
   return merged;
 }
-async function downloadDocumentHeadSample(client, document, maxBytes = 320 * 1024) {
+__name(concatBinaryChunks, "concatBinaryChunks");
+async function downloadDocumentChunk(client, document, maxBytes = 320 * 1024, offsetBytes = 0) {
   if (!document?.id || !document?.accessHash || !document?.fileReference) return null;
   const dcId = toInt(document?.dcId, 0);
+  const safeMaxBytes = Math.max(64 * 1024, toInt(maxBytes, 320 * 1024));
+  const safeOffset = Math.max(0, toInt(offsetBytes, 0));
   const requestSize = 128 * 1024;
-  const maxChunks = Math.max(1, Math.ceil(maxBytes / requestSize));
+  const maxChunks = Math.max(1, Math.ceil(safeMaxBytes / requestSize));
   const location = new import_telegram2.Api.InputDocumentFileLocation({
     id: document.id,
     accessHash: document.accessHash,
@@ -37802,20 +39601,36 @@ async function downloadDocumentHeadSample(client, document, maxBytes = 320 * 102
   for await (const chunk of client.iterDownload({
     file: location,
     dcId: dcId > 0 ? dcId : void 0,
+    offset: safeOffset,
     requestSize,
     chunkSize: requestSize,
     limit: maxChunks
   })) {
     if (!chunk || !chunk.length) break;
-    const remaining = maxBytes - total;
+    const remaining = safeMaxBytes - total;
     if (remaining <= 0) break;
     const normalized = chunk.length > remaining ? chunk.subarray(0, remaining) : chunk;
     chunks.push(normalized);
     total += normalized.length;
-    if (total >= maxBytes) break;
+    if (total >= safeMaxBytes) break;
   }
   return concatBinaryChunks(chunks);
 }
+__name(downloadDocumentChunk, "downloadDocumentChunk");
+async function downloadDocumentHeadSample(client, document, maxBytes = 320 * 1024, offsetBytes = 0, prependHeadBytes = 0) {
+  const safeMaxBytes = Math.max(64 * 1024, toInt(maxBytes, 320 * 1024));
+  const safeOffset = Math.max(0, toInt(offsetBytes, 0));
+  const safePrepend = Math.max(0, toInt(prependHeadBytes, 0));
+  if (safeOffset <= 0 || safePrepend <= 0) {
+    return await downloadDocumentChunk(client, document, safeMaxBytes, safeOffset);
+  }
+  const headBudget = Math.min(safePrepend, Math.max(64 * 1024, Math.floor(safeMaxBytes * 0.3)));
+  const tailBudget = Math.max(64 * 1024, safeMaxBytes - headBudget);
+  const headChunk = await downloadDocumentChunk(client, document, headBudget, 0);
+  const tailChunk = await downloadDocumentChunk(client, document, tailBudget, safeOffset);
+  return concatBinaryChunks([headChunk, tailChunk]);
+}
+__name(downloadDocumentHeadSample, "downloadDocumentHeadSample");
 function buildThumbAttemptIndexes(totalCount) {
   const count3 = Math.max(0, Number(totalCount) || 0);
   if (count3 <= 0) return [];
@@ -37824,6 +39639,7 @@ function buildThumbAttemptIndexes(totalCount) {
   if (count3 > 2) indexes.push(0);
   return Array.from(new Set(indexes));
 }
+__name(buildThumbAttemptIndexes, "buildThumbAttemptIndexes");
 function withPromiseTimeout(promise, timeoutMs, code = "MEDIA_PREVIEW_FETCH_TIMEOUT") {
   let timeoutId = 0;
   const timeout = new Promise((_, reject) => {
@@ -37835,6 +39651,7 @@ function withPromiseTimeout(promise, timeoutMs, code = "MEDIA_PREVIEW_FETCH_TIME
     clearTimeout(timeoutId);
   });
 }
+__name(withPromiseTimeout, "withPromiseTimeout");
 function withLegacySessionCleared(state) {
   return {
     ...state,
@@ -37842,25 +39659,29 @@ function withLegacySessionCleared(state) {
     updatedAt: Date.now()
   };
 }
+__name(withLegacySessionCleared, "withLegacySessionCleared");
 function ensureAuthenticatedUser(user) {
   if (user?.id) return user;
   throw new ApiError("APP_AUTH_REQUIRED", 401, "Google authentication required");
 }
-async function runWithUserTelegramSession({ env: env2, user, session }, fn) {
+__name(ensureAuthenticatedUser, "ensureAuthenticatedUser");
+async function runWithUserTelegramSession({ env: env22, user, session }, fn) {
   const safeUser = ensureAuthenticatedUser(user);
-  const { result, nextSession } = await runWithTelegramClient(env2, session || "", fn);
-  await saveTelegramSessionForUser(env2, safeUser.id, nextSession);
+  const { result, nextSession } = await runWithTelegramClient(env22, session || "", fn);
+  await saveTelegramSessionForUser(env22, safeUser.id, nextSession);
   return { result, nextSession };
 }
-async function okWithState(data, state, env2, init = {}) {
+__name(runWithUserTelegramSession, "runWithUserTelegramSession");
+async function okWithState(data, state, env22, init = {}) {
   const headers = new Headers(init.headers || {});
-  headers.set("set-cookie", await buildSessionCookie(withLegacySessionCleared(state), env2));
+  headers.set("set-cookie", await buildSessionCookie(withLegacySessionCleared(state), env22));
   return json2({ ok: true, data }, { ...init, headers });
 }
-async function errorWithState(err, state, env2, user) {
+__name(okWithState, "okWithState");
+async function errorWithState(err, state, env22, user) {
   const mapped = mapApiError(err);
   if (mapped.tgSession && user?.id) {
-    await saveTelegramSessionForUser(env2, user.id, mapped.tgSession).catch(() => {
+    await saveTelegramSessionForUser(env22, user.id, mapped.tgSession).catch(() => {
     });
   }
   return json2(
@@ -37876,17 +39697,18 @@ async function errorWithState(err, state, env2, user) {
     }
   );
 }
-async function handleSendCode({ request, env: env2, state, user, session }) {
+__name(errorWithState, "errorWithState");
+async function handleSendCode({ request, env: env22, state, user, session }) {
   const safeUser = ensureAuthenticatedUser(user);
   const body = await readJsonBody(request);
   const phoneNumber = toText(body.phoneNumber || body.phone);
   if (!phoneNumber) throw new ApiError("PHONE_NUMBER_INVALID", 400, "Phone number is required");
   const { result, nextSession } = await runWithTelegramClient(
-    env2,
+    env22,
     session || "",
     async ({ client, apiId, apiHash }) => sendCodeWithClient(client, apiId, apiHash, phoneNumber)
   );
-  await saveTelegramSessionForUser(env2, safeUser.id, nextSession);
+  await saveTelegramSessionForUser(env22, safeUser.id, nextSession);
   const nextState = {
     ...withLegacySessionCleared(state),
     pendingAuth: {
@@ -37895,9 +39717,10 @@ async function handleSendCode({ request, env: env2, state, user, session }) {
       createdAt: Date.now()
     }
   };
-  return okWithState({ phoneCodeHash: result.phoneCodeHash }, nextState, env2);
+  return okWithState({ phoneCodeHash: result.phoneCodeHash }, nextState, env22);
 }
-async function handleSignIn({ request, env: env2, state, user, session }) {
+__name(handleSendCode, "handleSendCode");
+async function handleSignIn({ request, env: env22, state, user, session }) {
   const safeUser = ensureAuthenticatedUser(user);
   const body = await readJsonBody(request);
   const phoneNumber = toText(body.phoneNumber || body.phone || state.pendingAuth?.phoneNumber);
@@ -37912,7 +39735,7 @@ async function handleSignIn({ request, env: env2, state, user, session }) {
   let nextSessionFromSignIn = session || "";
   try {
     const { nextSession } = await runWithTelegramClient(
-      env2,
+      env22,
       session || "",
       async ({ client }) => signInWithCode(client, phoneNumber, phoneCodeHash, phoneCode)
     );
@@ -37920,7 +39743,7 @@ async function handleSignIn({ request, env: env2, state, user, session }) {
   } catch (err) {
     const mapped = mapApiError(err);
     if (mapped.code === "SESSION_PASSWORD_NEEDED") {
-      await saveTelegramSessionForUser(env2, safeUser.id, mapped.tgSession || session || "");
+      await saveTelegramSessionForUser(env22, safeUser.id, mapped.tgSession || session || "");
       const nextState2 = {
         ...withLegacySessionCleared(clearPendingAuth(state))
       };
@@ -37935,43 +39758,45 @@ async function handleSignIn({ request, env: env2, state, user, session }) {
         {
           status: mapped.status,
           headers: {
-            "set-cookie": await buildSessionCookie(nextState2, env2)
+            "set-cookie": await buildSessionCookie(nextState2, env22)
           }
         }
       );
     }
     throw err;
   }
-  await saveTelegramSessionForUser(env2, safeUser.id, nextSessionFromSignIn);
+  await saveTelegramSessionForUser(env22, safeUser.id, nextSessionFromSignIn);
   const nextState = {
     ...withLegacySessionCleared(clearPendingAuth(state))
   };
-  return okWithState({ authorized: true }, nextState, env2);
+  return okWithState({ authorized: true }, nextState, env22);
 }
-async function handleSignIn2FA({ request, env: env2, state, user, session }) {
+__name(handleSignIn, "handleSignIn");
+async function handleSignIn2FA({ request, env: env22, state, user, session }) {
   const safeUser = ensureAuthenticatedUser(user);
   const body = await readJsonBody(request);
   const password = toText(body.password);
   if (!password) throw new ApiError("CLOUD_PASSWORD_REQUIRED", 400, "Cloud password is required");
   const { nextSession } = await runWithTelegramClient(
-    env2,
+    env22,
     session || "",
     async ({ client, apiId, apiHash }) => signInWithPassword(client, password, apiId, apiHash)
   );
-  await saveTelegramSessionForUser(env2, safeUser.id, nextSession);
+  await saveTelegramSessionForUser(env22, safeUser.id, nextSession);
   const nextState = {
     ...withLegacySessionCleared(clearPendingAuth(state))
   };
-  return okWithState({ authorized: true }, nextState, env2);
+  return okWithState({ authorized: true }, nextState, env22);
 }
-async function handleAuthorized({ env: env2, state, user, session }) {
+__name(handleSignIn2FA, "handleSignIn2FA");
+async function handleAuthorized({ env: env22, state, user, session }) {
   if (!user?.id) {
-    return okWithState(false, withLegacySessionCleared(state), env2);
+    return okWithState(false, withLegacySessionCleared(state), env22);
   }
   if (!session) {
-    return okWithState(false, withLegacySessionCleared(state), env2);
+    return okWithState(false, withLegacySessionCleared(state), env22);
   }
-  const { result } = await runWithUserTelegramSession({ env: env2, user, session }, async ({ client }) => {
+  const { result } = await runWithUserTelegramSession({ env: env22, user, session }, async ({ client }) => {
     try {
       return await client.isUserAuthorized();
     } catch {
@@ -37979,10 +39804,11 @@ async function handleAuthorized({ env: env2, state, user, session }) {
     }
   });
   const nextState = withLegacySessionCleared(state);
-  return okWithState(Boolean(result), nextState, env2);
+  return okWithState(Boolean(result), nextState, env22);
 }
-async function handleGetMe({ env: env2, state, user, session }) {
-  const { result } = await runWithUserTelegramSession({ env: env2, user, session }, async ({ client }) => {
+__name(handleAuthorized, "handleAuthorized");
+async function handleGetMe({ env: env22, state, user, session }) {
+  const { result } = await runWithUserTelegramSession({ env: env22, user, session }, async ({ client }) => {
     const me = await client.getMe();
     return {
       id: me?.id?.toString?.() || "",
@@ -37992,29 +39818,31 @@ async function handleGetMe({ env: env2, state, user, session }) {
     };
   });
   const nextState = withLegacySessionCleared(state);
-  return okWithState(result, nextState, env2);
+  return okWithState(result, nextState, env22);
 }
-async function handleGetDialogs({ request, env: env2, state, user, session }) {
+__name(handleGetMe, "handleGetMe");
+async function handleGetDialogs({ request, env: env22, state, user, session }) {
   const url = new URL(request.url);
   const limit = clamp(toInt(url.searchParams.get("limit"), 20), 1, 1e3);
   const folderRaw = url.searchParams.get("folder");
   const folder = folderRaw === null || folderRaw === "" ? void 0 : toInt(folderRaw, 0);
-  const { result } = await runWithUserTelegramSession({ env: env2, user, session }, async ({ client }) => {
+  const { result } = await runWithUserTelegramSession({ env: env22, user, session }, async ({ client }) => {
     const options = { limit };
     if (folder !== void 0) options.folder = folder;
     const dialogs = await client.getDialogs(options);
     return Array.isArray(dialogs) ? dialogs.map(serializeDialog) : [];
   });
   const nextState = withLegacySessionCleared(state);
-  return okWithState(result, nextState, env2);
+  return okWithState(result, nextState, env22);
 }
-async function handleGetHistory({ request, env: env2, state, user, session }) {
+__name(handleGetDialogs, "handleGetDialogs");
+async function handleGetHistory({ request, env: env22, state, user, session }) {
   const url = new URL(request.url);
   const chatId = toText(url.searchParams.get("chatId"));
   if (!chatId) throw new ApiError("CHAT_ID_REQUIRED", 400, "chatId is required");
   const limit = clamp(toInt(url.searchParams.get("limit"), 50), 1, 200);
   const offsetId = clamp(toInt(url.searchParams.get("offsetId"), 0), 0, Number.MAX_SAFE_INTEGER);
-  const { result } = await runWithUserTelegramSession({ env: env2, user, session }, async ({ client }) => {
+  const { result } = await runWithUserTelegramSession({ env: env22, user, session }, async ({ client }) => {
     let peerId = chatId;
     if (/^-?\d+$/.test(chatId)) {
       try {
@@ -38038,24 +39866,26 @@ async function handleGetHistory({ request, env: env2, state, user, session }) {
     return Array.isArray(messages) ? messages.map(serializeMessage) : [];
   });
   const nextState = withLegacySessionCleared(state);
-  return okWithState(result, nextState, env2);
+  return okWithState(result, nextState, env22);
 }
-async function handleGetChatFolders({ env: env2, state, user, session }) {
-  const { result } = await runWithUserTelegramSession({ env: env2, user, session }, async ({ client }) => {
+__name(handleGetHistory, "handleGetHistory");
+async function handleGetChatFolders({ env: env22, state, user, session }) {
+  const { result } = await runWithUserTelegramSession({ env: env22, user, session }, async ({ client }) => {
     const response = await client.invoke(new import_telegram2.Api.messages.GetDialogFilters());
     const filters = Array.isArray(response) ? response : Array.isArray(response?.filters) ? response.filters : [];
     return filters.filter((item) => item?.className === "DialogFilter" || item?.className === "DialogFilterChatlist").map(serializeChatFolder);
   });
   const nextState = withLegacySessionCleared(state);
-  return okWithState(result, nextState, env2);
+  return okWithState(result, nextState, env22);
 }
-async function handleSendMessage({ request, env: env2, state, user, session }) {
+__name(handleGetChatFolders, "handleGetChatFolders");
+async function handleSendMessage({ request, env: env22, state, user, session }) {
   const body = await readJsonBody(request);
   const chatId = toText(body.chatId);
   const message = typeof body.message === "string" ? body.message : "";
   if (!chatId) throw new ApiError("CHAT_ID_REQUIRED", 400, "chatId is required");
   if (!message.trim()) throw new ApiError("MESSAGE_REQUIRED", 400, "message is required");
-  const { result } = await runWithUserTelegramSession({ env: env2, user, session }, async ({ client }) => {
+  const { result } = await runWithUserTelegramSession({ env: env22, user, session }, async ({ client }) => {
     const peer = await resolvePeerEntity(client, chatId, "sendMessage");
     const stealthScheduleTime = Math.floor(Date.now() / 1e3) + 12;
     const sendRequest = new import_telegram2.Api.messages.SendMessage({
@@ -38081,9 +39911,10 @@ async function handleSendMessage({ request, env: env2, state, user, session }) {
     return { acknowledged: true, className: response?.className || "Updates" };
   });
   const nextState = withLegacySessionCleared(state);
-  return okWithState(result, nextState, env2);
+  return okWithState(result, nextState, env22);
 }
-async function handleSendFile({ request, env: env2, state, user, session }) {
+__name(handleSendMessage, "handleSendMessage");
+async function handleSendFile({ request, env: env22, state, user, session }) {
   const formData = await request.formData();
   const chatId = toText(formData.get("chatId"));
   const caption = toText(formData.get("caption"));
@@ -38102,7 +39933,7 @@ async function handleSendFile({ request, env: env2, state, user, session }) {
   const fileMime = toText(file.type) || "application/octet-stream";
   const fileExt = (fileName.split(".").pop() || "").toLowerCase();
   const isVideo = fileMime.startsWith("video/") || /^(mkv|avi|mov|wmv|flv|webm|mp4|m4v|3gp|ts|mts)$/.test(fileExt);
-  const { result } = await runWithUserTelegramSession({ env: env2, user, session }, async ({ client }) => {
+  const { result } = await runWithUserTelegramSession({ env: env22, user, session }, async ({ client }) => {
     const peer = await resolvePeerEntity(client, chatId, "sendFile");
     const arrayBuffer = await file.arrayBuffer();
     const customFile = new import_uploads2.CustomFile(fileName, fileSize, "", Buffer6.from(arrayBuffer));
@@ -38139,36 +39970,41 @@ async function handleSendFile({ request, env: env2, state, user, session }) {
     return serializeMessage(message);
   });
   const nextState = withLegacySessionCleared(state);
-  return okWithState(result, nextState, env2);
+  return okWithState(result, nextState, env22);
 }
-async function handleGetProfilePhoto({ request, env: env2, state, user, session }) {
+__name(handleSendFile, "handleSendFile");
+async function handleGetProfilePhoto({ request, env: env22, state, user, session }) {
   const url = new URL(request.url);
   const entityId = toText(url.searchParams.get("entityId") || url.searchParams.get("id"));
   if (!entityId) throw new ApiError("CHAT_ID_REQUIRED", 400, "entityId is required");
-  const { result } = await runWithUserTelegramSession({ env: env2, user, session }, async ({ client }) => {
+  const { result } = await runWithUserTelegramSession({ env: env22, user, session }, async ({ client }) => {
     const peer = await resolvePeerEntity(client, entityId, "getProfilePhoto");
     const bytes = await client.downloadProfilePhoto(peer, { isBig: false });
     return bytes && bytes.length ? bytes : null;
   });
   const nextState = withLegacySessionCleared(state);
   if (!result) {
-    return okWithState(null, nextState, env2);
+    return okWithState(null, nextState, env22);
   }
   const headers = new Headers({
     "content-type": "image/jpeg",
     "cache-control": "private, max-age=300",
-    "set-cookie": await buildSessionCookie(nextState, env2)
+    "set-cookie": await buildSessionCookie(nextState, env22)
   });
   return new Response(result, { status: 200, headers });
 }
-async function handleGetMediaPreview({ request, env: env2, state, user, session }) {
+__name(handleGetProfilePhoto, "handleGetProfilePhoto");
+async function handleGetMediaPreview({ request, env: env22, state, user, session }) {
   const url = new URL(request.url);
   const chatId = toText(url.searchParams.get("chatId"));
   const messageId = toPositiveInt(url.searchParams.get("messageId") || url.searchParams.get("id"));
   const mode = toText(url.searchParams.get("mode") || url.searchParams.get("quality") || "fast").toLowerCase();
+  const probeOffsetBytes = Math.max(0, toInt(url.searchParams.get("probeOffset") || 0, 0));
+  const probeMaxBytesRaw = Math.max(0, toInt(url.searchParams.get("probeBytes") || 0, 0));
+  const probeMaxBytes = probeMaxBytesRaw > 0 ? clamp(probeMaxBytesRaw, 128 * 1024, 12 * 1024 * 1024) : 0;
   const isUltraFastMode = mode === "ultrafast" || mode === "quick";
   const isFastMode = isUltraFastMode || mode !== "best" && mode !== "full" && mode !== "high";
-  const cacheEtag = `W/"tg-preview-${PREVIEW_ETAG_VERSION}-${mode || "fast"}-${chatId || "unknown"}-${messageId || 0}"`;
+  const cacheEtag = `W/"tg-preview-${PREVIEW_ETAG_VERSION}-${mode || "fast"}-${chatId || "unknown"}-${messageId || 0}-o${probeOffsetBytes || 0}-b${probeMaxBytes || 0}"`;
   if (!chatId) throw new ApiError("CHAT_ID_REQUIRED", 400, "chatId is required");
   if (!messageId) throw new ApiError("MESSAGE_ID_REQUIRED", 400, "messageId is required");
   const incomingEtag = request.headers.get("if-none-match");
@@ -38181,10 +40017,10 @@ async function handleGetMediaPreview({ request, env: env2, state, user, session 
       }
     });
   }
-  const { result } = await runWithUserTelegramSession({ env: env2, user, session }, async ({ client }) => {
+  const { result } = await runWithUserTelegramSession({ env: env22, user, session }, async ({ client }) => {
     const peer = await resolvePeerEntity(client, chatId, "getMediaPreview");
     let targetMessage = null;
-    const resolveByIdCandidates = /* @__PURE__ */ __name(async () => {
+    const resolveByIdCandidates = /* @__PURE__ */ __name2(async () => {
       const attempts2 = isFastMode ? [{ ids: [messageId] }] : [
         { ids: [messageId] },
         { ids: messageId }
@@ -38379,29 +40215,34 @@ async function handleGetMediaPreview({ request, env: env2, state, user, session 
       try {
         const noTelegramThumbs = documentThumbs.length === 0 && documentVideoThumbs.length === 0;
         const isWebmOrMkv = resolvedVideoMime.includes("webm") || resolvedVideoMime.includes("matroska") || fileExtension === "webm" || fileExtension === "mkv";
-        let sampleMaxBytes = 320 * 1024;
+        let sampleMaxBytes = probeMaxBytes > 0 ? probeMaxBytes : 320 * 1024;
         if (isUltraFastMode) {
-          sampleMaxBytes = 384 * 1024;
+          sampleMaxBytes = probeMaxBytes > 0 ? probeMaxBytes : 384 * 1024;
         } else if (isFastMode) {
-          sampleMaxBytes = 786432;
+          sampleMaxBytes = probeMaxBytes > 0 ? probeMaxBytes : 786432;
         } else {
-          sampleMaxBytes = 2097152;
+          sampleMaxBytes = probeMaxBytes > 0 ? probeMaxBytes : 4194304;
         }
-        if (noTelegramThumbs && isWebmOrMkv) {
+        if (probeMaxBytes <= 0 && noTelegramThumbs && isWebmOrMkv) {
           if (isUltraFastMode) sampleMaxBytes = 524288;
           else if (isFastMode) sampleMaxBytes = 1572864;
           else sampleMaxBytes = 10485760;
+        } else if (probeMaxBytes <= 0 && noTelegramThumbs) {
+          if (isUltraFastMode) sampleMaxBytes = 524288;
+          else if (isFastMode) sampleMaxBytes = 1572864;
+          else sampleMaxBytes = 8388608;
         }
-        const sampleTimeoutMs = isUltraFastMode ? 2400 : isFastMode ? 7500 : 2e4;
+        const sampleTimeoutMs = isUltraFastMode ? 2400 : isFastMode ? 7500 : 3e4;
+        const prependHeadBytes = probeOffsetBytes > 0 ? 256 * 1024 : 0;
         const sampled = await withPromiseTimeout(
-          downloadDocumentHeadSample(client, document, sampleMaxBytes),
+          downloadDocumentHeadSample(client, document, sampleMaxBytes, probeOffsetBytes, prependHeadBytes),
           sampleTimeoutMs
         );
         const minHead = isWebmOrMkv && noTelegramThumbs ? 48 * 1024 : 64 * 1024;
         if (sampled && sampled.length >= minHead) {
           bytes = sampled;
           forcedContentType = resolvedVideoMime || "video/mp4";
-          previewSource = "video-head-sample";
+          previewSource = probeOffsetBytes > 0 ? "video-probe-sample" : "video-head-sample";
         }
       } catch (err) {
         console.warn("[TG API] getMediaPreview video sample fallback failed:", {
@@ -38444,16 +40285,17 @@ async function handleGetMediaPreview({ request, env: env2, state, user, session 
     "content-type": result.contentType || "image/jpeg",
     "cache-control": "private, max-age=86400, immutable",
     etag: cacheEtag,
-    "set-cookie": await buildSessionCookie(nextState, env2)
+    "set-cookie": await buildSessionCookie(nextState, env22)
   });
   if (result?.source) {
     headers.set("x-tg-preview-source", result.source);
   }
   return new Response(result.bytes, { status: 200, headers });
 }
-async function handleLogout2({ env: env2, user }) {
+__name(handleGetMediaPreview, "handleGetMediaPreview");
+async function handleLogout2({ env: env22, user }) {
   if (user?.id) {
-    await clearTelegramSessionForUser(env2, user.id);
+    await clearTelegramSessionForUser(env22, user.id);
   }
   return json2(
     { ok: true, data: { cleared: true } },
@@ -38465,67 +40307,75 @@ async function handleLogout2({ env: env2, user }) {
     }
   );
 }
+__name(handleLogout2, "handleLogout2");
 async function onRequest2(context2) {
-  const { request, env: env2, params } = context2;
+  const { request, env: env22, params } = context2;
   const method = request.method.toUpperCase();
   const action = String(params?.action || "");
-  const state = await readSessionState(request, env2);
+  const state = await readSessionState(request, env22);
   let user = null;
   let telegramSession = "";
   try {
-    user = await readAuthenticatedUser(request, env2);
-    telegramSession = user?.id ? await loadTelegramSessionForUser(env2, user.id) : "";
+    user = await readAuthenticatedUser(request, env22);
+    telegramSession = user?.id ? await loadTelegramSessionForUser(env22, user.id) : "";
     if (method === "GET" && action === "authorized") {
-      return await handleAuthorized({ env: env2, state, user, session: telegramSession });
+      return await handleAuthorized({ env: env22, state, user, session: telegramSession });
     }
     if (method === "POST" && action === "logout") {
-      return await handleLogout2({ env: env2, user });
+      return await handleLogout2({ env: env22, user });
     }
     if (!user?.id) {
       throw new ApiError("APP_AUTH_REQUIRED", 401, "Google authentication required");
     }
     if (method === "POST" && action === "send-code") {
-      return await handleSendCode({ request, env: env2, state, user, session: telegramSession });
+      return await handleSendCode({ request, env: env22, state, user, session: telegramSession });
     }
     if (method === "POST" && action === "sign-in") {
-      return await handleSignIn({ request, env: env2, state, user, session: telegramSession });
+      return await handleSignIn({ request, env: env22, state, user, session: telegramSession });
     }
     if (method === "POST" && action === "sign-in-2fa") {
-      return await handleSignIn2FA({ request, env: env2, state, user, session: telegramSession });
+      return await handleSignIn2FA({ request, env: env22, state, user, session: telegramSession });
     }
     if (method === "GET" && action === "me") {
-      return await handleGetMe({ env: env2, state, user, session: telegramSession });
+      return await handleGetMe({ env: env22, state, user, session: telegramSession });
     }
     if (method === "GET" && action === "dialogs") {
-      return await handleGetDialogs({ request, env: env2, state, user, session: telegramSession });
+      return await handleGetDialogs({ request, env: env22, state, user, session: telegramSession });
     }
     if (method === "GET" && action === "history") {
-      return await handleGetHistory({ request, env: env2, state, user, session: telegramSession });
+      return await handleGetHistory({ request, env: env22, state, user, session: telegramSession });
     }
     if (method === "GET" && action === "chat-folders") {
-      return await handleGetChatFolders({ env: env2, state, user, session: telegramSession });
+      return await handleGetChatFolders({ env: env22, state, user, session: telegramSession });
     }
     if (method === "POST" && action === "send-message") {
-      return await handleSendMessage({ request, env: env2, state, user, session: telegramSession });
+      return await handleSendMessage({ request, env: env22, state, user, session: telegramSession });
     }
     if (method === "POST" && action === "send-file") {
-      return await handleSendFile({ request, env: env2, state, user, session: telegramSession });
+      return await handleSendFile({ request, env: env22, state, user, session: telegramSession });
     }
     if (method === "GET" && action === "profile-photo") {
-      return await handleGetProfilePhoto({ request, env: env2, state, user, session: telegramSession });
+      return await handleGetProfilePhoto({ request, env: env22, state, user, session: telegramSession });
     }
     if (method === "GET" && action === "media-preview") {
-      return await handleGetMediaPreview({ request, env: env2, state, user, session: telegramSession });
+      return await handleGetMediaPreview({ request, env: env22, state, user, session: telegramSession });
     }
     return routeNotFoundResponse();
   } catch (err) {
-    return errorWithState(err, state, env2, user);
+    return errorWithState(err, state, env22, user);
   }
 }
-var import_telegram2, import_uploads2, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, GENERIC_BINARY_MIMES, PREVIEW_ETAG_VERSION, MIN_ACCEPTABLE_PHOTO_PREVIEW_BYTES;
+__name(onRequest2, "onRequest2");
+var import_telegram2;
+var import_uploads2;
+var IMAGE_EXTENSIONS;
+var VIDEO_EXTENSIONS;
+var GENERIC_BINARY_MIMES;
+var PREVIEW_ETAG_VERSION;
+var MIN_ACCEPTABLE_PHOTO_PREVIEW_BYTES;
 var init_action2 = __esm({
   "api/tg/[action].js"() {
-    init_functionsRoutes_0_670591192908661();
+    init_functionsRoutes_0_03858115640323545();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -38536,10 +40386,10 @@ var init_action2 = __esm({
     init_telegram();
     init_session();
     init_storage();
-    __name(routeNotFoundResponse, "routeNotFoundResponse");
-    __name(clamp, "clamp");
-    __name(toText, "toText");
-    __name(toPositiveInt, "toPositiveInt");
+    __name2(routeNotFoundResponse, "routeNotFoundResponse");
+    __name2(clamp, "clamp");
+    __name2(toText, "toText");
+    __name2(toPositiveInt, "toPositiveInt");
     IMAGE_EXTENSIONS = /* @__PURE__ */ new Set(["jpg", "jpeg", "png", "webp", "gif", "bmp", "heic", "heif", "avif"]);
     VIDEO_EXTENSIONS = /* @__PURE__ */ new Set([
       "mp4",
@@ -38574,45 +40424,44 @@ var init_action2 = __esm({
       "application/x-binary",
       "application/unknown"
     ]);
-    PREVIEW_ETAG_VERSION = "v9";
+    PREVIEW_ETAG_VERSION = "v11";
     MIN_ACCEPTABLE_PHOTO_PREVIEW_BYTES = 24 * 1024;
-    __name(getFileExtension, "getFileExtension");
-    __name(inferImageMimeByExtension, "inferImageMimeByExtension");
-    __name(inferVideoMimeByExtension, "inferVideoMimeByExtension");
-    __name(isGenericBinaryMime, "isGenericBinaryMime");
-    __name(isLikelyVideoMime, "isLikelyVideoMime");
-    __name(resolveVideoPreviewMime, "resolveVideoPreviewMime");
-    __name(detectMediaContentType, "detectMediaContentType");
-    __name(concatBinaryChunks, "concatBinaryChunks");
-    __name(downloadDocumentHeadSample, "downloadDocumentHeadSample");
-    __name(buildThumbAttemptIndexes, "buildThumbAttemptIndexes");
-    __name(withPromiseTimeout, "withPromiseTimeout");
-    __name(withLegacySessionCleared, "withLegacySessionCleared");
-    __name(ensureAuthenticatedUser, "ensureAuthenticatedUser");
-    __name(runWithUserTelegramSession, "runWithUserTelegramSession");
-    __name(okWithState, "okWithState");
-    __name(errorWithState, "errorWithState");
-    __name(handleSendCode, "handleSendCode");
-    __name(handleSignIn, "handleSignIn");
-    __name(handleSignIn2FA, "handleSignIn2FA");
-    __name(handleAuthorized, "handleAuthorized");
-    __name(handleGetMe, "handleGetMe");
-    __name(handleGetDialogs, "handleGetDialogs");
-    __name(handleGetHistory, "handleGetHistory");
-    __name(handleGetChatFolders, "handleGetChatFolders");
-    __name(handleSendMessage, "handleSendMessage");
-    __name(handleSendFile, "handleSendFile");
-    __name(handleGetProfilePhoto, "handleGetProfilePhoto");
-    __name(handleGetMediaPreview, "handleGetMediaPreview");
-    __name(handleLogout2, "handleLogout");
-    __name(onRequest2, "onRequest");
+    __name2(getFileExtension, "getFileExtension");
+    __name2(inferImageMimeByExtension, "inferImageMimeByExtension");
+    __name2(inferVideoMimeByExtension, "inferVideoMimeByExtension");
+    __name2(isGenericBinaryMime, "isGenericBinaryMime");
+    __name2(isLikelyVideoMime, "isLikelyVideoMime");
+    __name2(resolveVideoPreviewMime, "resolveVideoPreviewMime");
+    __name2(detectMediaContentType, "detectMediaContentType");
+    __name2(concatBinaryChunks, "concatBinaryChunks");
+    __name2(downloadDocumentChunk, "downloadDocumentChunk");
+    __name2(downloadDocumentHeadSample, "downloadDocumentHeadSample");
+    __name2(buildThumbAttemptIndexes, "buildThumbAttemptIndexes");
+    __name2(withPromiseTimeout, "withPromiseTimeout");
+    __name2(withLegacySessionCleared, "withLegacySessionCleared");
+    __name2(ensureAuthenticatedUser, "ensureAuthenticatedUser");
+    __name2(runWithUserTelegramSession, "runWithUserTelegramSession");
+    __name2(okWithState, "okWithState");
+    __name2(errorWithState, "errorWithState");
+    __name2(handleSendCode, "handleSendCode");
+    __name2(handleSignIn, "handleSignIn");
+    __name2(handleSignIn2FA, "handleSignIn2FA");
+    __name2(handleAuthorized, "handleAuthorized");
+    __name2(handleGetMe, "handleGetMe");
+    __name2(handleGetDialogs, "handleGetDialogs");
+    __name2(handleGetHistory, "handleGetHistory");
+    __name2(handleGetChatFolders, "handleGetChatFolders");
+    __name2(handleSendMessage, "handleSendMessage");
+    __name2(handleSendFile, "handleSendFile");
+    __name2(handleGetProfilePhoto, "handleGetProfilePhoto");
+    __name2(handleGetMediaPreview, "handleGetMediaPreview");
+    __name2(handleLogout2, "handleLogout");
+    __name2(onRequest2, "onRequest");
   }
 });
-
-// ../.wrangler/tmp/pages-k0J5q5/functionsRoutes-0.670591192908661.mjs
 var routes;
-var init_functionsRoutes_0_670591192908661 = __esm({
-  "../.wrangler/tmp/pages-k0J5q5/functionsRoutes-0.670591192908661.mjs"() {
+var init_functionsRoutes_0_03858115640323545 = __esm({
+  "../.wrangler/tmp/pages-3G2Hdv/functionsRoutes-0.03858115640323545.mjs"() {
     init_action();
     init_action2();
     routes = [
@@ -38633,27 +40482,19 @@ var init_functionsRoutes_0_670591192908661 = __esm({
     ];
   }
 });
-
-// ../.wrangler/tmp/bundle-t0VFB2/middleware-loader.entry.ts
-init_functionsRoutes_0_670591192908661();
+init_functionsRoutes_0_03858115640323545();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
 init_performance2();
-
-// ../.wrangler/tmp/bundle-t0VFB2/middleware-insertion-facade.js
-init_functionsRoutes_0_670591192908661();
+init_functionsRoutes_0_03858115640323545();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
 init_performance2();
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/templates/pages-template-worker.ts
-init_functionsRoutes_0_670591192908661();
+init_functionsRoutes_0_03858115640323545();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
 init_performance2();
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/path-to-regexp/dist.es2015/index.js
-init_functionsRoutes_0_670591192908661();
+init_functionsRoutes_0_03858115640323545();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
 init_performance2();
@@ -38741,6 +40582,7 @@ function lexer(str) {
   return tokens;
 }
 __name(lexer, "lexer");
+__name2(lexer, "lexer");
 function parse(str, options) {
   if (options === void 0) {
     options = {};
@@ -38751,18 +40593,18 @@ function parse(str, options) {
   var key = 0;
   var i = 0;
   var path = "";
-  var tryConsume = /* @__PURE__ */ __name(function(type2) {
+  var tryConsume = /* @__PURE__ */ __name2(function(type2) {
     if (i < tokens.length && tokens[i].type === type2)
       return tokens[i++].value;
   }, "tryConsume");
-  var mustConsume = /* @__PURE__ */ __name(function(type2) {
+  var mustConsume = /* @__PURE__ */ __name2(function(type2) {
     var value2 = tryConsume(type2);
     if (value2 !== void 0)
       return value2;
     var _a2 = tokens[i], nextType = _a2.type, index = _a2.index;
     throw new TypeError("Unexpected ".concat(nextType, " at ").concat(index, ", expected ").concat(type2));
   }, "mustConsume");
-  var consumeText = /* @__PURE__ */ __name(function() {
+  var consumeText = /* @__PURE__ */ __name2(function() {
     var result2 = "";
     var value2;
     while (value2 = tryConsume("CHAR") || tryConsume("ESCAPED_CHAR")) {
@@ -38770,7 +40612,7 @@ function parse(str, options) {
     }
     return result2;
   }, "consumeText");
-  var isSafe = /* @__PURE__ */ __name(function(value2) {
+  var isSafe = /* @__PURE__ */ __name2(function(value2) {
     for (var _i = 0, delimiter_1 = delimiter; _i < delimiter_1.length; _i++) {
       var char2 = delimiter_1[_i];
       if (value2.indexOf(char2) > -1)
@@ -38778,7 +40620,7 @@ function parse(str, options) {
     }
     return false;
   }, "isSafe");
-  var safePattern = /* @__PURE__ */ __name(function(prefix2) {
+  var safePattern = /* @__PURE__ */ __name2(function(prefix2) {
     var prev = result[result.length - 1];
     var prevText = prefix2 || (prev && typeof prev === "string" ? prev : "");
     if (prev && !prevText) {
@@ -38841,12 +40683,14 @@ function parse(str, options) {
   return result;
 }
 __name(parse, "parse");
+__name2(parse, "parse");
 function match(str, options) {
   var keys = [];
   var re = pathToRegexp(str, keys, options);
   return regexpToFunction(re, keys, options);
 }
 __name(match, "match");
+__name2(match, "match");
 function regexpToFunction(re, keys, options) {
   if (options === void 0) {
     options = {};
@@ -38860,7 +40704,7 @@ function regexpToFunction(re, keys, options) {
       return false;
     var path = m[0], index = m.index;
     var params = /* @__PURE__ */ Object.create(null);
-    var _loop_1 = /* @__PURE__ */ __name(function(i2) {
+    var _loop_1 = /* @__PURE__ */ __name2(function(i2) {
       if (m[i2] === void 0)
         return "continue";
       var key = keys[i2 - 1];
@@ -38879,14 +40723,17 @@ function regexpToFunction(re, keys, options) {
   };
 }
 __name(regexpToFunction, "regexpToFunction");
+__name2(regexpToFunction, "regexpToFunction");
 function escapeString(str) {
   return str.replace(/([.+*?=^!:${}()[\]|/\\])/g, "\\$1");
 }
 __name(escapeString, "escapeString");
+__name2(escapeString, "escapeString");
 function flags(options) {
   return options && options.sensitive ? "" : "i";
 }
 __name(flags, "flags");
+__name2(flags, "flags");
 function regexpToRegexp(path, keys) {
   if (!keys)
     return path;
@@ -38907,6 +40754,7 @@ function regexpToRegexp(path, keys) {
   return path;
 }
 __name(regexpToRegexp, "regexpToRegexp");
+__name2(regexpToRegexp, "regexpToRegexp");
 function arrayToRegexp(paths, keys, options) {
   var parts = paths.map(function(path) {
     return pathToRegexp(path, keys, options).source;
@@ -38914,10 +40762,12 @@ function arrayToRegexp(paths, keys, options) {
   return new RegExp("(?:".concat(parts.join("|"), ")"), flags(options));
 }
 __name(arrayToRegexp, "arrayToRegexp");
+__name2(arrayToRegexp, "arrayToRegexp");
 function stringToRegexp(path, keys, options) {
   return tokensToRegexp(parse(path, options), keys, options);
 }
 __name(stringToRegexp, "stringToRegexp");
+__name2(stringToRegexp, "stringToRegexp");
 function tokensToRegexp(tokens, keys, options) {
   if (options === void 0) {
     options = {};
@@ -38973,6 +40823,7 @@ function tokensToRegexp(tokens, keys, options) {
   return new RegExp(route, flags(options));
 }
 __name(tokensToRegexp, "tokensToRegexp");
+__name2(tokensToRegexp, "tokensToRegexp");
 function pathToRegexp(path, keys, options) {
   if (path instanceof RegExp)
     return regexpToRegexp(path, keys);
@@ -38981,8 +40832,7 @@ function pathToRegexp(path, keys, options) {
   return stringToRegexp(path, keys, options);
 }
 __name(pathToRegexp, "pathToRegexp");
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/templates/pages-template-worker.ts
+__name2(pathToRegexp, "pathToRegexp");
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
@@ -39033,13 +40883,14 @@ function* executeRequest(request) {
   }
 }
 __name(executeRequest, "executeRequest");
+__name2(executeRequest, "executeRequest");
 var pages_template_worker_default = {
-  async fetch(originalRequest, env2, workerContext) {
+  async fetch(originalRequest, env22, workerContext) {
     let request = originalRequest;
     const handlerIterator = executeRequest(request);
     let data = {};
     let isFailOpen = false;
-    const next = /* @__PURE__ */ __name(async (input, init) => {
+    const next = /* @__PURE__ */ __name2(async (input, init) => {
       if (input !== void 0) {
         let url = input;
         if (typeof input === "string") {
@@ -39064,9 +40915,9 @@ var pages_template_worker_default = {
             }
             data = value;
           },
-          env: env2,
+          env: env22,
           waitUntil: workerContext.waitUntil.bind(workerContext),
-          passThroughOnException: /* @__PURE__ */ __name(() => {
+          passThroughOnException: /* @__PURE__ */ __name2(() => {
             isFailOpen = true;
           }, "passThroughOnException")
         };
@@ -39076,7 +40927,7 @@ var pages_template_worker_default = {
         }
         return cloneResponse(response);
       } else if ("ASSETS") {
-        const response = await env2["ASSETS"].fetch(request);
+        const response = await env22["ASSETS"].fetch(request);
         return cloneResponse(response);
       } else {
         const response = await fetch(request);
@@ -39087,29 +40938,27 @@ var pages_template_worker_default = {
       return await next();
     } catch (error3) {
       if (isFailOpen) {
-        const response = await env2["ASSETS"].fetch(request);
+        const response = await env22["ASSETS"].fetch(request);
         return cloneResponse(response);
       }
       throw error3;
     }
   }
 };
-var cloneResponse = /* @__PURE__ */ __name((response) => (
+var cloneResponse = /* @__PURE__ */ __name2((response) => (
   // https://fetch.spec.whatwg.org/#null-body-status
   new Response(
     [101, 204, 205, 304].includes(response.status) ? null : response.body,
     response
   )
 ), "cloneResponse");
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/templates/middleware/middleware-ensure-req-body-drained.ts
-init_functionsRoutes_0_670591192908661();
+init_functionsRoutes_0_03858115640323545();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
 init_performance2();
-var drainBody = /* @__PURE__ */ __name(async (request, env2, _ctx, middlewareCtx) => {
+var drainBody = /* @__PURE__ */ __name2(async (request, env22, _ctx, middlewareCtx) => {
   try {
-    return await middlewareCtx.next(request, env2);
+    return await middlewareCtx.next(request, env22);
   } finally {
     try {
       if (request.body !== null && !request.bodyUsed) {
@@ -39123,9 +40972,7 @@ var drainBody = /* @__PURE__ */ __name(async (request, env2, _ctx, middlewareCtx
   }
 }, "drainBody");
 var middleware_ensure_req_body_drained_default = drainBody;
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/templates/middleware/middleware-miniflare3-json-error.ts
-init_functionsRoutes_0_670591192908661();
+init_functionsRoutes_0_03858115640323545();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
 init_performance2();
@@ -39138,9 +40985,10 @@ function reduceError(e) {
   };
 }
 __name(reduceError, "reduceError");
-var jsonError = /* @__PURE__ */ __name(async (request, env2, _ctx, middlewareCtx) => {
+__name2(reduceError, "reduceError");
+var jsonError = /* @__PURE__ */ __name2(async (request, env22, _ctx, middlewareCtx) => {
   try {
-    return await middlewareCtx.next(request, env2);
+    return await middlewareCtx.next(request, env22);
   } catch (e) {
     const error3 = reduceError(e);
     return Response.json(error3, {
@@ -39150,16 +40998,12 @@ var jsonError = /* @__PURE__ */ __name(async (request, env2, _ctx, middlewareCtx
   }
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
-
-// ../.wrangler/tmp/bundle-t0VFB2/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
 ];
 var middleware_insertion_facade_default = pages_template_worker_default;
-
-// ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/templates/middleware/common.ts
-init_functionsRoutes_0_670591192908661();
+init_functionsRoutes_0_03858115640323545();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
 init_performance2();
@@ -39168,7 +41012,8 @@ function __facade_register__(...args) {
   __facade_middleware__.push(...args.flat());
 }
 __name(__facade_register__, "__facade_register__");
-function __facade_invokeChain__(request, env2, ctx, dispatch, middlewareChain) {
+__name2(__facade_register__, "__facade_register__");
+function __facade_invokeChain__(request, env22, ctx, dispatch, middlewareChain) {
   const [head, ...tail] = middlewareChain;
   const middlewareCtx = {
     dispatch,
@@ -39176,26 +41021,29 @@ function __facade_invokeChain__(request, env2, ctx, dispatch, middlewareChain) {
       return __facade_invokeChain__(newRequest, newEnv, ctx, dispatch, tail);
     }
   };
-  return head(request, env2, ctx, middlewareCtx);
+  return head(request, env22, ctx, middlewareCtx);
 }
 __name(__facade_invokeChain__, "__facade_invokeChain__");
-function __facade_invoke__(request, env2, ctx, dispatch, finalMiddleware) {
-  return __facade_invokeChain__(request, env2, ctx, dispatch, [
+__name2(__facade_invokeChain__, "__facade_invokeChain__");
+function __facade_invoke__(request, env22, ctx, dispatch, finalMiddleware) {
+  return __facade_invokeChain__(request, env22, ctx, dispatch, [
     ...__facade_middleware__,
     finalMiddleware
   ]);
 }
 __name(__facade_invoke__, "__facade_invoke__");
-
-// ../.wrangler/tmp/bundle-t0VFB2/middleware-loader.entry.ts
+__name2(__facade_invoke__, "__facade_invoke__");
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
+  static {
+    __name(this, "___Facade_ScheduledController__");
+  }
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;
     this.cron = cron;
     this.#noRetry = noRetry;
   }
   static {
-    __name(this, "__Facade_ScheduledController__");
+    __name2(this, "__Facade_ScheduledController__");
   }
   #noRetry;
   noRetry() {
@@ -39212,16 +41060,16 @@ function wrapExportedHandler(worker) {
   for (const middleware of __INTERNAL_WRANGLER_MIDDLEWARE__) {
     __facade_register__(middleware);
   }
-  const fetchDispatcher = /* @__PURE__ */ __name(function(request, env2, ctx) {
+  const fetchDispatcher = /* @__PURE__ */ __name2(function(request, env22, ctx) {
     if (worker.fetch === void 0) {
       throw new Error("Handler does not export a fetch() function.");
     }
-    return worker.fetch(request, env2, ctx);
+    return worker.fetch(request, env22, ctx);
   }, "fetchDispatcher");
   return {
     ...worker,
-    fetch(request, env2, ctx) {
-      const dispatcher = /* @__PURE__ */ __name(function(type2, init) {
+    fetch(request, env22, ctx) {
+      const dispatcher = /* @__PURE__ */ __name2(function(type2, init) {
         if (type2 === "scheduled" && worker.scheduled !== void 0) {
           const controller = new __Facade_ScheduledController__(
             Date.now(),
@@ -39229,14 +41077,15 @@ function wrapExportedHandler(worker) {
             () => {
             }
           );
-          return worker.scheduled(controller, env2, ctx);
+          return worker.scheduled(controller, env22, ctx);
         }
       }, "dispatcher");
-      return __facade_invoke__(request, env2, ctx, dispatcher, fetchDispatcher);
+      return __facade_invoke__(request, env22, ctx, dispatcher, fetchDispatcher);
     }
   };
 }
 __name(wrapExportedHandler, "wrapExportedHandler");
+__name2(wrapExportedHandler, "wrapExportedHandler");
 function wrapWorkerEntrypoint(klass) {
   if (__INTERNAL_WRANGLER_MIDDLEWARE__ === void 0 || __INTERNAL_WRANGLER_MIDDLEWARE__.length === 0) {
     return klass;
@@ -39245,15 +41094,15 @@ function wrapWorkerEntrypoint(klass) {
     __facade_register__(middleware);
   }
   return class extends klass {
-    #fetchDispatcher = /* @__PURE__ */ __name((request, env2, ctx) => {
-      this.env = env2;
+    #fetchDispatcher = /* @__PURE__ */ __name2((request, env22, ctx) => {
+      this.env = env22;
       this.ctx = ctx;
       if (super.fetch === void 0) {
         throw new Error("Entrypoint class does not define a fetch() function.");
       }
       return super.fetch(request);
     }, "#fetchDispatcher");
-    #dispatcher = /* @__PURE__ */ __name((type2, init) => {
+    #dispatcher = /* @__PURE__ */ __name2((type2, init) => {
       if (type2 === "scheduled" && super.scheduled !== void 0) {
         const controller = new __Facade_ScheduledController__(
           Date.now(),
@@ -39276,6 +41125,7 @@ function wrapWorkerEntrypoint(klass) {
   };
 }
 __name(wrapWorkerEntrypoint, "wrapWorkerEntrypoint");
+__name2(wrapWorkerEntrypoint, "wrapWorkerEntrypoint");
 var WRAPPED_ENTRY;
 if (typeof middleware_insertion_facade_default === "object") {
   WRAPPED_ENTRY = wrapExportedHandler(middleware_insertion_facade_default);
@@ -39283,9 +41133,179 @@ if (typeof middleware_insertion_facade_default === "object") {
   WRAPPED_ENTRY = wrapWorkerEntrypoint(middleware_insertion_facade_default);
 }
 var middleware_loader_entry_default = WRAPPED_ENTRY;
+
+// ../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/templates/middleware/middleware-ensure-req-body-drained.ts
+var drainBody2 = /* @__PURE__ */ __name(async (request, env3, _ctx, middlewareCtx) => {
+  try {
+    return await middlewareCtx.next(request, env3);
+  } finally {
+    try {
+      if (request.body !== null && !request.bodyUsed) {
+        const reader = request.body.getReader();
+        while (!(await reader.read()).done) {
+        }
+      }
+    } catch (e) {
+      console.error("Failed to drain the unused request body.", e);
+    }
+  }
+}, "drainBody");
+var middleware_ensure_req_body_drained_default2 = drainBody2;
+
+// ../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/templates/middleware/middleware-miniflare3-json-error.ts
+function reduceError2(e) {
+  return {
+    name: e?.name,
+    message: e?.message ?? String(e),
+    stack: e?.stack,
+    cause: e?.cause === void 0 ? void 0 : reduceError2(e.cause)
+  };
+}
+__name(reduceError2, "reduceError");
+var jsonError2 = /* @__PURE__ */ __name(async (request, env3, _ctx, middlewareCtx) => {
+  try {
+    return await middlewareCtx.next(request, env3);
+  } catch (e) {
+    const error3 = reduceError2(e);
+    return Response.json(error3, {
+      status: 500,
+      headers: { "MF-Experimental-Error-Stack": "true" }
+    });
+  }
+}, "jsonError");
+var middleware_miniflare3_json_error_default2 = jsonError2;
+
+// .wrangler/tmp/bundle-561K1S/middleware-insertion-facade.js
+var __INTERNAL_WRANGLER_MIDDLEWARE__2 = [
+  middleware_ensure_req_body_drained_default2,
+  middleware_miniflare3_json_error_default2
+];
+var middleware_insertion_facade_default2 = middleware_loader_entry_default;
+
+// ../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/templates/middleware/common.ts
+var __facade_middleware__2 = [];
+function __facade_register__2(...args) {
+  __facade_middleware__2.push(...args.flat());
+}
+__name(__facade_register__2, "__facade_register__");
+function __facade_invokeChain__2(request, env3, ctx, dispatch, middlewareChain) {
+  const [head, ...tail] = middlewareChain;
+  const middlewareCtx = {
+    dispatch,
+    next(newRequest, newEnv) {
+      return __facade_invokeChain__2(newRequest, newEnv, ctx, dispatch, tail);
+    }
+  };
+  return head(request, env3, ctx, middlewareCtx);
+}
+__name(__facade_invokeChain__2, "__facade_invokeChain__");
+function __facade_invoke__2(request, env3, ctx, dispatch, finalMiddleware) {
+  return __facade_invokeChain__2(request, env3, ctx, dispatch, [
+    ...__facade_middleware__2,
+    finalMiddleware
+  ]);
+}
+__name(__facade_invoke__2, "__facade_invoke__");
+
+// .wrangler/tmp/bundle-561K1S/middleware-loader.entry.ts
+var __Facade_ScheduledController__2 = class ___Facade_ScheduledController__2 {
+  constructor(scheduledTime, cron, noRetry) {
+    this.scheduledTime = scheduledTime;
+    this.cron = cron;
+    this.#noRetry = noRetry;
+  }
+  static {
+    __name(this, "__Facade_ScheduledController__");
+  }
+  #noRetry;
+  noRetry() {
+    if (!(this instanceof ___Facade_ScheduledController__2)) {
+      throw new TypeError("Illegal invocation");
+    }
+    this.#noRetry();
+  }
+};
+function wrapExportedHandler2(worker) {
+  if (__INTERNAL_WRANGLER_MIDDLEWARE__2 === void 0 || __INTERNAL_WRANGLER_MIDDLEWARE__2.length === 0) {
+    return worker;
+  }
+  for (const middleware of __INTERNAL_WRANGLER_MIDDLEWARE__2) {
+    __facade_register__2(middleware);
+  }
+  const fetchDispatcher = /* @__PURE__ */ __name(function(request, env3, ctx) {
+    if (worker.fetch === void 0) {
+      throw new Error("Handler does not export a fetch() function.");
+    }
+    return worker.fetch(request, env3, ctx);
+  }, "fetchDispatcher");
+  return {
+    ...worker,
+    fetch(request, env3, ctx) {
+      const dispatcher = /* @__PURE__ */ __name(function(type2, init) {
+        if (type2 === "scheduled" && worker.scheduled !== void 0) {
+          const controller = new __Facade_ScheduledController__2(
+            Date.now(),
+            init.cron ?? "",
+            () => {
+            }
+          );
+          return worker.scheduled(controller, env3, ctx);
+        }
+      }, "dispatcher");
+      return __facade_invoke__2(request, env3, ctx, dispatcher, fetchDispatcher);
+    }
+  };
+}
+__name(wrapExportedHandler2, "wrapExportedHandler");
+function wrapWorkerEntrypoint2(klass) {
+  if (__INTERNAL_WRANGLER_MIDDLEWARE__2 === void 0 || __INTERNAL_WRANGLER_MIDDLEWARE__2.length === 0) {
+    return klass;
+  }
+  for (const middleware of __INTERNAL_WRANGLER_MIDDLEWARE__2) {
+    __facade_register__2(middleware);
+  }
+  return class extends klass {
+    #fetchDispatcher = /* @__PURE__ */ __name((request, env3, ctx) => {
+      this.env = env3;
+      this.ctx = ctx;
+      if (super.fetch === void 0) {
+        throw new Error("Entrypoint class does not define a fetch() function.");
+      }
+      return super.fetch(request);
+    }, "#fetchDispatcher");
+    #dispatcher = /* @__PURE__ */ __name((type2, init) => {
+      if (type2 === "scheduled" && super.scheduled !== void 0) {
+        const controller = new __Facade_ScheduledController__2(
+          Date.now(),
+          init.cron ?? "",
+          () => {
+          }
+        );
+        return super.scheduled(controller);
+      }
+    }, "#dispatcher");
+    fetch(request) {
+      return __facade_invoke__2(
+        request,
+        this.env,
+        this.ctx,
+        this.#dispatcher,
+        this.#fetchDispatcher
+      );
+    }
+  };
+}
+__name(wrapWorkerEntrypoint2, "wrapWorkerEntrypoint");
+var WRAPPED_ENTRY2;
+if (typeof middleware_insertion_facade_default2 === "object") {
+  WRAPPED_ENTRY2 = wrapExportedHandler2(middleware_insertion_facade_default2);
+} else if (typeof middleware_insertion_facade_default2 === "function") {
+  WRAPPED_ENTRY2 = wrapWorkerEntrypoint2(middleware_insertion_facade_default2);
+}
+var middleware_loader_entry_default2 = WRAPPED_ENTRY2;
 export {
-  __INTERNAL_WRANGLER_MIDDLEWARE__,
-  middleware_loader_entry_default as default
+  __INTERNAL_WRANGLER_MIDDLEWARE__2 as __INTERNAL_WRANGLER_MIDDLEWARE__,
+  middleware_loader_entry_default2 as default
 };
 /*! Bundled license information:
 
@@ -39306,4 +41326,4 @@ imurmurhash/imurmurhash.js:
    * @see http://sites.google.com/site/murmurhash/
    *)
 */
-//# sourceMappingURL=functionsWorker-0.9037587216918883.mjs.map
+//# sourceMappingURL=functionsWorker-0.7243131424666118.js.map

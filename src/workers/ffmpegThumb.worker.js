@@ -104,46 +104,45 @@ async function runThumbnailExtraction({ bytes, fileName, captureMs, maxEdge, qua
   const scaleFilter = `scale=min(iw\\,${safeEdge}):-2:flags=lanczos`
   const inputName = `input_${Date.now()}.${ext}`
   const outputName = `thumb_${Date.now()}.jpg`
+  const commonArgs = ['-hide_banner', '-loglevel', 'error', '-analyzeduration', '20000000', '-probesize', '20000000']
+  const attempts = [
+    // Accurate seek after input parsing.
+    [...commonArgs, '-i', inputName, '-ss', captureSec, '-frames:v', '1', '-vf', scaleFilter, '-q:v', String(qscale), '-y', outputName],
+    // Fast seek before input (can work when indexing is available).
+    [...commonArgs, '-ss', captureSec, '-i', inputName, '-frames:v', '1', '-vf', scaleFilter, '-q:v', String(qscale), '-y', outputName],
+    // First decodable frame without seeking.
+    [...commonArgs, '-i', inputName, '-frames:v', '1', '-vf', scaleFilter, '-q:v', String(qscale), '-y', outputName],
+    // Last-resort thumbnail filter for noisy/partial samples.
+    [...commonArgs, '-i', inputName, '-frames:v', '1', '-vf', `thumbnail=24,${scaleFilter}`, '-q:v', String(qscale), '-y', outputName],
+  ]
 
   try {
     ffmpeg.FS('writeFile', inputName, bytes)
+    let outputBytes = null
 
-    let extracted = false
-    try {
-      await ffmpeg.run(
-        '-hide_banner',
-        '-loglevel', 'error',
-        '-ss', captureSec,
-        '-i', inputName,
-        '-frames:v', '1',
-        '-vf', scaleFilter,
-        '-q:v', String(qscale),
-        '-y',
-        outputName
-      )
-      extracted = true
-    } catch {
-      // fallback below
+    for (const args of attempts) {
+      safeUnlink(ffmpeg.FS, outputName)
+      try {
+        await ffmpeg.run(...args)
+      } catch {
+        continue
+      }
+
+      try {
+        const candidate = ffmpeg.FS('readFile', outputName)
+        if (candidate instanceof Uint8Array && candidate.length > 0) {
+          outputBytes = candidate
+          break
+        }
+      } catch {
+        // keep probing next strategy
+      }
     }
 
-    if (!extracted) {
-      await ffmpeg.run(
-        '-hide_banner',
-        '-loglevel', 'error',
-        '-i', inputName,
-        '-frames:v', '1',
-        '-vf', `thumbnail=24,${scaleFilter}`,
-        '-q:v', String(qscale),
-        '-y',
-        outputName
-      )
-    }
-
-    const output = ffmpeg.FS('readFile', outputName)
-    if (!(output instanceof Uint8Array) || output.length <= 0) {
+    if (!(outputBytes instanceof Uint8Array) || outputBytes.length <= 0) {
       throw new Error('EMPTY_OUTPUT_JPEG')
     }
-    return output
+    return outputBytes
   } finally {
     safeUnlink(ffmpeg.FS, inputName)
     safeUnlink(ffmpeg.FS, outputName)

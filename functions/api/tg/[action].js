@@ -66,7 +66,7 @@ const GENERIC_BINARY_MIMES = new Set([
   'application/x-binary',
   'application/unknown',
 ])
-const PREVIEW_ETAG_VERSION = 'v9'
+const PREVIEW_ETAG_VERSION = 'v11'
 const MIN_ACCEPTABLE_PHOTO_PREVIEW_BYTES = 24 * 1024
 
 function getFileExtension(value) {
@@ -227,11 +227,13 @@ function concatBinaryChunks(chunks) {
   return merged
 }
 
-async function downloadDocumentHeadSample(client, document, maxBytes = 320 * 1024) {
+async function downloadDocumentChunk(client, document, maxBytes = 320 * 1024, offsetBytes = 0) {
   if (!document?.id || !document?.accessHash || !document?.fileReference) return null
   const dcId = toInt(document?.dcId, 0)
+  const safeMaxBytes = Math.max(64 * 1024, toInt(maxBytes, 320 * 1024))
+  const safeOffset = Math.max(0, toInt(offsetBytes, 0))
   const requestSize = 128 * 1024
-  const maxChunks = Math.max(1, Math.ceil(maxBytes / requestSize))
+  const maxChunks = Math.max(1, Math.ceil(safeMaxBytes / requestSize))
 
   const location = new Api.InputDocumentFileLocation({
     id: document.id,
@@ -246,22 +248,41 @@ async function downloadDocumentHeadSample(client, document, maxBytes = 320 * 102
   for await (const chunk of client.iterDownload({
     file: location,
     dcId: dcId > 0 ? dcId : undefined,
+    offset: safeOffset,
     requestSize,
     chunkSize: requestSize,
     limit: maxChunks,
   })) {
     if (!chunk || !chunk.length) break
-    const remaining = maxBytes - total
+    const remaining = safeMaxBytes - total
     if (remaining <= 0) break
 
     const normalized = chunk.length > remaining ? chunk.subarray(0, remaining) : chunk
     chunks.push(normalized)
     total += normalized.length
 
-    if (total >= maxBytes) break
+    if (total >= safeMaxBytes) break
   }
 
   return concatBinaryChunks(chunks)
+}
+
+async function downloadDocumentHeadSample(client, document, maxBytes = 320 * 1024, offsetBytes = 0, prependHeadBytes = 0) {
+  const safeMaxBytes = Math.max(64 * 1024, toInt(maxBytes, 320 * 1024))
+  const safeOffset = Math.max(0, toInt(offsetBytes, 0))
+  const safePrepend = Math.max(0, toInt(prependHeadBytes, 0))
+
+  if (safeOffset <= 0 || safePrepend <= 0) {
+    return await downloadDocumentChunk(client, document, safeMaxBytes, safeOffset)
+  }
+
+  const headBudget = Math.min(safePrepend, Math.max(64 * 1024, Math.floor(safeMaxBytes * 0.3)))
+  const tailBudget = Math.max(64 * 1024, safeMaxBytes - headBudget)
+
+  const headChunk = await downloadDocumentChunk(client, document, headBudget, 0)
+  const tailChunk = await downloadDocumentChunk(client, document, tailBudget, safeOffset)
+
+  return concatBinaryChunks([headChunk, tailChunk])
 }
 
 function buildThumbAttemptIndexes(totalCount) {
@@ -685,9 +706,12 @@ async function handleGetMediaPreview({ request, env, state, user, session }) {
   const chatId = toText(url.searchParams.get('chatId'))
   const messageId = toPositiveInt(url.searchParams.get('messageId') || url.searchParams.get('id'))
   const mode = toText(url.searchParams.get('mode') || url.searchParams.get('quality') || 'fast').toLowerCase()
+  const probeOffsetBytes = Math.max(0, toInt(url.searchParams.get('probeOffset') || 0, 0))
+  const probeMaxBytesRaw = Math.max(0, toInt(url.searchParams.get('probeBytes') || 0, 0))
+  const probeMaxBytes = probeMaxBytesRaw > 0 ? clamp(probeMaxBytesRaw, 128 * 1024, 12 * 1024 * 1024) : 0
   const isUltraFastMode = mode === 'ultrafast' || mode === 'quick'
   const isFastMode = isUltraFastMode || (mode !== 'best' && mode !== 'full' && mode !== 'high')
-  const cacheEtag = `W/"tg-preview-${PREVIEW_ETAG_VERSION}-${mode || 'fast'}-${chatId || 'unknown'}-${messageId || 0}"`
+  const cacheEtag = `W/"tg-preview-${PREVIEW_ETAG_VERSION}-${mode || 'fast'}-${chatId || 'unknown'}-${messageId || 0}-o${probeOffsetBytes || 0}-b${probeMaxBytes || 0}"`
 
   if (!chatId) throw new ApiError('CHAT_ID_REQUIRED', 400, 'chatId is required')
   if (!messageId) throw new ApiError('MESSAGE_ID_REQUIRED', 400, 'messageId is required')
@@ -950,29 +974,34 @@ async function handleGetMediaPreview({ request, env, state, user, session }) {
           || fileExtension === 'webm'
           || fileExtension === 'mkv'
 
-        let sampleMaxBytes = 320 * 1024
+        let sampleMaxBytes = probeMaxBytes > 0 ? probeMaxBytes : 320 * 1024
         if (isUltraFastMode) {
-          sampleMaxBytes = 384 * 1024
+          sampleMaxBytes = probeMaxBytes > 0 ? probeMaxBytes : 384 * 1024
         } else if (isFastMode) {
-          sampleMaxBytes = 786_432
+          sampleMaxBytes = probeMaxBytes > 0 ? probeMaxBytes : 786_432
         } else {
-          sampleMaxBytes = 2_097_152
+          sampleMaxBytes = probeMaxBytes > 0 ? probeMaxBytes : 4_194_304
         }
-        if (noTelegramThumbs && isWebmOrMkv) {
+        if (probeMaxBytes <= 0 && noTelegramThumbs && isWebmOrMkv) {
           if (isUltraFastMode) sampleMaxBytes = 524_288
           else if (isFastMode) sampleMaxBytes = 1_572_864
           else sampleMaxBytes = 10_485_760
+        } else if (probeMaxBytes <= 0 && noTelegramThumbs) {
+          if (isUltraFastMode) sampleMaxBytes = 524_288
+          else if (isFastMode) sampleMaxBytes = 1_572_864
+          else sampleMaxBytes = 8_388_608
         }
-        const sampleTimeoutMs = isUltraFastMode ? 2_400 : (isFastMode ? 7_500 : 20_000)
+        const sampleTimeoutMs = isUltraFastMode ? 2_400 : (isFastMode ? 7_500 : 30_000)
+        const prependHeadBytes = probeOffsetBytes > 0 ? 256 * 1024 : 0
         const sampled = await withPromiseTimeout(
-          downloadDocumentHeadSample(client, document, sampleMaxBytes),
+          downloadDocumentHeadSample(client, document, sampleMaxBytes, probeOffsetBytes, prependHeadBytes),
           sampleTimeoutMs
         )
         const minHead = isWebmOrMkv && noTelegramThumbs ? 48 * 1024 : 64 * 1024
         if (sampled && sampled.length >= minHead) {
           bytes = sampled
           forcedContentType = resolvedVideoMime || 'video/mp4'
-          previewSource = 'video-head-sample'
+          previewSource = probeOffsetBytes > 0 ? 'video-probe-sample' : 'video-head-sample'
         }
       } catch (err) {
         console.warn('[TG API] getMediaPreview video sample fallback failed:', {

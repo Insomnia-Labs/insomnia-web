@@ -14,12 +14,12 @@ const AUTH_REQUEST_TIMEOUT_MS = 70_000
 const MEDIA_PREVIEW_REQUEST_TIMEOUT_MS = 10_000
 const MEDIA_PREVIEW_FAST_TIMEOUT_MS = 7_500
 const MEDIA_PREVIEW_ULTRAFAST_TIMEOUT_MS = 2_400
-const MEDIA_PREVIEW_HIGH_TIMEOUT_MS = 20_000
+const MEDIA_PREVIEW_HIGH_TIMEOUT_MS = 30_000
 const MEDIA_PREVIEW_VIDEO_FRAME_FAST_TIMEOUT_MS = 1_800
 const MEDIA_PREVIEW_VIDEO_FRAME_ULTRAFAST_TIMEOUT_MS = 1_100
 const MEDIA_PREVIEW_VIDEO_FRAME_TIMEOUT_MS = 2_800
 const MEDIA_PREVIEW_VIDEO_WASM_FAST_TIMEOUT_MS = 4_000
-const MEDIA_PREVIEW_VIDEO_WASM_TIMEOUT_MS = 6_200
+const MEDIA_PREVIEW_VIDEO_WASM_TIMEOUT_MS = 8_500
 const UPLOAD_THUMB_MAX_BYTES = 400 * 1024
 const UPLOAD_THUMB_PROBE_BYTES = [5 * 1024 * 1024, 15 * 1024 * 1024]
 const UPLOAD_THUMB_NATIVE_TIMEOUT_MS = 2_500
@@ -904,12 +904,13 @@ export async function getProfilePhoto(entity) {
   return resolved
 }
 
-function buildMediaPreviewCacheKey(chatId, messageId, mode = 'fast') {
+function buildMediaPreviewCacheKey(chatId, messageId, mode = 'fast', variant = '') {
   const chat = String(chatId || '').trim()
   const msg = String(messageId || '').trim()
   const quality = String(mode || 'fast').trim().toLowerCase()
+  const extra = String(variant || '').trim().toLowerCase()
   if (!chat || !msg) return ''
-  return `${chat}:${msg}:${quality || 'fast'}`
+  return `${chat}:${msg}:${quality || 'fast'}:${extra || 'base'}`
 }
 
 export async function getMessageMediaPreview(chatId, messageId, options = {}) {
@@ -919,13 +920,25 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
   const escalationDepth = Number.isFinite(Number(options?.escalationDepth))
     ? Math.max(0, Number(options.escalationDepth))
     : 0
-  const cacheKey = buildMediaPreviewCacheKey(chatId, messageId, mode)
+  const probeOffsetBytes = Number.isFinite(Number(options?.probeOffsetBytes))
+    ? Math.max(0, Math.trunc(Number(options.probeOffsetBytes)))
+    : 0
+  const probeMaxBytes = Number.isFinite(Number(options?.probeMaxBytes))
+    ? Math.max(0, Math.min(12 * 1024 * 1024, Math.trunc(Number(options.probeMaxBytes))))
+    : 0
+  const preferredCaptureMs = Number.isFinite(Number(options?.preferredCaptureMs))
+    ? Math.max(0, Math.trunc(Number(options.preferredCaptureMs)))
+    : 1_200
+  const cacheVariant = (probeOffsetBytes > 0 || probeMaxBytes > 0)
+    ? `o${probeOffsetBytes}b${probeMaxBytes}`
+    : 'base'
+  const cacheKey = buildMediaPreviewCacheKey(chatId, messageId, mode, cacheVariant)
   if (!cacheKey) {
     console.warn('[TG API] media preview skipped: invalid chatId/messageId', { chatId, messageId })
     return null
   }
 
-  const missKey = `${String(chatId).trim()}:${String(messageId).trim()}`
+  const missKey = `${String(chatId).trim()}:${String(messageId).trim()}:${mode}:${cacheVariant}`
   const missUntil = Number(mediaPreviewMissCache.get(missKey)) || 0
   if (missUntil > Date.now()) {
     return null
@@ -948,7 +961,13 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
           : (isHighQualityMode ? MEDIA_PREVIEW_HIGH_TIMEOUT_MS : MEDIA_PREVIEW_REQUEST_TIMEOUT_MS))
 
       const response = await fetchWithTimeout(
-        buildApiUrl('/media-preview', { chatId, messageId, mode }),
+        buildApiUrl('/media-preview', {
+          chatId,
+          messageId,
+          mode,
+          probeOffset: probeOffsetBytes > 0 ? probeOffsetBytes : undefined,
+          probeBytes: probeMaxBytes > 0 ? probeMaxBytes : undefined,
+        }),
         { method: 'GET' },
         requestTimeoutMs
       )
@@ -964,10 +983,12 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
           || response.statusText
           || 'Failed to fetch media preview'
         const err = createError(code, message, response.status, payload?.error || null)
+        const normalizedCode = String(err?.code || '').trim().toUpperCase()
+        const isTransientPreviewEmpty = normalizedCode === 'MEDIA_PREVIEW_EMPTY'
 
         // 404/415 are expected for unsupported messages (files without thumbnails, links, etc.).
-        if (response.status === 404 || response.status === 415) {
-          const missTtlMs = 45_000
+        if ((response.status === 404 || response.status === 415) && !isTransientPreviewEmpty) {
+          const missTtlMs = response.status === 415 ? 45_000 : 20_000
           mediaPreviewMissCache.set(missKey, Date.now() + missTtlMs)
           console.info('[TG API] media preview unavailable:', {
             code: err.code,
@@ -976,6 +997,59 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
             messageId: String(messageId || ''),
           })
           return null
+        }
+
+        if (
+          isTransientPreviewEmpty
+          && allowEscalation
+          && escalationDepth < 2
+          && (mode === 'fast' || mode === 'ultrafast')
+        ) {
+          try {
+            const fallbackMode = mode === 'ultrafast' ? 'fast' : 'high'
+            return await getMessageMediaPreview(chatId, messageId, {
+              mode: fallbackMode,
+              allowWasm,
+              allowEscalation,
+              escalationDepth: escalationDepth + 1,
+              probeOffsetBytes,
+              probeMaxBytes,
+              preferredCaptureMs,
+            })
+          } catch {
+            // keep error fallback below so Dashboard retry logic can continue
+          }
+        }
+
+        if (
+          isTransientPreviewEmpty
+          && allowEscalation
+          && escalationDepth < 3
+          && mode === 'high'
+          && probeOffsetBytes <= 0
+        ) {
+          const probePlan = [
+            { offset: 0, bytes: 12 * 1024 * 1024, captureMs: 1_200 },
+            { offset: 2 * 1024 * 1024, bytes: 2 * 1024 * 1024, captureMs: 800 },
+            { offset: 8 * 1024 * 1024, bytes: 3 * 1024 * 1024, captureMs: 1_200 },
+            { offset: 24 * 1024 * 1024, bytes: 4 * 1024 * 1024, captureMs: 1_600 },
+          ]
+          for (const probe of probePlan) {
+            try {
+              const probed = await getMessageMediaPreview(chatId, messageId, {
+                mode: 'high',
+                allowWasm: true,
+                allowEscalation: false,
+                escalationDepth: escalationDepth + 1,
+                probeOffsetBytes: probe.offset,
+                probeMaxBytes: probe.bytes,
+                preferredCaptureMs: probe.captureMs,
+              })
+              if (probed?.url) return probed
+            } catch {
+              // continue with next probe
+            }
+          }
         }
 
         console.error('[TG API] media preview request failed:', {
@@ -993,7 +1067,7 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
       const previewSource = response.headers.get('x-tg-preview-source') || ''
       let isImageContentType = contentType.startsWith('image/')
       let isVideoContentType = contentType.startsWith('video/')
-      const isVideoSampleLike = previewSource === 'video-head-sample'
+      const isVideoSampleLike = previewSource === 'video-head-sample' || previewSource === 'video-probe-sample'
 
       const blob = await response.blob()
       if (!blob || blob.size === 0) {
@@ -1021,21 +1095,28 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
       if (isVideoContentType || isVideoSampleLike) {
         const inferredVideoMime = isLikelyVideoMime(contentType) ? contentType : 'video/mp4'
         const isMatroska = inferredVideoMime.includes('matroska')
-        const stillFrameUrl = await extractStillFrameFromVideoBlob(blob, {
-          mimeType: inferredVideoMime,
-          timeoutMs: mode === 'ultrafast'
-            ? MEDIA_PREVIEW_VIDEO_FRAME_ULTRAFAST_TIMEOUT_MS
-            : (mode === 'fast'
-              ? (isMatroska ? 1_900 : MEDIA_PREVIEW_VIDEO_FRAME_FAST_TIMEOUT_MS)
-              : MEDIA_PREVIEW_VIDEO_FRAME_TIMEOUT_MS),
-          maxEdge: mode === 'ultrafast' ? 220 : (mode === 'fast' ? 260 : 340),
-          quality: mode === 'ultrafast' ? 0.58 : (mode === 'fast' ? 0.66 : 0.74),
-        })
+        const isWebm = inferredVideoMime.includes('webm')
+        const isMp4Like = inferredVideoMime.includes('mp4') || inferredVideoMime.includes('quicktime')
+        const allowNativeDecode = probeOffsetBytes <= 0
+        if (allowNativeDecode) {
+          const stillFrameUrl = await extractStillFrameFromVideoBlob(blob, {
+            mimeType: inferredVideoMime,
+            timeoutMs: mode === 'ultrafast'
+              ? MEDIA_PREVIEW_VIDEO_FRAME_ULTRAFAST_TIMEOUT_MS
+              : (mode === 'fast'
+                ? (isMatroska
+                  ? 1_900
+                  : (isWebm || isMp4Like ? 2_600 : MEDIA_PREVIEW_VIDEO_FRAME_FAST_TIMEOUT_MS))
+                : MEDIA_PREVIEW_VIDEO_FRAME_TIMEOUT_MS),
+            maxEdge: mode === 'ultrafast' ? 220 : (mode === 'fast' ? 260 : 340),
+            quality: mode === 'ultrafast' ? 0.58 : (mode === 'fast' ? 0.66 : 0.74),
+          })
 
-        if (stillFrameUrl) {
-          return {
-            url: stillFrameUrl,
-            mimeType: 'image/jpeg',
+          if (stillFrameUrl) {
+            return {
+              url: stillFrameUrl,
+              mimeType: 'image/jpeg',
+            }
           }
         }
 
@@ -1043,7 +1124,7 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
           const wasmFrame = await extractStillFrameFromVideoWithWasm(blob, {
             mimeType: inferredVideoMime,
             fileName: `preview_${String(chatId || 'chat')}_${String(messageId || 'msg')}.${guessVideoExtensionFromMime(inferredVideoMime)}`,
-            captureMs: 1_200,
+            captureMs: preferredCaptureMs,
             maxEdge: mode === 'ultrafast' ? 220 : (mode === 'fast' ? 260 : 340),
             quality: mode === 'ultrafast' ? 0.58 : (mode === 'fast' ? 0.66 : 0.74),
             timeoutMs: mode === 'fast' || mode === 'ultrafast'
@@ -1066,6 +1147,8 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
           previewSource,
           size: blob.size,
           allowWasm,
+          probeOffsetBytes,
+          probeMaxBytes,
         })
 
         if (
@@ -1081,9 +1164,47 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
               allowWasm,
               allowEscalation,
               escalationDepth: escalationDepth + 1,
+              probeOffsetBytes,
+              probeMaxBytes,
+              preferredCaptureMs,
             })
           } catch {
             // keep null fallback below
+          }
+        }
+
+        if (
+          allowEscalation
+          && escalationDepth < 3
+          && mode === 'high'
+          && probeOffsetBytes <= 0
+          && (previewSource === 'video-head-sample' || previewSource === 'video-probe-sample')
+        ) {
+          const probePlan = []
+          if (isMp4Like || isWebm) {
+            // For MP4/WebM, a larger contiguous head sample often helps with delayed keyframes/metadata layout.
+            probePlan.push({ offset: 0, bytes: 12 * 1024 * 1024, captureMs: 1_200 })
+          }
+          probePlan.push(
+            { offset: 2 * 1024 * 1024, bytes: 2 * 1024 * 1024, captureMs: 800 },
+            { offset: 8 * 1024 * 1024, bytes: 3 * 1024 * 1024, captureMs: 1_200 },
+            { offset: 24 * 1024 * 1024, bytes: 4 * 1024 * 1024, captureMs: 1_600 },
+          )
+          for (const probe of probePlan) {
+            try {
+              const probed = await getMessageMediaPreview(chatId, messageId, {
+                mode: 'high',
+                allowWasm: true,
+                allowEscalation: false,
+                escalationDepth: escalationDepth + 1,
+                probeOffsetBytes: probe.offset,
+                probeMaxBytes: probe.bytes,
+                preferredCaptureMs: probe.captureMs,
+              })
+              if (probed?.url) return probed
+            } catch {
+              // continue with next probe
+            }
           }
         }
 

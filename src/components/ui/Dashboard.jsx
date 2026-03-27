@@ -16,7 +16,7 @@ const VIDEO_EXTENSIONS = new Set([
 ])
 const MOBILE_PREVIEW_BATCH_LIMIT = 12
 const MOBILE_PREVIEW_MAX_PARALLEL = 2
-const MOBILE_PREVIEW_RETRY_SCHEDULE_MS = [450, 1_100, 2_400]
+const MOBILE_PREVIEW_RETRY_SCHEDULE_MS = [450, 1_100, 2_400, 5_500, 11_000]
 
 const isLikelyVideoMime = (value) => {
     const mime = (value || '').toLowerCase()
@@ -1795,7 +1795,6 @@ export default function Dashboard() {
         const candidates = mobileVisibleRows
             .map(({ preview }) => preview)
             .filter(preview => preview?.canPreview && preview?.canFetchRemotePreview && preview?.chatId && preview?.messageId)
-            .slice(0, MOBILE_PREVIEW_BATCH_LIMIT)
 
         if (candidates.length === 0) {
             const totalRows = mobileVisibleRows.length
@@ -1832,7 +1831,7 @@ export default function Dashboard() {
                 mobilePreviewRetryAtRef.current.delete(key)
             }
             return true
-        })
+        }).slice(0, MOBILE_PREVIEW_BATCH_LIMIT)
 
         if (queue.length === 0) {
             scheduleNextMobilePreviewRetry()
@@ -1861,7 +1860,7 @@ export default function Dashboard() {
                     const previewAsset = await getMessageMediaPreview(preview.chatId, preview.messageId, {
                         mode: previewMode,
                         allowWasm,
-                        allowEscalation: false,
+                        allowEscalation: nextAttempts >= 2,
                     })
                     if (cancelled) continue
 

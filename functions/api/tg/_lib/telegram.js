@@ -224,8 +224,7 @@ export async function runWithTelegramClient(env, sessionString, fn) {
   const { apiId, apiHash } = getApiConfig(env)
   const session = new StringSession(sessionString || '')
 
-  // Force web DC hostnames for WSS mode in Workers runtimes.
-  // Node-style IP DC routing can break websocket/TLS flows in Cloudflare.
+  // Force web DC hostnames for WSS mode — bare IPs break the WebSocket/TLS flow.
   const dcId = Number(session.dcId) || 4
   const webDcHost = getWebDcHost(dcId) || getWebDcHost(4)
   if (!session.serverAddress || isIpv4Address(session.serverAddress)) {
@@ -233,15 +232,13 @@ export async function runWithTelegramClient(env, sessionString, fn) {
   }
 
   const client = new TelegramClient(session, apiId, apiHash, {
-    // Cloudflare Pages/Workers runtime is closer to browser sockets than Node net sockets.
-    // Explicitly use websocket transport to avoid runtime incompatibilities in wrangler 3.x.
     connection: ConnectionTCPObfuscated,
     networkSocket: PromisedWebSockets,
-    connectionRetries: 2,
-    requestRetries: 1,
+    connectionRetries: 3,
+    requestRetries: 2,
     downloadRetries: 1,
-    autoReconnect: false,
-    retryDelay: 250,
+    autoReconnect: true,
+    retryDelay: 500,
     maxConcurrentDownloads: 1,
     useWSS: true,
     receiveUpdates: false,
@@ -501,11 +498,19 @@ function serializeMedia(media) {
   }
 
   if (media.document) {
+    const thumbsRaw = Array.isArray(media.document.thumbs) ? media.document.thumbs : []
+    const thumbs = thumbsRaw.filter(item => item?.className !== 'PhotoPathSize')
+    const videoThumbsRaw = Array.isArray(media.document.videoThumbs) ? media.document.videoThumbs : []
+    const videoThumbs = videoThumbsRaw.filter(
+      item => item?.className === 'VideoSize' && item?.type
+    )
     result.document = {
       id: toSafeId(media.document.id),
       size: toSafeInt(media.document.size, 0),
       mimeType: toSafeText(media.document.mimeType, ''),
       attributes: serializeDocumentAttributes(media.document.attributes),
+      thumbCount: thumbs.length,
+      videoThumbCount: videoThumbs.length,
     }
   }
 

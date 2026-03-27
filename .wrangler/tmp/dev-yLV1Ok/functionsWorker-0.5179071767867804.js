@@ -39320,6 +39320,26 @@ function toSafeUserId(userId) {
   return Math.trunc(numeric);
 }
 __name(toSafeUserId, "toSafeUserId");
+function isSessionSecretMissingError(err) {
+  const code = typeof err?.code === "string" ? err.code : "";
+  const message = typeof err?.message === "string" ? err.message : "";
+  const normalized = `${code} ${message}`.toUpperCase();
+  return normalized.includes("SESSION_SECRET_MISSING");
+}
+__name(isSessionSecretMissingError, "isSessionSecretMissingError");
+async function deleteTelegramSessionRow(env22, safeUserId) {
+  if (!safeUserId) return;
+  await supabaseRequest(env22, "telegram_sessions", {
+    method: "DELETE",
+    query: {
+      user_id: `eq.${safeUserId}`
+    },
+    headers: {
+      Prefer: "return=minimal"
+    }
+  });
+}
+__name(deleteTelegramSessionRow, "deleteTelegramSessionRow");
 async function loadTelegramSessionForUser(env22, userId) {
   const safeUserId = toSafeUserId(userId);
   if (!safeUserId) return "";
@@ -39334,7 +39354,17 @@ async function loadTelegramSessionForUser(env22, userId) {
   if (!encrypted) return "";
   try {
     return await decryptSessionValue(encrypted, env22);
-  } catch {
+  } catch (err) {
+    if (isSessionSecretMissingError(err)) {
+      throw err;
+    }
+    await deleteTelegramSessionRow(env22, safeUserId).catch((deleteErr) => {
+      console.warn("[TG STORAGE] Failed to delete corrupted telegram session row:", {
+        userId: safeUserId,
+        decryptError: String(err?.message || err || ""),
+        deleteError: String(deleteErr?.message || deleteErr || "")
+      });
+    });
     return "";
   }
 }
@@ -39345,15 +39375,7 @@ async function saveTelegramSessionForUser(env22, userId, session) {
   const value = typeof session === "string" ? session : String(session || "");
   const now = Date.now();
   if (!value) {
-    await supabaseRequest(env22, "telegram_sessions", {
-      method: "DELETE",
-      query: {
-        user_id: `eq.${safeUserId}`
-      },
-      headers: {
-        Prefer: "return=minimal"
-      }
-    });
+    await deleteTelegramSessionRow(env22, safeUserId);
     return;
   }
   const encrypted = await encryptSessionValue(value, env22);
@@ -39400,6 +39422,8 @@ var init_storage = __esm({
     __name2(encryptSessionValue, "encryptSessionValue");
     __name2(decryptSessionValue, "decryptSessionValue");
     __name2(toSafeUserId, "toSafeUserId");
+    __name2(isSessionSecretMissingError, "isSessionSecretMissingError");
+    __name2(deleteTelegramSessionRow, "deleteTelegramSessionRow");
     __name2(loadTelegramSessionForUser, "loadTelegramSessionForUser");
     __name2(saveTelegramSessionForUser, "saveTelegramSessionForUser");
     __name2(clearTelegramSessionForUser, "clearTelegramSessionForUser");

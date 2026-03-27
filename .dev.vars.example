@@ -8,4 +8,3 @@ SUPABASE_URL=https://your-project-id.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 # Optional: override callback URL (otherwise auto-resolved as <origin>/api/auth/google-callback)
 # GOOGLE_REDIRECT_URI=https://your-domain/api/auth/google-callback
-

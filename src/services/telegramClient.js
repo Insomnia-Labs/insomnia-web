@@ -20,6 +20,8 @@ const PRESENCE_POLL_INTERVAL_MS = 12_000
 
 const avatarCache = new Map()
 const mediaPreviewCache = new Map()
+/** chatId:messageId — server returned 404/415; do not refetch all modes */
+const mediaPreviewMissCache = new Set()
 const messagePollers = new Map()
 const presenceSubscribers = new Set()
 
@@ -66,9 +68,19 @@ function createError(code, message, status, details = null) {
   return err
 }
 
-async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS, externalSignal = null) {
   const controller = new AbortController()
   const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs)
+
+  let externalListener = null
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      window.clearTimeout(timeoutId)
+      throw createError('REQUEST_CANCELLED', 'Upload cancelled', 0)
+    }
+    externalListener = () => controller.abort()
+    externalSignal.addEventListener('abort', externalListener)
+  }
 
   try {
     return await fetch(url, {
@@ -78,11 +90,17 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_M
     })
   } catch (err) {
     if (err?.name === 'AbortError') {
+      if (externalSignal?.aborted) {
+        throw createError('REQUEST_CANCELLED', 'Upload cancelled', 0)
+      }
       throw createError('REQUEST_TIMEOUT', 'Request timed out', 504)
     }
     throw err
   } finally {
     window.clearTimeout(timeoutId)
+    if (externalSignal && externalListener) {
+      externalSignal.removeEventListener('abort', externalListener)
+    }
   }
 }
 
@@ -108,6 +126,21 @@ async function readTextSafely(response, maxLength = 700) {
   }
 }
 
+/** Browsers reliably decode only a few containers; skip MKV/AVI to avoid long hangs and useless work. */
+function shouldExtractUploadThumbFromVideoFile(file) {
+  if (!file || typeof file.size !== 'number' || file.size <= 0) return false
+  const mime = String(file.type || '').toLowerCase()
+  if (mime.startsWith('video/')) {
+    if (mime.includes('matroska') || mime.includes('msvideo') || mime.includes('x-ms-wmv')) return false
+    if (mime.includes('mp4') || mime.includes('webm') || mime.includes('quicktime') || mime.includes('3gpp')) return true
+    return false
+  }
+  const name = String(file.name || '').toLowerCase()
+  if (/\.(mkv|avi|wmv|flv|ts|mts)$/i.test(name)) return false
+  if (/\.(mp4|m4v|webm|mov|3gp)$/i.test(name)) return true
+  return false
+}
+
 async function extractStillFrameFromVideoBlob(blob, options = {}) {
   if (!blob || typeof blob.size !== 'number' || blob.size <= 0) return null
   if (typeof window === 'undefined' || typeof document === 'undefined') return null
@@ -121,9 +154,19 @@ async function extractStillFrameFromVideoBlob(blob, options = {}) {
     ? Math.max(0.45, Math.min(0.95, Number(options.quality)))
     : 0.72
 
+  const forcedMime = String(options.mimeType || '').trim().toLowerCase()
+  let workBlob = blob
+  if (forcedMime && (!blob.type || blob.type === 'application/octet-stream')) {
+    try {
+      workBlob = new Blob([await blob.arrayBuffer()], { type: forcedMime })
+    } catch {
+      workBlob = blob
+    }
+  }
+
   return await new Promise(resolve => {
     const video = document.createElement('video')
-    const sourceUrl = URL.createObjectURL(blob)
+    const sourceUrl = URL.createObjectURL(workBlob)
     let settled = false
     let timeoutId = 0
 
@@ -198,11 +241,33 @@ async function extractStillFrameFromVideoBlob(blob, options = {}) {
 
     video.muted = true
     video.playsInline = true
-    video.preload = 'metadata'
+    video.preload = 'auto'
     video.crossOrigin = 'anonymous'
 
+    const tryDrawOnce = () => {
+      const width = Number(video.videoWidth) || 0
+      const height = Number(video.videoHeight) || 0
+      return width > 0 && height > 0
+    }
+
     video.addEventListener('loadeddata', () => {
-      drawFrame()
+      if (tryDrawOnce()) {
+        drawFrame()
+        return
+      }
+      const onSeeked = () => {
+        video.removeEventListener('seeked', onSeeked)
+        if (tryDrawOnce()) drawFrame()
+        else finish(null)
+      }
+      video.addEventListener('seeked', onSeeked, { once: true })
+      try {
+        const d = Number(video.duration)
+        const t = Number.isFinite(d) && d > 0 ? Math.min(0.12, d * 0.02) : 0.05
+        video.currentTime = t
+      } catch {
+        finish(null)
+      }
     }, { once: true })
     video.addEventListener('error', () => {
       finish(null)
@@ -220,6 +285,7 @@ async function apiRequest(path, options = {}) {
     formData,
     query,
     timeoutMs = REQUEST_TIMEOUT_MS,
+    signal = null,
   } = options
 
   const headers = new Headers(options.headers || {})
@@ -239,7 +305,8 @@ async function apiRequest(path, options = {}) {
       headers,
       body: payloadBody,
     },
-    timeoutMs
+    timeoutMs,
+    signal instanceof AbortSignal ? signal : null
   )
 
   const payload = await readJsonSafely(response)
@@ -348,6 +415,7 @@ function resetCaches() {
     }
   }
   mediaPreviewCache.clear()
+  mediaPreviewMissCache.clear()
 }
 
 function getHighestMessageId(messages) {
@@ -577,23 +645,69 @@ export async function sendFileToChat(chatId, file, options = {}) {
     ? options.onProgress
     : (typeof options.progressCallback === 'function' ? options.progressCallback : null)
 
+  const signal = options.signal instanceof AbortSignal ? options.signal : null
+
+  // Small JPEG thumb for Telegram (only when the browser can decode the container).
+  // MKV/AVI: skip client-side decode; upload stays fast. Use MP4/WebM/MOV for thumbnails in-app.
+  let thumbFile = null
+  if (shouldExtractUploadThumbFromVideoFile(file)) {
+    try {
+      const thumbBlob = await extractStillFrameFromVideoBlob(file, {
+        timeoutMs: 2_500,
+        maxEdge: 160,
+        quality: 0.64,
+      })
+      if (thumbBlob && thumbBlob.size > 0 && thumbBlob.size < 400 * 1024) {
+        thumbFile = new File([thumbBlob], 'thumb.jpg', { type: 'image/jpeg' })
+      }
+    } catch {
+      // optional
+    }
+  }
+
   const formData = new FormData()
   formData.set('chatId', String(chatId))
   formData.set('file', file)
+  if (thumbFile) formData.set('thumb', thumbFile)
   formData.set('caption', typeof options.caption === 'string' ? options.caption : '')
   formData.set('silent', String(options.silent !== false))
   formData.set('forceDocument', String(options.forceDocument === true))
-  formData.set('workers', String(Number.isFinite(options.workers) ? options.workers : 4))
+  formData.set('workers', String(Number.isFinite(options.workers) ? options.workers : 16))
+
+  // Give at least 10 minutes, or 1 second per MB (whichever is larger).
+  const fileSizeBytes = typeof file.size === 'number' ? file.size : 0
+  const timeoutMs = Math.max(600_000, Math.ceil(fileSizeBytes / 1024))
 
   if (onProgress) {
     try { onProgress(0) } catch { /* noop */ }
   }
 
-  const uploaded = await apiRequest('/send-file', {
-    method: 'POST',
-    formData,
-    timeoutMs: 180_000,
-  })
+  // Fake progress that updates every 300ms using an asymptotic curve:
+  //   progress += (0.92 - progress) * 0.005  each tick
+  // This gives fast movement early on and slows naturally near 92%:
+  //   ~7%  at  5s  |  ~37% at 30s  |  ~60% at 1min  |  ~86% at 5min
+  // Decoupled from timeoutMs so updates are always responsive regardless
+  // of how large the file is or how long the upload takes.
+  let fakeProgressId = 0
+  let fakeProgress = 0
+  if (onProgress) {
+    fakeProgressId = window.setInterval(() => {
+      fakeProgress = fakeProgress + (0.92 - fakeProgress) * 0.005
+      try { onProgress(fakeProgress) } catch { /* noop */ }
+    }, 300)
+  }
+
+  let uploaded
+  try {
+    uploaded = await apiRequest('/send-file', {
+      method: 'POST',
+      formData,
+      timeoutMs,
+      signal,
+    })
+  } finally {
+    if (fakeProgressId) window.clearInterval(fakeProgressId)
+  }
 
   if (onProgress) {
     try { onProgress(1) } catch { /* noop */ }
@@ -656,6 +770,11 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
     return null
   }
 
+  const missKey = `${String(chatId).trim()}:${String(messageId).trim()}`
+  if (mediaPreviewMissCache.has(missKey)) {
+    return null
+  }
+
   if (mediaPreviewCache.has(cacheKey)) {
     return await mediaPreviewCache.get(cacheKey)
   }
@@ -686,6 +805,7 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
 
         // 404/415 are expected for unsupported messages (files without thumbnails, links, etc.).
         if (response.status === 404 || response.status === 415) {
+          mediaPreviewMissCache.add(missKey)
           console.info('[TG API] media preview unavailable:', {
             code: err.code,
             status: err.status,
@@ -726,10 +846,14 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
       }
 
       if (contentType.startsWith('video/')) {
+        const isMatroska = contentType.includes('matroska')
         const stillFrameUrl = await extractStillFrameFromVideoBlob(blob, {
+          mimeType: contentType,
           timeoutMs: mode === 'ultrafast'
             ? MEDIA_PREVIEW_VIDEO_FRAME_ULTRAFAST_TIMEOUT_MS
-            : (mode === 'fast' ? MEDIA_PREVIEW_VIDEO_FRAME_FAST_TIMEOUT_MS : MEDIA_PREVIEW_VIDEO_FRAME_TIMEOUT_MS),
+            : (mode === 'fast'
+              ? (isMatroska ? 4_200 : MEDIA_PREVIEW_VIDEO_FRAME_FAST_TIMEOUT_MS)
+              : MEDIA_PREVIEW_VIDEO_FRAME_TIMEOUT_MS),
           maxEdge: mode === 'ultrafast' ? 220 : (mode === 'fast' ? 260 : 340),
           quality: mode === 'ultrafast' ? 0.58 : (mode === 'fast' ? 0.66 : 0.74),
         })
@@ -775,7 +899,6 @@ export async function getMessageMediaPreview(chatId, messageId, options = {}) {
     if (resolved) {
       mediaPreviewCache.set(cacheKey, resolved)
     } else {
-      // Do not freeze missing previews forever; allow future retries.
       mediaPreviewCache.delete(cacheKey)
     }
     return resolved

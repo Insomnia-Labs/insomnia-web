@@ -1,10 +1,11 @@
 import { Api } from 'telegram'
+import { uploadFile as gramUploadFile, CustomFile } from 'telegram/client/uploads.js'
+import { Buffer } from 'node:buffer'
 import { readAuthenticatedUser } from '../_lib/auth.js'
 import { json, readJsonBody, toBoolean, toInt } from './_lib/http.js'
 import {
   ApiError,
   enrichMessagesWithSenders,
-  makeUploadCustomFile,
   mapApiError,
   resolvePeerEntity,
   runWithTelegramClient,
@@ -514,39 +515,68 @@ async function handleSendFile({ request, env, state, user, session }) {
   const caption = toText(formData.get('caption'))
   const silent = toBoolean(formData.get('silent'), true)
   const forceDocument = toBoolean(formData.get('forceDocument'), false)
-  const workers = clamp(toInt(formData.get('workers'), 4), 1, 16)
+  const workers = clamp(toInt(formData.get('workers'), 16), 1, 16)
   const file = formData.get('file')
+  const thumbEntry = formData.get('thumb')
 
   if (!chatId) throw new ApiError('CHAT_ID_REQUIRED', 400, 'chatId is required')
   if (!file || typeof file.arrayBuffer !== 'function') {
     throw new ApiError('NO_FILE_PROVIDED', 400, 'No file provided')
   }
+  if (!file.size) throw new ApiError('NO_FILE_PROVIDED', 400, 'File is empty')
 
-  const customFile = await makeUploadCustomFile(file)
+  const fileName = (typeof file.name === 'string' && file.name.trim()) ? file.name.trim() : 'upload.bin'
+  const fileSize = file.size
+  const fileMime = toText(file.type) || 'application/octet-stream'
+  const fileExt = (fileName.split('.').pop() || '').toLowerCase()
+  const isVideo = fileMime.startsWith('video/')
+    || /^(mkv|avi|mov|wmv|flv|webm|mp4|m4v|3gp|ts|mts)$/.test(fileExt)
 
   const { result } = await runWithUserTelegramSession({ env, user, session }, async ({ client }) => {
     const peer = await resolvePeerEntity(client, chatId, 'sendFile')
-    const message = await client.sendFile(peer, {
+
+    // Upload main file. GramJS's sendFile→_fileToMedia→uploadFile pipeline has a bug
+    // for files > 20MB: it uses file.path ('' = falsy) instead of the buffer.
+    // Fix: call uploadFile directly with maxBufferSize > fileSize to force the buffer path.
+    const arrayBuffer = await file.arrayBuffer()
+    const customFile = new CustomFile(fileName, fileSize, '', Buffer.from(arrayBuffer))
+    const fileHandle = await gramUploadFile(client, {
       file: customFile,
+      workers,
+      maxBufferSize: 2 ** 31,
+    })
+
+    // Optional JPEG thumb: GramJS _fileToMedia accepts File or Buffer for thumb (CustomFile is not handled for thumb).
+    let thumbPayload = undefined
+    if (thumbEntry && typeof thumbEntry.arrayBuffer === 'function' && thumbEntry.size > 0 && thumbEntry.size <= 512 * 1024) {
+      try {
+        const buf = Buffer.from(await thumbEntry.arrayBuffer())
+        if (buf.length > 0) {
+          thumbPayload = typeof File !== 'undefined'
+            ? new File([buf], 'thumb.jpg', { type: 'image/jpeg' })
+            : buf
+        }
+      } catch {
+        // non-fatal
+      }
+    }
+    const message = await client.sendFile(peer, {
+      file: fileHandle,
       caption,
       silent,
       forceDocument,
-      workers,
-      supportsStreaming: String(file.type || '').startsWith('video/'),
+      supportsStreaming: isVideo && !forceDocument,
+      thumb: thumbPayload,
+      workers: 1,
     })
 
     if (!message.sender && typeof message.getSender === 'function') {
-      try {
-        message.sender = await message.getSender()
-      } catch {
-        // noop
-      }
+      try { message.sender = await message.getSender() } catch { /* noop */ }
     }
     return serializeMessage(message)
   })
 
   const nextState = withLegacySessionCleared(state)
-
   return okWithState(result, nextState, env)
 }
 
@@ -836,14 +866,34 @@ async function handleGetMediaPreview({ request, env, state, user, session }) {
       previewSource = 'best-effort-photo-thumb'
     }
 
-    if (!bytes && isVideoDocument && document && !isUltraFastMode) {
+    if (!bytes && isVideoDocument && document) {
       try {
-        const sampleMaxBytes = isFastMode ? 320 * 1024 : 768 * 1024
+        const noTelegramThumbs = documentThumbs.length === 0 && documentVideoThumbs.length === 0
+        const isWebmOrMkv = documentMime.includes('webm')
+          || documentMime.includes('matroska')
+          || fileExtension === 'webm'
+          || fileExtension === 'mkv'
+
+        let sampleMaxBytes = 320 * 1024
+        if (isUltraFastMode) {
+          sampleMaxBytes = 384 * 1024
+        } else if (isFastMode) {
+          sampleMaxBytes = 320 * 1024
+        } else {
+          sampleMaxBytes = 768 * 1024
+        }
+        if (noTelegramThumbs && isWebmOrMkv) {
+          if (isUltraFastMode) sampleMaxBytes = 512 * 1024
+          else if (isFastMode) sampleMaxBytes = 768 * 1024
+          else sampleMaxBytes = 1_572_864
+        }
+        const sampleTimeoutMs = isUltraFastMode ? 2_200 : (isFastMode ? 3_200 : 7_000)
         const sampled = await withPromiseTimeout(
           downloadDocumentHeadSample(client, document, sampleMaxBytes),
-          isFastMode ? 2_600 : 7_000
+          sampleTimeoutMs
         )
-        if (sampled && sampled.length >= 64 * 1024) {
+        const minHead = isWebmOrMkv && noTelegramThumbs ? 48 * 1024 : 64 * 1024
+        if (sampled && sampled.length >= minHead) {
           bytes = sampled
           forcedContentType = documentMime || inferVideoMimeByExtension(fileExtension) || 'video/mp4'
           previewSource = 'video-head-sample'

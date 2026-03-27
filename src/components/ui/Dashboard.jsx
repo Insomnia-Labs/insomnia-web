@@ -23,6 +23,7 @@ export default function Dashboard() {
     const [error, setError] = useState(null)
     const [activeTab, setActiveTab] = useState('all') // 'all', 'photo', 'video', 'archive'
     const [activeSection, setActiveSection] = useState('main') // 'main', 'chats'
+    const [mobileNavTab, setMobileNavTab] = useState('files') // 'home', 'files', 'notes', 'contacts', 'profile'
     const [avatarUrls, setAvatarUrls] = useState({})
     const [chatFolder, setChatFolder] = useState(0) // 0 = regular, 1 = archive, 2+ = custom folders
     const [showChatMenu, setShowChatMenu] = useState(false)
@@ -58,6 +59,8 @@ export default function Dashboard() {
     const pendingScrollRestoreRef = useRef(null)
     const shouldScrollToBottomRef = useRef(false)
     const exportCancelRef = useRef(false)
+    const mobileUploadAbortRef = useRef(null)
+    const [mobileUploadFileSize, setMobileUploadFileSize] = useState(0)
     const mobileUploadDisplayedProgressRef = useRef(0)
     const mobileUploadProgressTargetRef = useRef(0)
     const mobileUploadProgressFrameRef = useRef(0)
@@ -940,14 +943,19 @@ export default function Dashboard() {
             return
         }
 
+        const abortController = new AbortController()
+        mobileUploadAbortRef.current = abortController
+
         setMobileUploadInProgress(true)
         setMobileUploadNotice(null)
         setMobileUploadDetailsOpen(false)
         setMobileUploadCopyState('idle')
+        setMobileUploadFileSize(file.size || 0)
         resetMobileUploadProgress()
 
         try {
             const uploadedMessage = await sendFileToChat(selectedChatId, file, {
+                signal: abortController.signal,
                 onProgress: (rawValue) => {
                     const numeric = Number(rawValue)
                     const percent = Number.isFinite(numeric) ? Math.round(Math.max(0, Math.min(1, numeric)) * 100) : 0
@@ -963,6 +971,10 @@ export default function Dashboard() {
                 })
             }
         } catch (err) {
+            if (err?.code === 'REQUEST_CANCELLED') {
+                // User cancelled — silent reset, no error notice
+                return
+            }
             console.error('Failed to upload file:', err)
             const uiError = getMobileUploadErrorPresentation(err)
             setMobileUploadNotice({
@@ -973,9 +985,18 @@ export default function Dashboard() {
                 createdAt: Date.now()
             })
         } finally {
+            mobileUploadAbortRef.current = null
             setMobileUploadInProgress(false)
+            setMobileUploadFileSize(0)
             resetMobileUploadProgress()
             if (event?.target) event.target.value = ''
+        }
+    }
+
+    const handleCancelMobileUpload = () => {
+        if (mobileUploadAbortRef.current) {
+            mobileUploadAbortRef.current.abort()
+            mobileUploadAbortRef.current = null
         }
     }
 
@@ -1318,6 +1339,15 @@ export default function Dashboard() {
         const metaPrimary = fileSize || typeLabel
         const mobileMetaLine = metaPrimary ? `${metaPrimary}, ${modifiedLabel}` : modifiedLabel
         const canPreview = (type === 'photo' || type === 'video') && Boolean(chatId) && Boolean(messageId)
+        const docThumbCount = (Number(media.document?.thumbCount) || 0) + (Number(media.document?.videoThumbCount) || 0)
+        // Photo: only if Telegram has a thumb on the document (avoid huge image downloads). Video: always try — server may return a head sample for WebM/MKV without embedded thumbs.
+        const canFetchRemotePreview = (() => {
+            if (!canPreview) return false
+            if (media.photo) return true
+            if (type === 'video') return true
+            if (type === 'photo' && media.document) return docThumbCount > 0
+            return false
+        })()
 
         return {
             id: messageId || Math.random().toString(),
@@ -1335,6 +1365,7 @@ export default function Dashboard() {
             messageId,
             chatId,
             canPreview,
+            canFetchRemotePreview,
             fileExtension,
         }
     }
@@ -1742,7 +1773,7 @@ export default function Dashboard() {
 
         const candidates = mobileVisibleRows
             .map(({ preview }) => preview)
-            .filter(preview => preview?.canPreview && preview?.chatId && preview?.messageId)
+            .filter(preview => preview?.canPreview && preview?.canFetchRemotePreview && preview?.chatId && preview?.messageId)
             .slice(0, MOBILE_PREVIEW_BATCH_LIMIT)
 
         if (candidates.length === 0) {
@@ -1800,10 +1831,8 @@ export default function Dashboard() {
 
                 mobilePreviewInFlightRef.current.add(key)
                 try {
-                    const previousAttempts = mobilePreviewAttemptCountRef.current.get(key) || 0
-                    const previewMode = previousAttempts === 0 ? 'ultrafast' : 'fast'
                     const previewAsset = await getMessageMediaPreview(preview.chatId, preview.messageId, {
-                        mode: previewMode,
+                        mode: 'fast',
                     })
                     if (cancelled) continue
 
@@ -1817,27 +1846,10 @@ export default function Dashboard() {
                             return { ...prev, [key]: previewAsset }
                         })
                     } else {
-                        if (previewMode === 'ultrafast') {
-                            mobilePreviewAttemptCountRef.current.set(key, 1)
-                            mobilePreviewRetryAtRef.current.set(key, Date.now() + 250)
-                            scheduleNextMobilePreviewRetry()
-                            console.info('[MobilePreview] ultrafast miss, queued fast retry', {
-                                chatId: preview.chatId,
-                                messageId: preview.messageId,
-                                type: preview.type,
-                            })
-                        } else {
-                            // 404/415 are returned as null by client helper -> permanent "no preview" for this media.
-                            mobilePreviewUnavailableRef.current.add(key)
-                            mobilePreviewRetryAtRef.current.delete(key)
-                            mobilePreviewAttemptCountRef.current.delete(key)
-                            scheduleNextMobilePreviewRetry()
-                            console.info('[MobilePreview] preview not available', {
-                                chatId: preview.chatId,
-                                messageId: preview.messageId,
-                                type: preview.type,
-                            })
-                        }
+                        mobilePreviewUnavailableRef.current.add(key)
+                        mobilePreviewRetryAtRef.current.delete(key)
+                        mobilePreviewAttemptCountRef.current.delete(key)
+                        scheduleNextMobilePreviewRetry()
                     }
                 } catch (err) {
                     const previousAttempts = mobilePreviewAttemptCountRef.current.get(key) || 0
@@ -2301,20 +2313,44 @@ export default function Dashboard() {
                     )}
                 </AnimatePresence>
 
-                {mobileUploadInProgress && (
-                    <div className="absolute left-4 right-24 bottom-[94px] z-10 rounded-xl border border-[#2f4e7b] bg-[#111a27]/95 px-3 py-2 shadow-[0_8px_20px_rgba(0,0,0,0.35)]">
-                        <div className="flex items-center justify-between text-[11px] text-[#b4c5de]">
-                            <span>Загрузка файла</span>
-                            <span className="font-semibold text-[#d8e9ff]">{mobileUploadProgress}%</span>
+                {mobileUploadInProgress && (() => {
+                    const totalMB = mobileUploadFileSize > 0 ? mobileUploadFileSize / 1048576 : 0
+                    const loadedMB = totalMB * (mobileUploadProgress / 100)
+                    const fmtMB = (n) => n >= 100 ? `${Math.round(n)} MB` : n >= 10 ? `${n.toFixed(1)} MB` : `${n.toFixed(2)} MB`
+                    return (
+                        <div className="absolute left-4 right-24 bottom-[94px] z-10 rounded-xl border border-[#2f4e7b] bg-[#111a27]/95 px-3 py-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.35)]">
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                    <span className="text-[11px] text-[#b4c5de] shrink-0">Загрузка</span>
+                                    {totalMB > 0 && (
+                                        <span className="text-[11px] text-[#7a9cbf] truncate">
+                                            {fmtMB(loadedMB)} / {fmtMB(totalMB)}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <span className="text-[11px] font-semibold text-[#d8e9ff]">{mobileUploadProgress}%</span>
+                                    <button
+                                        onClick={handleCancelMobileUpload}
+                                        className="w-5 h-5 rounded-full bg-[#2f4a6e] hover:bg-[#3d5f8a] text-[#b4c5de] hover:text-white flex items-center justify-center transition-colors"
+                                        title="Отменить загрузку"
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3 h-3">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="mt-2 h-1.5 rounded-full bg-[#25344b] overflow-hidden">
+                                <div
+                                    className="h-full w-full rounded-full bg-[#7ea8d2] origin-left will-change-transform transition-transform duration-100 ease-linear"
+                                    style={{ transform: `scaleX(${Math.max(0, Math.min(100, mobileUploadProgress)) / 100})` }}
+                                ></div>
+                            </div>
                         </div>
-                        <div className="mt-1.5 h-1.5 rounded-full bg-[#25344b] overflow-hidden">
-                            <div
-                                className="h-full w-full rounded-full bg-[#7ea8d2] origin-left will-change-transform transition-transform duration-100 ease-linear"
-                                style={{ transform: `scaleX(${Math.max(0, Math.min(100, mobileUploadProgress)) / 100})` }}
-                            ></div>
-                        </div>
-                    </div>
-                )}
+                    )
+                })()}
 
                 <button
                     onClick={openMobileFilePicker}
@@ -2336,8 +2372,21 @@ export default function Dashboard() {
                 </button>
 
                 <div className="absolute left-3 right-3 bottom-4 rounded-[28px] border border-white/10 bg-[#1a1d24]/95 backdrop-blur-md px-2 py-2">
-                    <div className="grid grid-cols-4 gap-1">
-                        <button className="h-12 rounded-2xl bg-[#272d39] text-[#cfe0ff] text-[12px] font-semibold flex flex-col items-center justify-center gap-0.5">
+                    <div className="grid grid-cols-5 gap-0.5">
+                        <button
+                            onClick={() => setMobileNavTab('home')}
+                            className={`h-12 rounded-2xl text-[11px] font-semibold flex flex-col items-center justify-center gap-0.5 transition-colors ${mobileNavTab === 'home' ? 'bg-[#272d39] text-[#cfe0ff]' : 'text-[#8c93a3]'}`}
+                        >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                                <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"></path>
+                                <path d="M9 21V12h6v9"></path>
+                            </svg>
+                            Главная
+                        </button>
+                        <button
+                            onClick={() => setMobileNavTab('files')}
+                            className={`h-12 rounded-2xl text-[11px] font-semibold flex flex-col items-center justify-center gap-0.5 transition-colors ${mobileNavTab === 'files' ? 'bg-[#272d39] text-[#cfe0ff]' : 'text-[#8c93a3]'}`}
+                        >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
                                 <rect x="3" y="3" width="7" height="7"></rect>
                                 <rect x="14" y="3" width="7" height="7"></rect>
@@ -2346,20 +2395,35 @@ export default function Dashboard() {
                             </svg>
                             Файлы
                         </button>
-                        <button className="h-12 rounded-2xl text-[#8c93a3] text-[12px] font-semibold flex flex-col items-center justify-center gap-0.5">
+                        <button
+                            onClick={() => setMobileNavTab('notes')}
+                            className={`h-12 rounded-2xl text-[11px] font-semibold flex flex-col items-center justify-center gap-0.5 transition-colors ${mobileNavTab === 'notes' ? 'bg-[#272d39] text-[#cfe0ff]' : 'text-[#8c93a3]'}`}
+                        >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
-                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
                             </svg>
-                            Избранное
+                            Заметки
                         </button>
-                        <button className="h-12 rounded-2xl text-[#8c93a3] text-[12px] font-semibold flex flex-col items-center justify-center gap-0.5">
+                        <button
+                            onClick={() => setMobileNavTab('contacts')}
+                            className={`h-12 rounded-2xl text-[11px] font-semibold flex flex-col items-center justify-center gap-0.5 transition-colors ${mobileNavTab === 'contacts' ? 'bg-[#272d39] text-[#cfe0ff]' : 'text-[#8c93a3]'}`}
+                        >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                             </svg>
-                            Поиск
+                            Контакты
                         </button>
-                        <button className="h-12 rounded-2xl text-[#8c93a3] text-[12px] font-semibold flex flex-col items-center justify-center gap-0.5">
+                        <button
+                            onClick={() => setMobileNavTab('profile')}
+                            className={`h-12 rounded-2xl text-[11px] font-semibold flex flex-col items-center justify-center gap-0.5 transition-colors ${mobileNavTab === 'profile' ? 'bg-[#272d39] text-[#cfe0ff]' : 'text-[#8c93a3]'}`}
+                        >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
                                 <path d="M20 21a8 8 0 1 0-16 0"></path>
                                 <circle cx="12" cy="7" r="4"></circle>

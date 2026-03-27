@@ -37542,6 +37542,24 @@ function toSafeUserId(userId) {
   if (!Number.isFinite(numeric) || numeric <= 0) return 0;
   return Math.trunc(numeric);
 }
+function isSessionSecretMissingError(err) {
+  const code = typeof err?.code === "string" ? err.code : "";
+  const message = typeof err?.message === "string" ? err.message : "";
+  const normalized = `${code} ${message}`.toUpperCase();
+  return normalized.includes("SESSION_SECRET_MISSING");
+}
+async function deleteTelegramSessionRow(env2, safeUserId) {
+  if (!safeUserId) return;
+  await supabaseRequest(env2, "telegram_sessions", {
+    method: "DELETE",
+    query: {
+      user_id: `eq.${safeUserId}`
+    },
+    headers: {
+      Prefer: "return=minimal"
+    }
+  });
+}
 async function loadTelegramSessionForUser(env2, userId) {
   const safeUserId = toSafeUserId(userId);
   if (!safeUserId) return "";
@@ -37556,7 +37574,17 @@ async function loadTelegramSessionForUser(env2, userId) {
   if (!encrypted) return "";
   try {
     return await decryptSessionValue(encrypted, env2);
-  } catch {
+  } catch (err) {
+    if (isSessionSecretMissingError(err)) {
+      throw err;
+    }
+    await deleteTelegramSessionRow(env2, safeUserId).catch((deleteErr) => {
+      console.warn("[TG STORAGE] Failed to delete corrupted telegram session row:", {
+        userId: safeUserId,
+        decryptError: String(err?.message || err || ""),
+        deleteError: String(deleteErr?.message || deleteErr || "")
+      });
+    });
     return "";
   }
 }
@@ -37566,15 +37594,7 @@ async function saveTelegramSessionForUser(env2, userId, session) {
   const value = typeof session === "string" ? session : String(session || "");
   const now = Date.now();
   if (!value) {
-    await supabaseRequest(env2, "telegram_sessions", {
-      method: "DELETE",
-      query: {
-        user_id: `eq.${safeUserId}`
-      },
-      headers: {
-        Prefer: "return=minimal"
-      }
-    });
+    await deleteTelegramSessionRow(env2, safeUserId);
     return;
   }
   const encrypted = await encryptSessionValue(value, env2);
@@ -37616,6 +37636,8 @@ var init_storage = __esm({
     __name(encryptSessionValue, "encryptSessionValue");
     __name(decryptSessionValue, "decryptSessionValue");
     __name(toSafeUserId, "toSafeUserId");
+    __name(isSessionSecretMissingError, "isSessionSecretMissingError");
+    __name(deleteTelegramSessionRow, "deleteTelegramSessionRow");
     __name(loadTelegramSessionForUser, "loadTelegramSessionForUser");
     __name(saveTelegramSessionForUser, "saveTelegramSessionForUser");
     __name(clearTelegramSessionForUser, "clearTelegramSessionForUser");
@@ -38482,13 +38504,13 @@ var init_functionsRoutes_0_6011585863384392 = __esm({
   }
 });
 
-// ../.wrangler/tmp/bundle-1zLlU3/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-Q9KpGq/middleware-loader.entry.ts
 init_functionsRoutes_0_6011585863384392();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
 init_performance2();
 
-// ../.wrangler/tmp/bundle-1zLlU3/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-Q9KpGq/middleware-insertion-facade.js
 init_functionsRoutes_0_6011585863384392();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
@@ -38999,7 +39021,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env2, _ctx, middlewareCtx
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-1zLlU3/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-Q9KpGq/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -39035,7 +39057,7 @@ function __facade_invoke__(request, env2, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-1zLlU3/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-Q9KpGq/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

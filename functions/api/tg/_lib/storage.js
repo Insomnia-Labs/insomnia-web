@@ -41,6 +41,7 @@ const textDecoder = new TextDecoder()
 
 let cachedSecret = ''
 let cachedKey = null
+let corruptedSessionCleanupCount = 0
 
 async function getEncryptionKey(env) {
   const secret = getStorageSecret(env)
@@ -95,6 +96,32 @@ function toSafeUserId(userId) {
   return Math.trunc(numeric)
 }
 
+function isSessionSecretMissingError(err) {
+  const code = typeof err?.code === 'string' ? err.code : ''
+  const message = typeof err?.message === 'string' ? err.message : ''
+  const normalized = `${code} ${message}`.toUpperCase()
+  return normalized.includes('SESSION_SECRET_MISSING')
+}
+
+async function deleteTelegramSessionRow(env, safeUserId) {
+  if (!safeUserId) return
+
+  await supabaseRequest(env, 'telegram_sessions', {
+    method: 'DELETE',
+    query: {
+      user_id: `eq.${safeUserId}`,
+    },
+    headers: {
+      Prefer: 'return=minimal',
+    },
+  })
+}
+
+function incrementCorruptedSessionCleanupCount() {
+  corruptedSessionCleanupCount += 1
+  return corruptedSessionCleanupCount
+}
+
 export async function loadTelegramSessionForUser(env, userId) {
   const safeUserId = toSafeUserId(userId)
   if (!safeUserId) return ''
@@ -112,7 +139,28 @@ export async function loadTelegramSessionForUser(env, userId) {
 
   try {
     return await decryptSessionValue(encrypted, env)
-  } catch {
+  } catch (err) {
+    // Missing encryption secret is a config issue; do not hide or delete data.
+    if (isSessionSecretMissingError(err)) {
+      throw err
+    }
+
+    // Encrypted payload cannot be decrypted (rotated key/corrupted row): remove stale row.
+    try {
+      await deleteTelegramSessionRow(env, safeUserId)
+      const cleanupCount = incrementCorruptedSessionCleanupCount()
+      console.info('[TG STORAGE] Auto-cleared corrupted telegram session row:', {
+        userId: safeUserId,
+        cleanupCount,
+        decryptError: String(err?.message || err || ''),
+      })
+    } catch (deleteErr) {
+      console.warn('[TG STORAGE] Failed to delete corrupted telegram session row:', {
+        userId: safeUserId,
+        decryptError: String(err?.message || err || ''),
+        deleteError: String(deleteErr?.message || deleteErr || ''),
+      })
+    }
     return ''
   }
 }
@@ -125,15 +173,7 @@ export async function saveTelegramSessionForUser(env, userId, session) {
   const now = Date.now()
 
   if (!value) {
-    await supabaseRequest(env, 'telegram_sessions', {
-      method: 'DELETE',
-      query: {
-        user_id: `eq.${safeUserId}`,
-      },
-      headers: {
-        Prefer: 'return=minimal',
-      },
-    })
+    await deleteTelegramSessionRow(env, safeUserId)
     return
   }
 

@@ -7,6 +7,8 @@ import { PromisedWebSockets } from 'telegram/extensions/index.js'
 
 const CONNECT_TIMEOUT_MS = 20_000
 const REQUEST_TIMEOUT_MS = 30_000
+const CONNECT_ATTEMPT_TIMEOUT_MS = 12_000
+const WEB_DC_IDS = [1, 2, 3, 4, 5]
 
 const KNOWN_STATUS_CODES = new Map([
   ['APP_AUTH_REQUIRED', 401],
@@ -105,6 +107,91 @@ function getWebDcHost(dcId) {
     case 5: return 'flora.web.telegram.org'
     default: return ''
   }
+}
+
+function normalizeDcId(value, fallback = 4) {
+  const dcId = Number(value)
+  if (!Number.isInteger(dcId) || dcId < 1 || dcId > 5) return fallback
+  return dcId
+}
+
+function normalizeDcHost(value) {
+  const host = toSafeText(value, '').trim().toLowerCase()
+  if (!host || isIpv4Address(host) || host.includes(':')) return ''
+  return host
+}
+
+function buildDcCandidates(session) {
+  const preferredDcId = normalizeDcId(session?.dcId, 4)
+  const sessionHost = normalizeDcHost(session?.serverAddress)
+  const candidates = []
+  const seenHosts = new Set()
+
+  const pushCandidate = (dcId, host) => {
+    const safeDcId = normalizeDcId(dcId, preferredDcId)
+    const normalizedHost = normalizeDcHost(host)
+    const resolvedHost = normalizedHost || getWebDcHost(safeDcId)
+    if (!resolvedHost || seenHosts.has(resolvedHost)) return
+    seenHosts.add(resolvedHost)
+    candidates.push({
+      dcId: safeDcId,
+      host: resolvedHost,
+      port: 443,
+    })
+  }
+
+  pushCandidate(preferredDcId, sessionHost || getWebDcHost(preferredDcId))
+  WEB_DC_IDS.forEach(dcId => pushCandidate(dcId, getWebDcHost(dcId)))
+  return candidates.length ? candidates : [{ dcId: 4, host: getWebDcHost(4), port: 443 }]
+}
+
+function buildConnectAttemptTimeoutMs(totalCandidates) {
+  const safeCount = Math.max(1, Number(totalCandidates) || 1)
+  const perAttempt = Math.max(CONNECT_ATTEMPT_TIMEOUT_MS, Math.floor(CONNECT_TIMEOUT_MS / safeCount))
+  return Math.min(CONNECT_TIMEOUT_MS, perAttempt)
+}
+
+function isRetryableConnectError(err) {
+  const code = String(err?.code || '').toUpperCase()
+  const message = String(err?.message || '').toUpperCase()
+  if (code === 'TELEGRAM_CONNECT_TIMEOUT' || code === 'TELEGRAM_REQUEST_TIMEOUT') return true
+
+  const text = `${code} ${message}`
+  return (
+    text.includes('TIMEOUT')
+    || text.includes('ETIMEDOUT')
+    || text.includes('ECONNRESET')
+    || text.includes('ECONNREFUSED')
+    || text.includes('ENETUNREACH')
+    || text.includes('EHOSTUNREACH')
+    || text.includes('ENOTFOUND')
+    || text.includes('EAI_AGAIN')
+    || text.includes('WEBSOCKET')
+    || text.includes('SOCKET')
+  )
+}
+
+function createTelegramClient(session, apiId, apiHash) {
+  const client = new TelegramClient(session, apiId, apiHash, {
+    connection: ConnectionTCPObfuscated,
+    networkSocket: PromisedWebSockets,
+    connectionRetries: 1,
+    requestRetries: 2,
+    downloadRetries: 1,
+    autoReconnect: true,
+    retryDelay: 500,
+    maxConcurrentDownloads: 1,
+    useWSS: true,
+    useIPV6: false,
+    receiveUpdates: false,
+  })
+  client.setLogLevel('error')
+
+  const originalGetDC = client.getDC.bind(client)
+  client.getDC = async (requestedDcId, downloadDC = false) => {
+    return originalGetDC(requestedDcId, downloadDC, true)
+  }
+  return client
 }
 
 function isIpv4Address(value) {
@@ -222,51 +309,53 @@ async function safeDisconnect(client) {
 
 export async function runWithTelegramClient(env, sessionString, fn) {
   const { apiId, apiHash } = getApiConfig(env)
-  const session = new StringSession(sessionString || '')
+  const initialSession = new StringSession(sessionString || '')
+  const candidates = buildDcCandidates(initialSession)
+  const attemptTimeoutMs = buildConnectAttemptTimeoutMs(candidates.length)
+  const connectErrors = []
 
-  // Force web DC hostnames for WSS mode — bare IPs break the WebSocket/TLS flow.
-  const dcId = Number(session.dcId) || 4
-  const webDcHost = getWebDcHost(dcId) || getWebDcHost(4)
-  if (!session.serverAddress || isIpv4Address(session.serverAddress)) {
-    session.setDC(dcId, webDcHost, 443)
-  }
+  for (const candidate of candidates) {
+    const session = new StringSession(sessionString || '')
+    session.setDC(candidate.dcId, candidate.host, candidate.port)
 
-  const client = new TelegramClient(session, apiId, apiHash, {
-    connection: ConnectionTCPObfuscated,
-    networkSocket: PromisedWebSockets,
-    connectionRetries: 3,
-    requestRetries: 2,
-    downloadRetries: 1,
-    autoReconnect: true,
-    retryDelay: 500,
-    maxConcurrentDownloads: 1,
-    useWSS: true,
-    receiveUpdates: false,
-  })
-  client.setLogLevel('error')
+    const client = createTelegramClient(session, apiId, apiHash)
+    let hasConnected = false
 
-  const originalGetDC = client.getDC.bind(client)
-  client.getDC = async (requestedDcId, downloadDC = false) => {
-    return originalGetDC(requestedDcId, downloadDC, true)
-  }
-
-  try {
-    await withTimeout(client.connect(), CONNECT_TIMEOUT_MS, 'TELEGRAM_CONNECT_TIMEOUT')
-
-    const result = await fn({ client, apiId, apiHash })
-    const nextSession = client.session.save()
-    return { result, nextSession }
-  } catch (err) {
-    const wrapped = err instanceof Error ? err : new Error(String(err || 'UNKNOWN_ERROR'))
     try {
-      wrapped.tgSession = client?.session?.save?.() || ''
-    } catch {
-      wrapped.tgSession = ''
+      await withTimeout(client.connect(), attemptTimeoutMs, 'TELEGRAM_CONNECT_TIMEOUT')
+      hasConnected = true
+
+      const result = await fn({ client, apiId, apiHash })
+      const nextSession = client.session.save()
+      return { result, nextSession }
+    } catch (err) {
+      const wrapped = err instanceof Error ? err : new Error(String(err || 'UNKNOWN_ERROR'))
+      try {
+        wrapped.tgSession = client?.session?.save?.() || ''
+      } catch {
+        wrapped.tgSession = ''
+      }
+
+      if (!hasConnected && isRetryableConnectError(wrapped)) {
+        connectErrors.push({
+          dcId: candidate.dcId,
+          host: candidate.host,
+          message: String(wrapped.message || wrapped.code || 'connect failed').slice(0, 160),
+        })
+        continue
+      }
+      throw wrapped
+    } finally {
+      await safeDisconnect(client)
     }
-    throw wrapped
-  } finally {
-    await safeDisconnect(client)
   }
+
+  throw new ApiError(
+    'TELEGRAM_CONNECT_TIMEOUT',
+    504,
+    'TELEGRAM_CONNECT_TIMEOUT',
+    connectErrors
+  )
 }
 
 export async function sendCodeWithClient(client, apiId, apiHash, phoneNumber) {

@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useStore } from '../../store/useStore'
-import { sendCode, signIn, signInWith2FA, isAuthorized, clearSession } from '../../services/telegramClient'
-import { getAuthMe, getGoogleLoginStartUrl } from '../../services/authClient'
+import { sendCode, signIn, signInWith2FA, isAuthorized } from '../../services/telegramClient'
+import { getAuthMe, getGoogleLoginStartUrl, logoutAppSession } from '../../services/authClient'
 
 /* ─────────────────────────────────────────────────────────────
    Tiny helpers
@@ -217,12 +217,97 @@ function resolve2FAError(err) {
     }
 }
 
+function formatLogTime(timestamp) {
+    const iso = String(timestamp || '')
+    if (iso.length >= 19 && iso.includes('T')) return iso.slice(11, 19)
+    const date = new Date()
+    const hh = String(date.getHours()).padStart(2, '0')
+    const mm = String(date.getMinutes()).padStart(2, '0')
+    const ss = String(date.getSeconds()).padStart(2, '0')
+    return `${hh}:${mm}:${ss}`
+}
+
+function toLogMetaText(meta, maxLength = 1800) {
+    if (meta === undefined || meta === null || meta === '') return ''
+    const raw = typeof meta === 'string'
+        ? meta
+        : (() => {
+            try {
+                return JSON.stringify(meta, null, 2)
+            } catch {
+                return String(meta)
+            }
+        })()
+    const compact = String(raw).trim()
+    if (!compact) return ''
+    if (compact.length <= maxLength) return compact
+    return `${compact.slice(0, maxLength - 3)}...`
+}
+
+function maskPhone(value) {
+    const digits = String(value || '').replace(/\D/g, '')
+    if (!digits) return ''
+    if (digits.length <= 4) return `+${digits}`
+    const head = digits.slice(0, 3)
+    const tail = digits.slice(-2)
+    return `+${head}***${tail}`
+}
+
+function toLogErrorMeta(err) {
+    const details = err?.details
+    return {
+        code: extractAuthErrorCode(err),
+        status: Number.isFinite(Number(err?.status)) ? Number(err.status) : null,
+        message: compactErrorMessage(err) || String(err?.message || 'unknown error'),
+        details: details === undefined ? null : details,
+    }
+}
+
+function levelColor(level) {
+    const safe = String(level || '').toUpperCase()
+    if (safe === 'ERROR') return '#f87171'
+    if (safe === 'WARN') return '#fbbf24'
+    if (safe === 'OK') return '#34d399'
+    if (safe === 'NET') return '#7dd3fc'
+    if (safe === 'STATE') return '#c4b5fd'
+    if (safe === 'INFO') return '#e5e7eb'
+    return '#cbd5e1'
+}
+
+function buildLogsExportText(entries) {
+    if (!Array.isArray(entries) || entries.length === 0) return 'NO LOGS YET.'
+
+    return entries.map(entry => {
+        const timestamp = String(entry?.timestamp || '').trim()
+        const level = String(entry?.level || 'INFO').trim().toUpperCase()
+        const message = String(entry?.message || 'EVENT').trim()
+        const header = `[${timestamp}] [${level}] ${message}`
+        const meta = String(entry?.metaText || '').trim()
+        if (!meta) return header
+        return `${header}\n${meta}`
+    }).join('\n\n')
+}
+
+function safeShortText(value, max = 64) {
+    const text = String(value || '').trim()
+    if (!text) return '—'
+    if (text.length <= max) return text
+    return `${text.slice(0, max - 3)}...`
+}
+
+function accountInitial(user) {
+    const name = String(user?.name || '').trim()
+    const email = String(user?.email || '').trim()
+    const source = name || email || 'G'
+    return source.charAt(0).toUpperCase()
+}
+
 /* ─────────────────────────────────────────────────────────────
    Main component
 ───────────────────────────────────────────────────────────── */
 
 export default function VoidLogin() {
-    const { showVoidLogin, setShowVoidLogin, setSection } = useStore()
+    const { showVoidLogin, setShowVoidLogin } = useStore()
 
     /* stages: 'check-auth' | 'appauth' | 'check' | 'boot' | 'phone' | 'sending' | 'code' | 'verifying' | 'password' | 'verifying2fa' | 'success' */
     const [stage, setStage] = useState('boot')
@@ -233,10 +318,59 @@ export default function VoidLogin() {
     const [glitch, setGlitch] = useState(false)
     const [closing, setClosing] = useState(false)
     const [statusMsg, setStatusMsg] = useState('')
+    const [showLogs, setShowLogs] = useState(false)
+    const [logs, setLogs] = useState([])
+    const [copyLogsState, setCopyLogsState] = useState('idle')
+    const [appUser, setAppUser] = useState(null)
+    const [showAccountPanel, setShowAccountPanel] = useState(false)
+    const [isSigningOutApp, setIsSigningOutApp] = useState(false)
+
+    const logIdRef = useRef(0)
+    const copyStateTimerRef = useRef(0)
 
     const phoneRef = useRef(null)
     const codeRef = useRef(null)
     const twofaRef = useRef(null)
+    const accountPanelRef = useRef(null)
+
+    const appendLog = useCallback((level, message, meta = null) => {
+        const id = ++logIdRef.current
+        const entry = {
+            id,
+            timestamp: new Date().toISOString(),
+            level: String(level || 'INFO').toUpperCase(),
+            message: String(message || '').trim() || 'EVENT',
+            metaText: toLogMetaText(meta),
+        }
+        setLogs(prev => {
+            const next = [...prev, entry]
+            return next.length > 120 ? next.slice(next.length - 120) : next
+        })
+    }, [])
+
+    useEffect(() => {
+        return () => {
+            if (copyStateTimerRef.current) {
+                clearTimeout(copyStateTimerRef.current)
+            }
+        }
+    }, [])
+
+    useEffect(() => {
+        if (!showAccountPanel) return
+        const handlePointerDown = (event) => {
+            if (!accountPanelRef.current) return
+            if (!accountPanelRef.current.contains(event.target)) {
+                setShowAccountPanel(false)
+            }
+        }
+        window.addEventListener('mousedown', handlePointerDown)
+        window.addEventListener('touchstart', handlePointerDown)
+        return () => {
+            window.removeEventListener('mousedown', handlePointerDown)
+            window.removeEventListener('touchstart', handlePointerDown)
+        }
+    }, [showAccountPanel])
 
     /* Periodic glitch */
     useEffect(() => {
@@ -258,41 +392,91 @@ export default function VoidLogin() {
     /* Reset + check existing session on every open */
     useEffect(() => {
         if (!showVoidLogin) return
+        logIdRef.current = 0
+        setLogs([])
+        setShowLogs(false)
+        setCopyLogsState('idle')
+        setAppUser(null)
+        setShowAccountPanel(false)
+        setIsSigningOutApp(false)
         setPhone('')
         setCode('')
         setTwofa('')
         setError('')
         setClosing(false)
         setStage('check-auth')
-    }, [showVoidLogin])
+        appendLog('INFO', 'VOID LOGIN OPENED')
+    }, [showVoidLogin, appendLog])
+
+    useEffect(() => {
+        if (!showVoidLogin) return
+        appendLog('STATE', `STAGE -> ${String(stage || '').toUpperCase()}`)
+    }, [stage, showVoidLogin, appendLog])
 
     /* Check Google auth session first */
     useEffect(() => {
         if (stage !== 'check-auth') return
+        const startedAt = Date.now()
+        appendLog('NET', 'GET /api/auth/me START')
         getAuthMe()
             .then(payload => {
                 if (payload?.authenticated) {
+                    setAppUser(payload?.user || null)
+                    appendLog('OK', 'GET /api/auth/me OK', {
+                        durationMs: Date.now() - startedAt,
+                        authenticated: true,
+                    })
                     setStage('check')
                 } else {
+                    setAppUser(null)
+                    setShowAccountPanel(false)
+                    appendLog('WARN', 'GET /api/auth/me OK', {
+                        durationMs: Date.now() - startedAt,
+                        authenticated: false,
+                    })
                     setStage('appauth')
                 }
             })
-            .catch(() => setStage('appauth'))
-    }, [stage])
+            .catch(err => {
+                setAppUser(null)
+                setShowAccountPanel(false)
+                appendLog('ERROR', 'GET /api/auth/me FAILED', {
+                    durationMs: Date.now() - startedAt,
+                    ...toLogErrorMeta(err),
+                })
+                setStage('appauth')
+            })
+    }, [stage, appendLog])
 
     /* Check if already authorized */
     useEffect(() => {
         if (stage !== 'check') return
+        const startedAt = Date.now()
+        appendLog('NET', 'GET /api/tg/authorized START')
         isAuthorized()
             .then(ok => {
                 if (ok) {
+                    appendLog('OK', 'GET /api/tg/authorized OK', {
+                        durationMs: Date.now() - startedAt,
+                        authorized: true,
+                    })
                     setStage('success')
                 } else {
+                    appendLog('WARN', 'GET /api/tg/authorized OK', {
+                        durationMs: Date.now() - startedAt,
+                        authorized: false,
+                    })
                     setStage('boot')
                 }
             })
-            .catch(() => setStage('boot'))
-    }, [stage])
+            .catch(err => {
+                appendLog('ERROR', 'GET /api/tg/authorized FAILED', {
+                    durationMs: Date.now() - startedAt,
+                    ...toLogErrorMeta(err),
+                })
+                setStage('boot')
+            })
+    }, [stage, appendLog])
 
     /* Handle transition to chats upon success */
     useEffect(() => {
@@ -314,25 +498,77 @@ export default function VoidLogin() {
         }
     }, [stage, setShowVoidLogin])
 
+    const scheduleCopyStateReset = useCallback(() => {
+        if (copyStateTimerRef.current) clearTimeout(copyStateTimerRef.current)
+        copyStateTimerRef.current = setTimeout(() => {
+            setCopyLogsState('idle')
+        }, 1800)
+    }, [])
+
+    const handleCopyLogs = useCallback(async () => {
+        const text = buildLogsExportText(logs)
+
+        try {
+            if (navigator?.clipboard?.writeText) {
+                await navigator.clipboard.writeText(text)
+            } else {
+                const textArea = document.createElement('textarea')
+                textArea.value = text
+                textArea.setAttribute('readonly', '')
+                textArea.style.position = 'fixed'
+                textArea.style.opacity = '0'
+                textArea.style.pointerEvents = 'none'
+                document.body.appendChild(textArea)
+                textArea.select()
+                document.execCommand('copy')
+                document.body.removeChild(textArea)
+            }
+            setCopyLogsState('ok')
+        } catch {
+            setCopyLogsState('error')
+        } finally {
+            scheduleCopyStateReset()
+        }
+    }, [logs, scheduleCopyStateReset])
+
+    const handleAppSignOut = useCallback(async () => {
+        if (isSigningOutApp) return
+        const startedAt = Date.now()
+        setIsSigningOutApp(true)
+        appendLog('NET', 'POST /api/auth/logout START')
+
+        try {
+            await logoutAppSession()
+            appendLog('OK', 'POST /api/auth/logout OK', {
+                durationMs: Date.now() - startedAt,
+            })
+            setShowAccountPanel(false)
+            setAppUser(null)
+            setError('')
+            setStage('appauth')
+        } catch (err) {
+            appendLog('ERROR', 'POST /api/auth/logout FAILED', {
+                durationMs: Date.now() - startedAt,
+                ...toLogErrorMeta(err),
+            })
+        } finally {
+            setIsSigningOutApp(false)
+        }
+    }, [appendLog, isSigningOutApp])
+
     if (!showVoidLogin) return null
 
     /* ── Helpers ────────────────────────────────────────── */
 
-    const handleLogout = () => {
-        clearSession()
-        setPhone('')
-        setCode('')
-        setTwofa('')
-        setError('')
-        setStage('boot')
-    }
-
     const handleClose = () => {
+        setShowAccountPanel(false)
         setClosing(true)
         setTimeout(() => setShowVoidLogin(false), 600)
     }
 
     const handleGoogleLogin = () => {
+        setShowAccountPanel(false)
+        appendLog('INFO', 'REDIRECTING TO GOOGLE AUTH')
         const nextUrl = getGoogleLoginStartUrl()
         window.location.href = nextUrl
     }
@@ -349,18 +585,33 @@ export default function VoidLogin() {
 
         setStage('sending')
         setStatusMsg('TRANSMITTING SIGNAL TO TELEGRAM...')
+        const startedAt = Date.now()
+        appendLog('NET', 'POST /api/tg/send-code START', { phone: maskPhone(cleaned) })
 
         try {
             await sendCode(cleaned)
+            appendLog('OK', 'POST /api/tg/send-code OK', {
+                durationMs: Date.now() - startedAt,
+                phone: maskPhone(cleaned),
+            })
             setStage('code')
         } catch (err) {
             const code = extractAuthErrorCode(err)
             if (code === 'APP_AUTH_REQUIRED') {
+                appendLog('WARN', 'POST /api/tg/send-code REQUIRES APP AUTH', {
+                    durationMs: Date.now() - startedAt,
+                    ...toLogErrorMeta(err),
+                })
                 setError('')
                 setStage('appauth')
                 return
             }
             console.error('[VoidLogin] sendCode error:', err)
+            appendLog('ERROR', 'POST /api/tg/send-code FAILED', {
+                durationMs: Date.now() - startedAt,
+                phone: maskPhone(cleaned),
+                ...toLogErrorMeta(err),
+            })
             setError(resolveSendCodeError(err))
             setStage('phone')
         }
@@ -377,21 +628,40 @@ export default function VoidLogin() {
 
         setStage('verifying')
         setStatusMsg('VERIFYING QUANTUM KEY...')
+        const startedAt = Date.now()
+        appendLog('NET', 'POST /api/tg/sign-in START', {
+            phone: maskPhone(phone.trim()),
+            codeLength: code.trim().length,
+        })
 
         try {
             await signIn(phone.trim(), code.trim())
+            appendLog('OK', 'POST /api/tg/sign-in OK', {
+                durationMs: Date.now() - startedAt,
+                phone: maskPhone(phone.trim()),
+            })
             setStage('success')
         } catch (err) {
             const authCode = extractAuthErrorCode(err)
             if (authCode === 'APP_AUTH_REQUIRED') {
+                appendLog('WARN', 'POST /api/tg/sign-in REQUIRES APP AUTH', {
+                    durationMs: Date.now() - startedAt,
+                    ...toLogErrorMeta(err),
+                })
                 setError('')
                 setStage('appauth')
                 return
             }
             console.error('[VoidLogin] signIn error:', err)
+            appendLog('ERROR', 'POST /api/tg/sign-in FAILED', {
+                durationMs: Date.now() - startedAt,
+                phone: maskPhone(phone.trim()),
+                ...toLogErrorMeta(err),
+            })
             const resolved = resolveSignInError(err)
             if (resolved.nextStage === 'password') {
                 // 2FA is enabled — show cloud password input.
+                appendLog('INFO', '2FA REQUIRED')
                 setError('')
                 setStage('password')
                 return
@@ -411,17 +681,30 @@ export default function VoidLogin() {
         }
         setStage('verifying2fa')
         setStatusMsg('VERIFYING CLOUD PASSWORD...')
+        const startedAt = Date.now()
+        appendLog('NET', 'POST /api/tg/sign-in-2fa START', { passwordLength: twofa.trim().length })
         try {
             await signInWith2FA(twofa)
+            appendLog('OK', 'POST /api/tg/sign-in-2fa OK', {
+                durationMs: Date.now() - startedAt,
+            })
             setStage('success')
         } catch (err) {
             const authCode = extractAuthErrorCode(err)
             if (authCode === 'APP_AUTH_REQUIRED') {
+                appendLog('WARN', 'POST /api/tg/sign-in-2fa REQUIRES APP AUTH', {
+                    durationMs: Date.now() - startedAt,
+                    ...toLogErrorMeta(err),
+                })
                 setError('')
                 setStage('appauth')
                 return
             }
             console.error('[VoidLogin] 2FA error:', err)
+            appendLog('ERROR', 'POST /api/tg/sign-in-2fa FAILED', {
+                durationMs: Date.now() - startedAt,
+                ...toLogErrorMeta(err),
+            })
             const resolved = resolve2FAError(err)
             setError(resolved.text)
             setStage(resolved.nextStage || 'password')
@@ -532,6 +815,302 @@ export default function VoidLogin() {
                     padding: 8px 0; transition: color .3s; width: 100%;
                 }
                 .vl-link-btn:hover { color: rgba(139,92,246,.75); }
+
+                .vl-actions-dock {
+                    position: absolute;
+                    left: 24px;
+                    bottom: 24px;
+                    z-index: 12;
+                    display: flex;
+                    gap: 6px;
+                    flex-wrap: wrap;
+                }
+                .vl-void-cta {
+                    pointer-events: auto;
+                    position: relative;
+                    padding: 7px 20px;
+                    background: transparent;
+                    border: 1px solid rgba(255,255,255,.2);
+                    overflow: hidden;
+                    cursor: pointer;
+                    transition: border-color .5s;
+                    min-width: 188px;
+                }
+                .vl-void-cta-fill {
+                    position: absolute;
+                    inset: 0;
+                    background: rgba(255,255,255,1);
+                    transform: translateY(100%);
+                    transition: transform .5s cubic-bezier(0.87, 0, 0.13, 1);
+                }
+                .vl-void-cta:hover,
+                .vl-void-cta.active {
+                    border-color: rgba(255,255,255,.82);
+                }
+                .vl-void-cta:hover .vl-void-cta-fill {
+                    transform: translateY(0);
+                }
+                .vl-void-cta-label {
+                    position: relative;
+                    font-family: 'Courier New', monospace;
+                    font-size: 12px;
+                    font-weight: 400;
+                    letter-spacing: .18em;
+                    color: rgba(255,255,255,.86);
+                    line-height: 1.15;
+                    text-transform: uppercase;
+                    transition: color .5s;
+                    white-space: nowrap;
+                }
+                .vl-void-cta:hover .vl-void-cta-label {
+                    color: rgba(0,0,0,.95);
+                }
+                .vl-void-cta-corner-tr,
+                .vl-void-cta-corner-bl {
+                    position: absolute;
+                    width: 8px;
+                    height: 8px;
+                    transition: border-color .5s;
+                }
+                .vl-void-cta-corner-tr {
+                    top: 0;
+                    right: 0;
+                    border-top: 1px solid rgba(255,255,255,.5);
+                    border-right: 1px solid rgba(255,255,255,.5);
+                }
+                .vl-void-cta-corner-bl {
+                    bottom: 0;
+                    left: 0;
+                    border-bottom: 1px solid rgba(255,255,255,.5);
+                    border-left: 1px solid rgba(255,255,255,.5);
+                }
+                .vl-void-cta:hover .vl-void-cta-corner-tr,
+                .vl-void-cta:hover .vl-void-cta-corner-bl {
+                    border-color: rgba(0,0,0,.95);
+                }
+
+                .vl-logs-panel {
+                    position: absolute;
+                    left: 24px;
+                    bottom: 90px;
+                    width: min(680px, calc(100vw - 88px));
+                    max-height: min(58vh, 540px);
+                    border: 1px solid rgba(255,255,255,.24);
+                    background: linear-gradient(180deg, rgba(6,10,20,.96) 0%, rgba(3,5,12,.97) 100%);
+                    box-shadow: 0 24px 50px rgba(0,0,0,.5);
+                    backdrop-filter: blur(6px);
+                    z-index: 11;
+                    display: flex;
+                    flex-direction: column;
+                }
+                .vl-logs-head {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 11px 12px;
+                    border-bottom: 1px solid rgba(255,255,255,.15);
+                    font-family: 'Courier New', monospace;
+                    font-size: .68rem;
+                    letter-spacing: .14em;
+                    text-transform: uppercase;
+                    color: rgba(255,255,255,.9);
+                }
+                .vl-logs-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+                .vl-log-clear {
+                    background: transparent;
+                    border: 1px solid rgba(255,255,255,.25);
+                    color: rgba(255,255,255,.78);
+                    cursor: pointer;
+                    font-family: 'Courier New', monospace;
+                    font-size: .62rem;
+                    letter-spacing: .1em;
+                    text-transform: uppercase;
+                    padding: 5px 10px;
+                    transition: border-color .2s, color .2s, background .2s;
+                }
+                .vl-log-clear:hover {
+                    border-color: rgba(255,255,255,.62);
+                    color: #fff;
+                    background: rgba(255,255,255,.08);
+                }
+                .vl-logs-list {
+                    padding: 12px;
+                    overflow: auto;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 11px;
+                }
+                .vl-logs-item {
+                    border-left: 2px solid rgba(255,255,255,.25);
+                    padding-left: 10px;
+                }
+                .vl-logs-main {
+                    font-family: 'Courier New', monospace;
+                    font-size: .74rem;
+                    letter-spacing: .02em;
+                    color: rgba(255,255,255,.92);
+                    line-height: 1.6;
+                    white-space: pre-wrap;
+                }
+                .vl-logs-meta {
+                    margin-top: 5px;
+                    font-family: 'Courier New', monospace;
+                    font-size: .68rem;
+                    letter-spacing: .01em;
+                    color: rgba(189,225,255,.94);
+                    white-space: pre-wrap;
+                    word-break: break-word;
+                    line-height: 1.62;
+                }
+
+                .vl-account-anchor {
+                    position: absolute;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 14;
+                }
+                .vl-account-button {
+                    width: 42px;
+                    height: 42px;
+                    border-radius: 999px;
+                    border: 1px solid rgba(255,255,255,.34);
+                    background: rgba(15,20,35,.66);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    overflow: hidden;
+                    transition: border-color .2s, box-shadow .2s, transform .2s;
+                    box-shadow: 0 8px 20px rgba(0,0,0,.35);
+                }
+                .vl-account-button:hover {
+                    border-color: rgba(255,255,255,.68);
+                    box-shadow: 0 10px 24px rgba(0,0,0,.45);
+                    transform: translateY(-1px);
+                }
+                .vl-account-avatar {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+                .vl-account-fallback {
+                    font-family: 'Courier New', monospace;
+                    font-size: .92rem;
+                    color: rgba(255,255,255,.92);
+                    letter-spacing: .08em;
+                    text-transform: uppercase;
+                }
+                .vl-account-panel {
+                    position: absolute;
+                    top: calc(100% + 10px);
+                    right: 0;
+                    width: min(320px, calc(100vw - 34px));
+                    border: 1px solid rgba(255,255,255,.24);
+                    background: linear-gradient(180deg, rgba(8,14,30,.98) 0%, rgba(4,7,18,.98) 100%);
+                    box-shadow: 0 20px 42px rgba(0,0,0,.5);
+                    padding: 12px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                }
+                .vl-account-head {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+                .vl-account-head-avatar {
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 999px;
+                    overflow: hidden;
+                    border: 1px solid rgba(255,255,255,.3);
+                    flex-shrink: 0;
+                    background: rgba(255,255,255,.08);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .vl-account-name {
+                    font-family: 'Courier New', monospace;
+                    font-size: .72rem;
+                    color: rgba(255,255,255,.95);
+                    letter-spacing: .08em;
+                    line-height: 1.35;
+                    text-transform: uppercase;
+                }
+                .vl-account-mail {
+                    font-family: 'Courier New', monospace;
+                    font-size: .62rem;
+                    color: rgba(208,227,255,.92);
+                    letter-spacing: .02em;
+                    line-height: 1.3;
+                    word-break: break-word;
+                }
+                .vl-account-info {
+                    border-top: 1px solid rgba(255,255,255,.14);
+                    border-bottom: 1px solid rgba(255,255,255,.14);
+                    padding: 8px 0;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 5px;
+                }
+                .vl-account-row {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 12px;
+                    font-family: 'Courier New', monospace;
+                    font-size: .58rem;
+                    letter-spacing: .04em;
+                    line-height: 1.35;
+                }
+                .vl-account-key {
+                    color: rgba(182,202,245,.74);
+                    text-transform: uppercase;
+                }
+                .vl-account-value {
+                    color: rgba(255,255,255,.92);
+                    text-align: right;
+                    word-break: break-word;
+                }
+                .vl-account-signout {
+                    border: 1px solid rgba(255,255,255,.28);
+                    background: transparent;
+                    color: rgba(255,255,255,.9);
+                    font-family: 'Courier New', monospace;
+                    font-size: .62rem;
+                    letter-spacing: .12em;
+                    text-transform: uppercase;
+                    cursor: pointer;
+                    padding: 8px 10px;
+                    transition: border-color .2s, background .2s, color .2s;
+                }
+                .vl-account-signout:hover {
+                    border-color: rgba(248,113,113,.72);
+                    color: rgba(254,202,202,.95);
+                    background: rgba(248,113,113,.12);
+                }
+                .vl-account-signout:disabled {
+                    opacity: .55;
+                    cursor: not-allowed;
+                }
+                @media (min-width: 768px) {
+                    .vl-actions-dock {
+                        left: 32px;
+                        bottom: 32px;
+                    }
+                    .vl-logs-panel {
+                        left: 32px;
+                        bottom: 98px;
+                    }
+                    .vl-account-anchor {
+                        top: 24px;
+                        right: 24px;
+                    }
+                }
             `}</style>
 
             {/* ── Backdrop ──────────────────────────────────────── */}
@@ -570,22 +1149,148 @@ export default function VoidLogin() {
                     <div key={i} style={{ position: 'absolute', width: 40, height: 40, borderColor: 'rgba(139,92,246,.28)', ...s }} />
                 ))}
 
-                {/* ESC */}
-                <button
-                    onClick={handleClose}
-                    style={{
-                        position: 'absolute', top: 24, right: 24, zIndex: 10,
-                        background: 'transparent', border: 'none',
-                        color: 'rgba(139,92,246,.35)', cursor: 'pointer',
-                        fontFamily: 'Courier New, monospace', fontSize: '.62rem',
-                        letterSpacing: '.3em', textTransform: 'uppercase',
-                        padding: '4px 8px', transition: 'color .3s',
-                    }}
-                    onMouseEnter={e => e.target.style.color = 'rgba(167,139,250,.9)'}
-                    onMouseLeave={e => e.target.style.color = 'rgba(139,92,246,.35)'}
-                >
-                    [ ESC ]
-                </button>
+                {appUser && (
+                    <div className="vl-account-anchor" ref={accountPanelRef}>
+                        <button
+                            type="button"
+                            className="vl-account-button"
+                            id="void-google-account-toggle"
+                            onClick={() => setShowAccountPanel(prev => !prev)}
+                            title="Google account"
+                        >
+                            {appUser.picture ? (
+                                <img className="vl-account-avatar" src={appUser.picture} alt="Google account avatar" />
+                            ) : (
+                                <span className="vl-account-fallback">{accountInitial(appUser)}</span>
+                            )}
+                        </button>
+
+                        {showAccountPanel && (
+                            <div className="vl-account-panel" id="void-google-account-panel">
+                                <div className="vl-account-head">
+                                    <div className="vl-account-head-avatar">
+                                        {appUser.picture ? (
+                                            <img className="vl-account-avatar" src={appUser.picture} alt="Google account avatar" />
+                                        ) : (
+                                            <span className="vl-account-fallback">{accountInitial(appUser)}</span>
+                                        )}
+                                    </div>
+                                    <div style={{ minWidth: 0 }}>
+                                        <div className="vl-account-name">{safeShortText(appUser.name || 'Google User', 42)}</div>
+                                        <div className="vl-account-mail">{safeShortText(appUser.email, 64)}</div>
+                                    </div>
+                                </div>
+
+                                <div className="vl-account-info">
+                                    <div className="vl-account-row">
+                                        <span className="vl-account-key">User ID</span>
+                                        <span className="vl-account-value">{safeShortText(appUser.id, 18)}</span>
+                                    </div>
+                                    <div className="vl-account-row">
+                                        <span className="vl-account-key">Google Sub</span>
+                                        <span className="vl-account-value">{safeShortText(appUser.googleSub, 26)}</span>
+                                    </div>
+                                    <div className="vl-account-row">
+                                        <span className="vl-account-key">Status</span>
+                                        <span className="vl-account-value">AUTHORIZED</span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    className="vl-account-signout"
+                                    id="void-google-account-signout"
+                                    onClick={handleAppSignOut}
+                                    disabled={isSigningOutApp}
+                                >
+                                    {isSigningOutApp ? '[ SIGNING OUT... ]' : '[ SIGN OUT GOOGLE ]'}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                <div className="vl-actions-dock">
+                    <button
+                        type="button"
+                        className={`vl-void-cta ${showLogs ? 'active' : ''}`}
+                        id="void-logs-toggle"
+                        onClick={() => setShowLogs(prev => !prev)}
+                    >
+                        <div className="vl-void-cta-fill" />
+                        <span className="vl-void-cta-label">[{showLogs ? '  HIDE LOGS  ' : '  LOGS  '}]</span>
+                        <div className="vl-void-cta-corner-tr" />
+                        <div className="vl-void-cta-corner-bl" />
+                    </button>
+                    <button
+                        type="button"
+                        className="vl-void-cta"
+                        onClick={handleClose}
+                    >
+                        <div className="vl-void-cta-fill" />
+                        <span className="vl-void-cta-label">[  ESC  ]</span>
+                        <div className="vl-void-cta-corner-tr" />
+                        <div className="vl-void-cta-corner-bl" />
+                    </button>
+                </div>
+
+                {showLogs && (
+                    <div className="vl-logs-panel" id="void-logs-panel">
+                        <div className="vl-logs-head">
+                            <span>SESSION DIAGNOSTICS</span>
+                            <div className="vl-logs-actions">
+                                <button
+                                    type="button"
+                                    className="vl-log-clear"
+                                    id="void-logs-copy"
+                                    onClick={handleCopyLogs}
+                                >
+                                    {copyLogsState === 'ok'
+                                        ? '[ COPIED ]'
+                                        : copyLogsState === 'error'
+                                            ? '[ COPY FAILED ]'
+                                            : '[ COPY ALL ]'}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="vl-log-clear"
+                                    onClick={() => {
+                                        logIdRef.current = 0
+                                        setLogs([])
+                                        setCopyLogsState('idle')
+                                        appendLog('INFO', 'LOG BUFFER CLEARED')
+                                    }}
+                                >
+                                    [ CLEAR ]
+                                </button>
+                            </div>
+                        </div>
+                        <div className="vl-logs-list">
+                            {logs.length === 0 && (
+                                <div className="vl-logs-main" style={{ color: 'rgba(255,255,255,.6)' }}>
+                                    NO LOGS YET.
+                                </div>
+                            )}
+
+                            {logs.slice().reverse().map(entry => (
+                                <div key={entry.id} className="vl-logs-item">
+                                    <div className="vl-logs-main">
+                                        <span style={{ color: levelColor(entry.level), marginRight: 10 }}>
+                                            [{entry.level}]
+                                        </span>
+                                        <span style={{ color: 'rgba(255,255,255,.55)', marginRight: 10 }}>
+                                            {formatLogTime(entry.timestamp)}
+                                        </span>
+                                        <span>{entry.message}</span>
+                                    </div>
+                                    {entry.metaText && (
+                                        <div className="vl-logs-meta">{entry.metaText}</div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* ── Content ───────────────────────────────────── */}
                 <div style={{

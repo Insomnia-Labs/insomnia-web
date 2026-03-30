@@ -265,13 +265,13 @@ function toLogErrorMeta(err) {
 
 function levelColor(level) {
     const safe = String(level || '').toUpperCase()
-    if (safe === 'ERROR') return '#f87171'
-    if (safe === 'WARN') return '#fbbf24'
-    if (safe === 'OK') return '#34d399'
-    if (safe === 'NET') return '#7dd3fc'
-    if (safe === 'STATE') return '#c4b5fd'
-    if (safe === 'INFO') return '#e5e7eb'
-    return '#cbd5e1'
+    if (safe === 'ERROR') return '#a87979'
+    if (safe === 'WARN') return '#9b8d75'
+    if (safe === 'OK') return '#7e8d86'
+    if (safe === 'NET') return '#798697'
+    if (safe === 'STATE') return '#848097'
+    if (safe === 'INFO') return '#8b96a8'
+    return '#7d8798'
 }
 
 function buildLogsExportText(entries) {
@@ -746,11 +746,11 @@ export default function VoidLogin() {
                     --vl-card-soft: #0f1620;
                     --vl-border: rgba(129, 140, 158, 0.24);
                     --vl-border-strong: rgba(129, 140, 158, 0.34);
-                    --vl-text: #e8edf4;
-                    --vl-muted: #95a3b7;
-                    --vl-soft: #c1ccdb;
-                    --vl-accent: #5b82d6;
-                    --vl-accent-soft: rgba(91, 130, 214, 0.16);
+                    --vl-text: #d0d5de;
+                    --vl-muted: #9aa4b2;
+                    --vl-soft: #b1bac8;
+                    --vl-accent: #7a8291;
+                    --vl-accent-soft: rgba(122, 130, 145, 0.16);
                     --vl-danger: #ff7a7a;
                 }
 
@@ -786,8 +786,8 @@ export default function VoidLogin() {
                     100%{ clip-path: inset(58% 0 4% 0); transform: translateX(0); }
                 }
                 @keyframes vl-success-pulse {
-                    0%, 100% { box-shadow: 0 0 0 0 rgba(91, 130, 214, .28); }
-                    50% { box-shadow: 0 0 0 12px rgba(91, 130, 214, 0); }
+                    0%, 100% { box-shadow: 0 0 0 0 rgba(122, 130, 145, .28); }
+                    50% { box-shadow: 0 0 0 12px rgba(122, 130, 145, 0); }
                 }
 
                 .vl-root {
@@ -799,7 +799,7 @@ export default function VoidLogin() {
                     align-items: center;
                     justify-content: center;
                     background:
-                        radial-gradient(1200px 700px at 12% -10%, rgba(91, 130, 214, .1), transparent 62%),
+                        radial-gradient(1200px 700px at 12% -10%, rgba(122, 130, 145, .1), transparent 62%),
                         radial-gradient(900px 600px at 100% 0%, rgba(33, 52, 79, .2), transparent 68%),
                         linear-gradient(170deg, var(--vl-bg-b), var(--vl-bg-a) 68%);
                     animation: vl-fade-in .45s ease forwards;
@@ -831,7 +831,7 @@ export default function VoidLogin() {
                     height: 360px;
                     left: -100px;
                     top: -120px;
-                    background: rgba(91, 130, 214, .14);
+                    background: rgba(122, 130, 145, .14);
                 }
                 .vl-bg-orb-b {
                     width: 280px;
@@ -846,7 +846,7 @@ export default function VoidLogin() {
                     left: 0;
                     right: 0;
                     height: 2px;
-                    background: linear-gradient(to right, transparent, rgba(91, 130, 214, .24), transparent);
+                    background: linear-gradient(to right, transparent, rgba(122, 130, 145, .24), transparent);
                     pointer-events: none;
                     opacity: .34;
                     animation: vl-scanline 9s linear infinite;
@@ -891,13 +891,13 @@ export default function VoidLogin() {
                     position: absolute;
                     inset: 0;
                     background:
-                        radial-gradient(500px 360px at 20% 5%, rgba(91, 130, 214, .08), transparent 74%);
+                        radial-gradient(500px 360px at 20% 5%, rgba(122, 130, 145, .08), transparent 74%);
                     pointer-events: none;
                 }
                 .vl-kicker {
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
                     font-size: 0.74rem;
-                    color: rgba(180, 203, 224, .82);
+                    color: rgba(150, 160, 176, .86);
                     letter-spacing: .17em;
                     text-transform: uppercase;
                     position: relative;
@@ -909,12 +909,12 @@ export default function VoidLogin() {
                     line-height: .95;
                     letter-spacing: .04em;
                     font-weight: 700;
-                    color: #f8fbff;
+                    color: var(--vl-text);
                     text-shadow: 0 16px 48px rgba(0, 0, 0, .45);
                     user-select: none;
                 }
                 .vl-brand-title .accent {
-                    color: #8fb0ff;
+                    color: #9fa9ba;
                 }
                 .vl-brand-copy {
                     font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
@@ -936,11 +936,11 @@ export default function VoidLogin() {
                     background: linear-gradient(120deg, rgba(20, 28, 42, .72), rgba(20, 28, 42, .45));
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
                     font-size: 0.8rem;
-                    color: #dce8f7;
+                    color: #bcc4cf;
                     letter-spacing: .02em;
                 }
                 .vl-brand-point strong {
-                    color: #8fb0ff;
+                    color: #9fa9ba;
                     font-weight: 500;
                 }
 
@@ -977,12 +977,12 @@ export default function VoidLogin() {
                     align-items: center;
                     gap: 10px;
                     cursor: pointer;
-                    color: #f3f8ff;
+                    color: #c2c9d4;
                     transition: border-color .2s, transform .2s, box-shadow .2s;
                     box-shadow: 0 16px 34px rgba(0, 0, 0, .34);
                 }
                 .vl-account-button:hover {
-                    border-color: rgba(91, 130, 214, .58);
+                    border-color: rgba(122, 130, 145, .58);
                     transform: translateY(-1px);
                     box-shadow: 0 20px 40px rgba(0, 0, 0, .44);
                 }
@@ -996,7 +996,7 @@ export default function VoidLogin() {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    background: linear-gradient(130deg, rgba(91, 130, 214, .18), rgba(67, 117, 255, .16));
+                    background: linear-gradient(130deg, rgba(122, 130, 145, .18), rgba(122, 130, 145, .16));
                 }
                 .vl-account-avatar {
                     width: 100%;
@@ -1007,7 +1007,7 @@ export default function VoidLogin() {
                     font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
                     font-size: 0.9rem;
                     font-weight: 700;
-                    color: #f8fafc;
+                    color: #96a3b8;
                     text-transform: uppercase;
                 }
                 .vl-account-pill-copy {
@@ -1022,19 +1022,19 @@ export default function VoidLogin() {
                     font-size: 0.62rem;
                     text-transform: uppercase;
                     letter-spacing: .09em;
-                    color: #8fb0ff;
+                    color: #9fa9ba;
                 }
                 .vl-account-pill-mail {
                     font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
                     font-size: 0.77rem;
-                    color: #d9e5f7;
+                    color: #bac2cd;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
                 }
                 .vl-account-pill-arrow {
                     margin-left: auto;
-                    color: rgba(200, 216, 236, .86);
+                    color: rgba(136, 150, 172, .86);
                     font-size: 0.86rem;
                 }
                 .vl-account-panel {
@@ -1045,7 +1045,7 @@ export default function VoidLogin() {
                     border-radius: 18px;
                     border: 1px solid var(--vl-border-strong);
                     background:
-                        radial-gradient(400px 220px at 10% -10%, rgba(91, 130, 214, .09), transparent 76%),
+                        radial-gradient(400px 220px at 10% -10%, rgba(122, 130, 145, .09), transparent 76%),
                         linear-gradient(160deg, rgba(12, 18, 28, .99), rgba(8, 12, 19, .99));
                     box-shadow: 0 24px 50px rgba(0, 0, 0, .55);
                     padding: 14px;
@@ -1064,7 +1064,7 @@ export default function VoidLogin() {
                     font-size: 0.62rem;
                     letter-spacing: .12em;
                     text-transform: uppercase;
-                    color: #cad8ec;
+                    color: #bec6d1;
                 }
                 .vl-account-top-status {
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
@@ -1072,9 +1072,9 @@ export default function VoidLogin() {
                     letter-spacing: .08em;
                     text-transform: uppercase;
                     border-radius: 999px;
-                    border: 1px solid rgba(91, 130, 214, .45);
-                    background: rgba(91, 130, 214, .13);
-                    color: #b6c8ff;
+                    border: 1px solid rgba(122, 130, 145, .45);
+                    background: rgba(122, 130, 145, .13);
+                    color: #b8c0ce;
                     padding: 3px 8px;
                 }
                 .vl-account-body {
@@ -1107,14 +1107,14 @@ export default function VoidLogin() {
                     font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
                     font-size: 0.95rem;
                     font-weight: 600;
-                    color: #f7fbff;
+                    color: #d0d5de;
                     line-height: 1.2;
                 }
                 .vl-account-mail {
                     margin-top: 2px;
                     font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
                     font-size: 0.78rem;
-                    color: #c5d3e6;
+                    color: #afb8c6;
                     line-height: 1.2;
                     word-break: break-word;
                 }
@@ -1134,12 +1134,12 @@ export default function VoidLogin() {
                     line-height: 1.35;
                 }
                 .vl-account-key {
-                    color: #90a7c2;
+                    color: #aab4c3;
                     text-transform: uppercase;
                     letter-spacing: .03em;
                 }
                 .vl-account-value {
-                    color: #f3f8ff;
+                    color: #96a3b8;
                     text-align: right;
                     word-break: break-word;
                 }
@@ -1170,7 +1170,7 @@ export default function VoidLogin() {
                     border-radius: 22px;
                     border: 1px solid var(--vl-border);
                     background:
-                        radial-gradient(560px 240px at 20% -10%, rgba(91, 130, 214, .09), transparent 72%),
+                        radial-gradient(560px 240px at 20% -10%, rgba(122, 130, 145, .09), transparent 72%),
                         linear-gradient(150deg, rgba(14, 20, 30, .98), rgba(10, 15, 23, .98));
                     box-shadow:
                         0 20px 46px rgba(0, 0, 0, .42),
@@ -1187,9 +1187,9 @@ export default function VoidLogin() {
                 }
                 .vl-card-tag {
                     width: fit-content;
-                    border: 1px solid rgba(91, 130, 214, .45);
-                    background: rgba(91, 130, 214, .1);
-                    color: #b6c8ff;
+                    border: 1px solid rgba(122, 130, 145, .45);
+                    background: rgba(122, 130, 145, .1);
+                    color: #b8c1cf;
                     border-radius: 999px;
                     padding: 4px 9px;
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
@@ -1201,7 +1201,7 @@ export default function VoidLogin() {
                     font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
                     font-size: 1.6rem;
                     letter-spacing: .01em;
-                    color: #f8fbff;
+                    color: #d0d5de;
                     font-weight: 700;
                     line-height: 1.1;
                 }
@@ -1231,10 +1231,10 @@ export default function VoidLogin() {
                     font-size: 0.78rem;
                     line-height: 1.68;
                     letter-spacing: .02em;
-                    color: #d5e2f3;
+                    color: #bcc4cf;
                 }
                 .vl-panel-text-soft {
-                    color: #93a6c0;
+                    color: #a6afbe;
                     font-size: 0.72rem;
                 }
 
@@ -1248,29 +1248,29 @@ export default function VoidLogin() {
                     font-size: 0.64rem;
                     letter-spacing: .08em;
                     text-transform: uppercase;
-                    color: #9eb3ce;
+                    color: #aab3c2;
                 }
                 .vl-input {
                     width: 100%;
                     border: 1px solid rgba(148, 163, 184, .34);
                     border-radius: 12px;
                     background: rgba(5, 9, 15, .8);
-                    color: #f8fbff;
+                    color: #d0d5de;
                     font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
                     font-size: 1.02rem;
                     letter-spacing: .02em;
                     outline: none;
                     padding: 12px 14px;
                     transition: border-color .2s, box-shadow .2s, background .2s;
-                    caret-color: #8fb0ff;
+                    caret-color: #808b9c;
                 }
                 .vl-input:focus {
-                    border-color: rgba(91, 130, 214, .62);
-                    box-shadow: 0 0 0 3px rgba(91, 130, 214, .1);
+                    border-color: rgba(122, 130, 145, .62);
+                    box-shadow: 0 0 0 3px rgba(122, 130, 145, .1);
                     background: rgba(6, 11, 18, .88);
                 }
                 .vl-input::placeholder {
-                    color: rgba(170, 186, 209, .55);
+                    color: rgba(122, 136, 156, .55);
                 }
                 .vl-input-code {
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
@@ -1282,10 +1282,10 @@ export default function VoidLogin() {
 
                 .vl-btn {
                     width: 100%;
-                    border: 1px solid rgba(91, 130, 214, .5);
+                    border: 1px solid rgba(122, 130, 145, .5);
                     border-radius: 12px;
                     background: linear-gradient(145deg, rgba(14, 21, 30, .98), rgba(10, 15, 23, .98));
-                    color: #dbe5ff;
+                    color: #c2c9d4;
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
                     font-size: 0.73rem;
                     letter-spacing: .1em;
@@ -1297,7 +1297,7 @@ export default function VoidLogin() {
                 }
                 .vl-btn:hover {
                     background: linear-gradient(145deg, rgba(17, 27, 37, .99), rgba(13, 21, 31, .99));
-                    border-color: rgba(91, 130, 214, .74);
+                    border-color: rgba(122, 130, 145, .74);
                     filter: none;
                     transform: translateY(-1px);
                 }
@@ -1309,7 +1309,7 @@ export default function VoidLogin() {
                 .vl-link-btn {
                     background: transparent;
                     border: 0;
-                    color: #9eb4ce;
+                    color: #adb6c5;
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
                     font-size: 0.64rem;
                     letter-spacing: .05em;
@@ -1320,14 +1320,14 @@ export default function VoidLogin() {
                     width: fit-content;
                 }
                 .vl-link-btn:hover {
-                    color: #d4e4f8;
+                    color: #c0c8d3;
                 }
 
                 .vl-footer-note {
                     margin-top: 2px;
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
                     font-size: 0.6rem;
-                    color: rgba(157, 177, 201, .72);
+                    color: rgba(115, 128, 147, .72);
                     letter-spacing: .06em;
                     text-transform: uppercase;
                 }
@@ -1344,7 +1344,7 @@ export default function VoidLogin() {
                     border-radius: 12px;
                     height: 42px;
                     background: linear-gradient(130deg, rgba(22, 30, 44, .94), rgba(16, 23, 35, .94));
-                    color: #e4eefc;
+                    color: #c2cad5;
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
                     font-size: 0.69rem;
                     letter-spacing: .1em;
@@ -1357,11 +1357,11 @@ export default function VoidLogin() {
                 }
                 .vl-void-cta:hover {
                     transform: translateY(-1px);
-                    border-color: rgba(91, 130, 214, .56);
+                    border-color: rgba(122, 130, 145, .56);
                 }
                 .vl-void-cta.active {
-                    border-color: rgba(91, 130, 214, .62);
-                    background: linear-gradient(130deg, rgba(20, 38, 31, .9), rgba(13, 24, 20, .92));
+                    border-color: rgba(122, 130, 145, .62);
+                    background: linear-gradient(130deg, rgba(17, 24, 38, .94), rgba(11, 17, 27, .95));
                 }
                 .vl-void-cta-fill,
                 .vl-void-cta-corner-tr,
@@ -1381,7 +1381,7 @@ export default function VoidLogin() {
                     border-radius: 18px;
                     border: 1px solid var(--vl-border-strong);
                     background:
-                        radial-gradient(500px 220px at 10% -10%, rgba(91, 130, 214, .09), transparent 72%),
+                        radial-gradient(500px 220px at 10% -10%, rgba(122, 130, 145, .09), transparent 72%),
                         linear-gradient(160deg, rgba(10, 14, 22, .99), rgba(7, 11, 17, .99));
                     box-shadow: 0 24px 52px rgba(0, 0, 0, .6);
                     z-index: 14;
@@ -1403,7 +1403,7 @@ export default function VoidLogin() {
                     font-size: 0.67rem;
                     letter-spacing: .11em;
                     text-transform: uppercase;
-                    color: #d8e7f9;
+                    color: #bec6d1;
                 }
                 .vl-logs-actions {
                     display: flex;
@@ -1413,7 +1413,7 @@ export default function VoidLogin() {
                     border: 1px solid rgba(148, 163, 184, .45);
                     border-radius: 10px;
                     background: rgba(19, 28, 42, .72);
-                    color: #dfebfb;
+                    color: #c0c8d3;
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
                     font-size: 0.62rem;
                     letter-spacing: .08em;
@@ -1423,8 +1423,8 @@ export default function VoidLogin() {
                     transition: border-color .2s, background .2s;
                 }
                 .vl-log-clear:hover {
-                    border-color: rgba(91, 130, 214, .58);
-                    background: rgba(20, 34, 29, .62);
+                    border-color: rgba(122, 130, 145, .58);
+                    background: rgba(16, 24, 34, .7);
                 }
                 .vl-logs-list {
                     padding: 12px 14px;
@@ -1443,7 +1443,7 @@ export default function VoidLogin() {
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
                     font-size: 0.79rem;
                     line-height: 1.6;
-                    color: #e5effc;
+                    color: #96a3b8;
                     white-space: pre-wrap;
                     word-break: break-word;
                 }
@@ -1452,14 +1452,14 @@ export default function VoidLogin() {
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
                     font-size: 0.73rem;
                     line-height: 1.6;
-                    color: #b8cae0;
+                    color: #9aa3b1;
                     white-space: pre-wrap;
                     word-break: break-word;
                 }
                 .vl-logs-empty {
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
                     font-size: 0.76rem;
-                    color: #9bb0ca;
+                    color: #a6afbe;
                     padding: 18px 6px;
                 }
 
@@ -1477,14 +1477,14 @@ export default function VoidLogin() {
                     width: 34px;
                     height: 34px;
                     border: 2px solid rgba(148, 163, 184, .28);
-                    border-top-color: #8fb0ff;
+                    border-top-color: #808b9c;
                     border-radius: 50%;
                     animation: vl-spin .9s linear infinite;
                 }
                 .vl-loading-text {
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
                     font-size: 0.72rem;
-                    color: #d1e0f3;
+                    color: #aeb7c3;
                     letter-spacing: .06em;
                     text-transform: uppercase;
                     text-align: center;
@@ -1492,7 +1492,7 @@ export default function VoidLogin() {
                 }
                 .vl-cursor {
                     margin-left: 2px;
-                    color: #8fb0ff;
+                    color: #a2abb9;
                     animation: vl-blink 1s step-end infinite;
                 }
 
@@ -1512,9 +1512,9 @@ export default function VoidLogin() {
                     width: 62px;
                     height: 62px;
                     border-radius: 999px;
-                    border: 1px solid rgba(91, 130, 214, .55);
-                    background: radial-gradient(circle at 35% 25%, rgba(91, 130, 214, .24), rgba(7, 10, 18, .72));
-                    color: #c3d2ff;
+                    border: 1px solid rgba(122, 130, 145, .55);
+                    background: radial-gradient(circle at 35% 25%, rgba(122, 130, 145, .24), rgba(7, 10, 18, .72));
+                    color: #b9c2d0;
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
@@ -1529,13 +1529,13 @@ export default function VoidLogin() {
                     inset: 0;
                 }
                 .vl-glitch::before {
-                    color: rgba(120, 226, 255, .68);
-                    text-shadow: 2px 0 rgba(91, 130, 214, .25);
+                    color: rgba(126, 137, 156, .58);
+                    text-shadow: 2px 0 rgba(122, 130, 145, .25);
                     animation: vl-glitch-a .14s steps(2) forwards;
                 }
                 .vl-glitch::after {
-                    color: rgba(255, 255, 255, .65);
-                    text-shadow: -2px 0 rgba(91, 130, 214, .22);
+                    color: rgba(144, 157, 178, .58);
+                    text-shadow: -2px 0 rgba(122, 130, 145, .22);
                     animation: vl-glitch-b .14s steps(2) forwards;
                 }
 

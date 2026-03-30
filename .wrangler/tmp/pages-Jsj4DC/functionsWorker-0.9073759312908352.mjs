@@ -62,7 +62,7 @@ function notImplementedClass(name) {
 }
 var init_utils = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/_internal/utils.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -77,7 +77,7 @@ var init_utils = __esm({
 var _timeOrigin, _performanceNow, nodeTiming, PerformanceEntry, PerformanceMark, PerformanceMeasure, PerformanceResourceTiming, PerformanceObserverEntryList, Performance, PerformanceObserver, performance;
 var init_performance = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/perf_hooks/performance.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -324,7 +324,7 @@ var init_performance = __esm({
 // ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/perf_hooks.mjs
 var init_perf_hooks = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/perf_hooks.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -351,7 +351,7 @@ var init_performance2 = __esm({
 var noop_default;
 var init_noop = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/mock/noop.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -365,7 +365,7 @@ import { Writable } from "node:stream";
 var _console, _ignoreErrors, _stderr, _stdout, log, info, trace, debug, table, error, warn, createTask, clear, count, countReset, dir, dirxml, group, groupEnd, groupCollapsed, profile, profileEnd, time, timeEnd, timeLog, timeStamp, Console, _times, _stdoutErrorHandler, _stderrErrorHandler;
 var init_console = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/console.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -408,7 +408,7 @@ var init_console = __esm({
 var workerdConsole, assert, clear2, context, count2, countReset2, createTask2, debug2, dir2, dirxml2, error2, group2, groupCollapsed2, groupEnd2, info2, log2, profile2, profileEnd2, table2, time2, timeEnd2, timeLog2, timeStamp2, trace2, warn2, console_default;
 var init_console2 = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/@cloudflare/unenv-preset/dist/runtime/node/console.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -471,7 +471,7 @@ var init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console = __
 var hrtime;
 var init_hrtime = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/process/hrtime.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -499,7 +499,7 @@ var init_hrtime = __esm({
 var ReadStream;
 var init_read_stream = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/tty/read-stream.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -525,7 +525,7 @@ var init_read_stream = __esm({
 var WriteStream;
 var init_write_stream = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/tty/write-stream.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -583,7 +583,7 @@ var init_write_stream = __esm({
 // ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/tty.mjs
 var init_tty = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/tty.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -596,7 +596,7 @@ var init_tty = __esm({
 var NODE_VERSION;
 var init_node_version = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/process/node-version.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -609,7 +609,7 @@ import { EventEmitter } from "node:events";
 var Process;
 var init_process = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/process/process.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -856,7 +856,7 @@ var init_process = __esm({
 var globalProcess, getBuiltinModule, workerdProcess, isWorkerdProcessV2, unenvProcess, exit, features, platform, env, hrtime3, nextTick, _channel, _disconnect, _events, _eventsCount, _handleQueue, _maxListeners, _pendingMessage, _send, assert2, disconnect, mainModule, _debugEnd, _debugProcess, _exiting, _fatalException, _getActiveHandles, _getActiveRequests, _kill, _linkedBinding, _preload_modules, _rawDebug, _startProfilerIdleNotifier, _stopProfilerIdleNotifier, _tickCallback, abort, addListener, allowedNodeEnvironmentFlags, arch, argv, argv0, availableMemory, binding, channel, chdir, config, connected, constrainedMemory, cpuUsage, cwd, debugPort, dlopen, domain, emit, emitWarning, eventNames, execArgv, execPath, exitCode, finalization, getActiveResourcesInfo, getegid, geteuid, getgid, getgroups, getMaxListeners, getuid, hasUncaughtExceptionCaptureCallback, initgroups, kill, listenerCount, listeners, loadEnvFile, memoryUsage, moduleLoadList, off, on, once, openStdin, permission, pid, ppid, prependListener, prependOnceListener, rawListeners, reallyExit, ref, release, removeAllListeners, removeListener, report, resourceUsage, send, setegid, seteuid, setgid, setgroups, setMaxListeners, setSourceMapsEnabled, setuid, setUncaughtExceptionCaptureCallback, sourceMapsEnabled, stderr, stdin, stdout, throwDeprecation, title, traceDeprecation, umask, unref, uptime, version, versions, _process, process_default;
 var init_process2 = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/@cloudflare/unenv-preset/dist/runtime/node/process.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -1251,7 +1251,7 @@ async function supabaseRequest(env2, table3, options = {}) {
 }
 var init_supabase = __esm({
   "api/_lib/supabase.js"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -1559,7 +1559,7 @@ function toSafeReturnTo(input, fallback = "/") {
 var APP_SESSION_COOKIE_NAME, APP_SESSION_MAX_AGE_SECONDS, GOOGLE_OAUTH_STATE_COOKIE_NAME, GOOGLE_OAUTH_RETURN_TO_COOKIE_NAME, GOOGLE_OAUTH_COOKIE_MAX_AGE_SECONDS;
 var init_auth = __esm({
   "api/_lib/auth.js"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -1828,7 +1828,7 @@ async function onRequest(context2) {
 }
 var init_action = __esm({
   "api/auth/[action].js"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -1853,7 +1853,7 @@ var init_action = __esm({
 import libDefault from "util";
 var require_util = __commonJS({
   "node-built-in-modules:util"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -1865,7 +1865,7 @@ var require_util = __commonJS({
 var require_inspect = __commonJS({
   "../node_modules/telegram/inspect.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -1881,7 +1881,7 @@ var require_inspect = __commonJS({
 // ../node_modules/big-integer/BigInteger.js
 var require_BigInteger = __commonJS({
   "../node_modules/big-integer/BigInteger.js"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -3188,7 +3188,7 @@ var require_BigInteger = __commonJS({
 import libDefault2 from "crypto";
 var require_crypto = __commonJS({
   "node-built-in-modules:crypto"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -3200,7 +3200,7 @@ var require_crypto = __commonJS({
 var require_CryptoFile = __commonJS({
   "../node_modules/telegram/CryptoFile.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -3241,7 +3241,7 @@ var require_CryptoFile = __commonJS({
 var require_platform = __commonJS({
   "../node_modules/telegram/platform.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -3257,7 +3257,7 @@ var require_platform = __commonJS({
 var require_Helpers = __commonJS({
   "../node_modules/telegram/Helpers.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -3624,7 +3624,7 @@ var require_Helpers = __commonJS({
 var require_apiTl = __commonJS({
   "../node_modules/telegram/tl/apiTl.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -5728,7 +5728,7 @@ fragment.getCollectibleInfo#be1e85ba collectible:InputCollectible = fragment.Col
 var require_schemaTl = __commonJS({
   "../node_modules/telegram/tl/schemaTl.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -5803,7 +5803,7 @@ destroy_session#e7512126 session_id:long = DestroySessionRes;
 var require_generationHelpers = __commonJS({
   "../node_modules/telegram/tl/generationHelpers.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -6066,7 +6066,7 @@ var require_generationHelpers = __commonJS({
 var require_api = __commonJS({
   "../node_modules/telegram/tl/api.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -6544,7 +6544,7 @@ var require_api = __commonJS({
 var require_chatGetter = __commonJS({
   "../node_modules/telegram/tl/custom/chatGetter.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -6680,7 +6680,7 @@ var require_chatGetter = __commonJS({
 var require_senderGetter = __commonJS({
   "../node_modules/telegram/tl/custom/senderGetter.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -6745,7 +6745,7 @@ var require_senderGetter = __commonJS({
 var require_Mime = __commonJS({
   "../node_modules/mime/Mime.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -6803,7 +6803,7 @@ var require_Mime = __commonJS({
 // ../node_modules/mime/types/standard.js
 var require_standard = __commonJS({
   "../node_modules/mime/types/standard.js"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -6814,7 +6814,7 @@ var require_standard = __commonJS({
 // ../node_modules/mime/types/other.js
 var require_other = __commonJS({
   "../node_modules/mime/types/other.js"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -6826,7 +6826,7 @@ var require_other = __commonJS({
 var require_mime = __commonJS({
   "../node_modules/mime/index.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -6846,7 +6846,7 @@ var require_decode = __commonJS({
 var require_decode_codepoint = __commonJS({
   "../node_modules/entities/lib/decode_codepoint.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -6907,7 +6907,7 @@ var require_xml = __commonJS({
 var require_Tokenizer = __commonJS({
   "../node_modules/htmlparser2/lib/Tokenizer.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -7784,7 +7784,7 @@ var require_Tokenizer = __commonJS({
 var require_Parser = __commonJS({
   "../node_modules/htmlparser2/lib/Parser.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -8118,7 +8118,7 @@ var require_Parser = __commonJS({
 var require_lib = __commonJS({
   "../node_modules/domelementtype/lib/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -8157,7 +8157,7 @@ var require_lib = __commonJS({
 var require_node = __commonJS({
   "../node_modules/domhandler/lib/node.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -8574,7 +8574,7 @@ var require_node = __commonJS({
 var require_lib2 = __commonJS({
   "../node_modules/domhandler/lib/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -8748,7 +8748,7 @@ var require_lib2 = __commonJS({
 var require_decode2 = __commonJS({
   "../node_modules/entities/lib/decode.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -8817,7 +8817,7 @@ var require_decode2 = __commonJS({
 var require_encode = __commonJS({
   "../node_modules/entities/lib/encode.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -8921,7 +8921,7 @@ var require_encode = __commonJS({
 var require_lib3 = __commonJS({
   "../node_modules/entities/lib/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -8998,7 +8998,7 @@ var require_lib3 = __commonJS({
 var require_foreignNames = __commonJS({
   "../node_modules/dom-serializer/lib/foreignNames.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -9111,7 +9111,7 @@ var require_foreignNames = __commonJS({
 var require_lib4 = __commonJS({
   "../node_modules/dom-serializer/lib/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -9310,7 +9310,7 @@ var require_lib4 = __commonJS({
 var require_stringify = __commonJS({
   "../node_modules/domutils/lib/stringify.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -9378,7 +9378,7 @@ var require_stringify = __commonJS({
 var require_traversal = __commonJS({
   "../node_modules/domutils/lib/traversal.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -9457,7 +9457,7 @@ var require_traversal = __commonJS({
 var require_manipulation = __commonJS({
   "../node_modules/domutils/lib/manipulation.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -9564,7 +9564,7 @@ var require_manipulation = __commonJS({
 var require_querying = __commonJS({
   "../node_modules/domutils/lib/querying.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -9660,7 +9660,7 @@ var require_querying = __commonJS({
 var require_legacy2 = __commonJS({
   "../node_modules/domutils/lib/legacy.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -9781,7 +9781,7 @@ var require_legacy2 = __commonJS({
 var require_helpers = __commonJS({
   "../node_modules/domutils/lib/helpers.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -9872,7 +9872,7 @@ var require_helpers = __commonJS({
 var require_feeds = __commonJS({
   "../node_modules/domutils/lib/feeds.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -10025,7 +10025,7 @@ var require_feeds = __commonJS({
 var require_lib5 = __commonJS({
   "../node_modules/domutils/lib/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -10076,7 +10076,7 @@ var require_lib5 = __commonJS({
 var require_FeedHandler = __commonJS({
   "../node_modules/htmlparser2/lib/FeedHandler.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -10334,7 +10334,7 @@ var require_FeedHandler = __commonJS({
 var require_lib6 = __commonJS({
   "../node_modules/htmlparser2/lib/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -10417,7 +10417,7 @@ var require_lib6 = __commonJS({
 var require_html = __commonJS({
   "../node_modules/telegram/extensions/html.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -10623,7 +10623,7 @@ var require_html = __commonJS({
 var require_messageParse = __commonJS({
   "../node_modules/telegram/client/messageParse.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -10803,7 +10803,7 @@ var require_messageParse = __commonJS({
 var require_markdown = __commonJS({
   "../node_modules/telegram/extensions/markdown.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -10890,7 +10890,7 @@ var require_markdown = __commonJS({
 var require_markdownv2 = __commonJS({
   "../node_modules/telegram/extensions/markdownv2.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -10935,7 +10935,7 @@ var require_markdownv2 = __commonJS({
 var require_Utils = __commonJS({
   "../node_modules/telegram/Utils.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -11829,7 +11829,7 @@ var require_Utils = __commonJS({
 var require_forward = __commonJS({
   "../node_modules/telegram/tl/custom/forward.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -11887,7 +11887,7 @@ var require_forward = __commonJS({
 var require_file = __commonJS({
   "../node_modules/telegram/tl/custom/file.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -11966,7 +11966,7 @@ var require_file = __commonJS({
 var require_Logger = __commonJS({
   "../node_modules/telegram/extensions/Logger.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -12094,7 +12094,7 @@ var require_Logger = __commonJS({
 var require_Deferred = __commonJS({
   "../node_modules/telegram/extensions/Deferred.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -12123,7 +12123,7 @@ var require_Deferred = __commonJS({
 var require_RequestState = __commonJS({
   "../node_modules/telegram/network/RequestState.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -12170,7 +12170,7 @@ var require_RequestState = __commonJS({
 var require_users = __commonJS({
   "../node_modules/telegram/client/users.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -12599,7 +12599,7 @@ var require_users = __commonJS({
 var require_button = __commonJS({
   "../node_modules/telegram/tl/custom/button.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -12686,7 +12686,7 @@ var require_button = __commonJS({
 var require_Password = __commonJS({
   "../node_modules/telegram/Password.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -13101,7 +13101,7 @@ var require_Password = __commonJS({
 var require_messageButton = __commonJS({
   "../node_modules/telegram/tl/custom/messageButton.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -13254,7 +13254,7 @@ var require_messageButton = __commonJS({
 var require_message = __commonJS({
   "../node_modules/telegram/tl/custom/message.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -13931,7 +13931,7 @@ var require_message = __commonJS({
 var require_patched = __commonJS({
   "../node_modules/telegram/tl/patched/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14018,7 +14018,7 @@ var require_patched = __commonJS({
 var require_tl = __commonJS({
   "../node_modules/telegram/tl/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14044,7 +14044,7 @@ var require_tl = __commonJS({
 var require_BinaryWriter = __commonJS({
   "../node_modules/telegram/extensions/BinaryWriter.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14071,7 +14071,7 @@ var require_BinaryWriter = __commonJS({
 // ../node_modules/ts-custom-error/dist/custom-error.js
 var require_custom_error = __commonJS({
   "../node_modules/ts-custom-error/dist/custom-error.js"(exports) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14179,7 +14179,7 @@ var require_custom_error = __commonJS({
 var require_RPCBaseErrors = __commonJS({
   "../node_modules/telegram/errors/RPCBaseErrors.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14310,7 +14310,7 @@ var require_RPCBaseErrors = __commonJS({
 var require_RPCErrorList = __commonJS({
   "../node_modules/telegram/errors/RPCErrorList.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14442,7 +14442,7 @@ var require_RPCErrorList = __commonJS({
 var require_Common = __commonJS({
   "../node_modules/telegram/errors/Common.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14555,7 +14555,7 @@ var require_Common = __commonJS({
 var require_errors = __commonJS({
   "../node_modules/telegram/errors/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14600,7 +14600,7 @@ var require_errors = __commonJS({
 var require_TLMessage = __commonJS({
   "../node_modules/telegram/tl/core/TLMessage.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14627,7 +14627,7 @@ var require_TLMessage = __commonJS({
 var require_RPCResult = __commonJS({
   "../node_modules/telegram/tl/core/RPCResult.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14669,7 +14669,7 @@ var require_RPCResult = __commonJS({
 var require_MessageContainer = __commonJS({
   "../node_modules/telegram/tl/core/MessageContainer.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -14713,7 +14713,7 @@ var require_MessageContainer = __commonJS({
 var require_trees = __commonJS({
   "../node_modules/pako/lib/zlib/trees.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -15358,7 +15358,7 @@ var require_trees = __commonJS({
 var require_adler32 = __commonJS({
   "../node_modules/pako/lib/zlib/adler32.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -15384,7 +15384,7 @@ var require_adler32 = __commonJS({
 var require_crc32 = __commonJS({
   "../node_modules/pako/lib/zlib/crc32.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -15417,7 +15417,7 @@ var require_crc32 = __commonJS({
 var require_messages = __commonJS({
   "../node_modules/pako/lib/zlib/messages.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -15448,7 +15448,7 @@ var require_messages = __commonJS({
 var require_constants = __commonJS({
   "../node_modules/pako/lib/zlib/constants.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -15499,7 +15499,7 @@ var require_constants = __commonJS({
 var require_deflate = __commonJS({
   "../node_modules/pako/lib/zlib/deflate.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -16645,7 +16645,7 @@ var require_deflate = __commonJS({
 var require_common = __commonJS({
   "../node_modules/pako/lib/utils/common.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -16690,7 +16690,7 @@ var require_common = __commonJS({
 var require_strings = __commonJS({
   "../node_modules/pako/lib/utils/strings.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -16823,7 +16823,7 @@ var require_strings = __commonJS({
 var require_zstream = __commonJS({
   "../node_modules/pako/lib/zlib/zstream.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -16850,7 +16850,7 @@ var require_zstream = __commonJS({
 var require_deflate2 = __commonJS({
   "../node_modules/pako/lib/deflate.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -17019,7 +17019,7 @@ var require_deflate2 = __commonJS({
 var require_inffast = __commonJS({
   "../node_modules/pako/lib/zlib/inffast.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -17251,7 +17251,7 @@ var require_inffast = __commonJS({
 var require_inftrees = __commonJS({
   "../node_modules/pako/lib/zlib/inftrees.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -17567,7 +17567,7 @@ var require_inftrees = __commonJS({
 var require_inflate = __commonJS({
   "../node_modules/pako/lib/zlib/inflate.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -18823,7 +18823,7 @@ var require_inflate = __commonJS({
 var require_gzheader = __commonJS({
   "../node_modules/pako/lib/zlib/gzheader.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -18848,7 +18848,7 @@ var require_gzheader = __commonJS({
 var require_inflate2 = __commonJS({
   "../node_modules/pako/lib/inflate.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -19030,7 +19030,7 @@ var require_inflate2 = __commonJS({
 var require_pako = __commonJS({
   "../node_modules/pako/index.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -19053,7 +19053,7 @@ var require_pako = __commonJS({
 var require_GZIPPacked = __commonJS({
   "../node_modules/telegram/tl/core/GZIPPacked.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -19115,7 +19115,7 @@ var require_GZIPPacked = __commonJS({
 var require_core = __commonJS({
   "../node_modules/telegram/tl/core/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -19149,7 +19149,7 @@ var require_core = __commonJS({
 var require_AllTLObjects = __commonJS({
   "../node_modules/telegram/tl/AllTLObjects.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -19175,7 +19175,7 @@ var require_AllTLObjects = __commonJS({
 var require_BinaryReader = __commonJS({
   "../node_modules/telegram/extensions/BinaryReader.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -19409,7 +19409,7 @@ var require_BinaryReader = __commonJS({
 // ../node_modules/es5-ext/global.js
 var require_global = __commonJS({
   "../node_modules/es5-ext/global.js"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -19508,7 +19508,7 @@ var require_package = __commonJS({
 // ../node_modules/websocket/lib/version.js
 var require_version = __commonJS({
   "../node_modules/websocket/lib/version.js"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -19519,7 +19519,7 @@ var require_version = __commonJS({
 // ../node_modules/websocket/lib/browser.js
 var require_browser = __commonJS({
   "../node_modules/websocket/lib/browser.js"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -19570,7 +19570,7 @@ var require_browser = __commonJS({
 // ../node_modules/tslib/tslib.js
 var require_tslib = __commonJS({
   "../node_modules/tslib/tslib.js"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20133,7 +20133,7 @@ var require_tslib = __commonJS({
 var require_errors2 = __commonJS({
   "../node_modules/async-mutex/lib/errors.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20149,7 +20149,7 @@ var require_errors2 = __commonJS({
 var require_Semaphore = __commonJS({
   "../node_modules/async-mutex/lib/Semaphore.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20281,7 +20281,7 @@ var require_Semaphore = __commonJS({
 var require_Mutex = __commonJS({
   "../node_modules/async-mutex/lib/Mutex.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20337,7 +20337,7 @@ var require_Mutex = __commonJS({
 var require_withTimeout = __commonJS({
   "../node_modules/async-mutex/lib/withTimeout.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20460,7 +20460,7 @@ var require_withTimeout = __commonJS({
 var require_tryAcquire = __commonJS({
   "../node_modules/async-mutex/lib/tryAcquire.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20483,7 +20483,7 @@ var require_tryAcquire = __commonJS({
 var require_lib7 = __commonJS({
   "../node_modules/async-mutex/lib/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20514,7 +20514,7 @@ var require_lib7 = __commonJS({
 var require_PromisedWebSockets = __commonJS({
   "../node_modules/telegram/extensions/PromisedWebSockets.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20657,7 +20657,7 @@ var require_PromisedWebSockets = __commonJS({
 import libDefault3 from "net";
 var require_net = __commonJS({
   "node-built-in-modules:net"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20669,7 +20669,7 @@ var require_net = __commonJS({
 var require_net2 = __commonJS({
   "../node_modules/telegram/extensions/net.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20698,7 +20698,7 @@ var require_net2 = __commonJS({
 import libDefault4 from "events";
 var require_events = __commonJS({
   "node-built-in-modules:events"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20710,7 +20710,7 @@ var require_events = __commonJS({
 import libDefault5 from "buffer";
 var require_buffer = __commonJS({
   "node-built-in-modules:buffer"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20722,7 +20722,7 @@ var require_buffer = __commonJS({
 var require_utils = __commonJS({
   "../node_modules/smart-buffer/build/utils.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -20803,7 +20803,7 @@ var require_utils = __commonJS({
 var require_smartbuffer = __commonJS({
   "../node_modules/smart-buffer/build/smartbuffer.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -21968,7 +21968,7 @@ var require_smartbuffer = __commonJS({
 var require_constants2 = __commonJS({
   "../node_modules/socks/build/common/constants.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22089,7 +22089,7 @@ var require_constants2 = __commonJS({
 var require_util2 = __commonJS({
   "../node_modules/socks/build/common/util.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22120,7 +22120,7 @@ var require_util2 = __commonJS({
 import libDefault6 from "stream";
 var require_stream = __commonJS({
   "node-built-in-modules:stream"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22132,7 +22132,7 @@ var require_stream = __commonJS({
 var require_common2 = __commonJS({
   "../node_modules/ip-address/dist/common.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22188,7 +22188,7 @@ var require_common2 = __commonJS({
 var require_constants3 = __commonJS({
   "../node_modules/ip-address/dist/v4/constants.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22205,7 +22205,7 @@ var require_constants3 = __commonJS({
 var require_address_error = __commonJS({
   "../node_modules/ip-address/dist/address-error.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22229,7 +22229,7 @@ var require_address_error = __commonJS({
 var require_ipv4 = __commonJS({
   "../node_modules/ip-address/dist/ipv4.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22579,7 +22579,7 @@ var require_ipv4 = __commonJS({
 var require_constants4 = __commonJS({
   "../node_modules/ip-address/dist/v6/constants.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22634,7 +22634,7 @@ var require_constants4 = __commonJS({
 var require_helpers2 = __commonJS({
   "../node_modules/ip-address/dist/v6/helpers.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22678,7 +22678,7 @@ var require_helpers2 = __commonJS({
 var require_regular_expressions = __commonJS({
   "../node_modules/ip-address/dist/v6/regular-expressions.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -22778,7 +22778,7 @@ var require_regular_expressions = __commonJS({
 var require_ipv6 = __commonJS({
   "../node_modules/ip-address/dist/ipv6.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -23705,7 +23705,7 @@ var require_ipv6 = __commonJS({
 var require_ip_address = __commonJS({
   "../node_modules/ip-address/dist/ip-address.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -23759,7 +23759,7 @@ var require_ip_address = __commonJS({
 var require_helpers3 = __commonJS({
   "../node_modules/socks/build/common/helpers.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -23879,7 +23879,7 @@ var require_helpers3 = __commonJS({
 var require_receivebuffer = __commonJS({
   "../node_modules/socks/build/common/receivebuffer.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -23934,7 +23934,7 @@ var require_receivebuffer = __commonJS({
 var require_socksclient = __commonJS({
   "../node_modules/socks/build/client/socksclient.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -24624,7 +24624,7 @@ var require_socksclient = __commonJS({
 var require_build = __commonJS({
   "../node_modules/socks/build/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -24653,7 +24653,7 @@ var require_build = __commonJS({
 var require_socks = __commonJS({
   "../node_modules/telegram/extensions/socks.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -24682,7 +24682,7 @@ var require_socks = __commonJS({
 var require_PromisedNetSockets = __commonJS({
   "../node_modules/telegram/extensions/PromisedNetSockets.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -24876,7 +24876,7 @@ var require_PromisedNetSockets = __commonJS({
 var require_MessagePacker = __commonJS({
   "../node_modules/telegram/extensions/MessagePacker.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25033,7 +25033,7 @@ var require_MessagePacker = __commonJS({
 var require_AsyncQueue = __commonJS({
   "../node_modules/telegram/extensions/AsyncQueue.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25080,7 +25080,7 @@ var require_AsyncQueue = __commonJS({
 var require_extensions = __commonJS({
   "../node_modules/telegram/extensions/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25121,7 +25121,7 @@ var require_extensions = __commonJS({
 var require_Connection = __commonJS({
   "../node_modules/telegram/network/connection/Connection.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25279,7 +25279,7 @@ var require_Connection = __commonJS({
 var require_TCPFull = __commonJS({
   "../node_modules/telegram/network/connection/TCPFull.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25350,7 +25350,7 @@ var require_TCPFull = __commonJS({
 var require_TCPAbridged = __commonJS({
   "../node_modules/telegram/network/connection/TCPAbridged.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25418,7 +25418,7 @@ var require_TCPAbridged = __commonJS({
 var require_aes_min = __commonJS({
   "../node_modules/@cryptography/aes/dist/cjs/aes.min.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25527,7 +25527,7 @@ var require_aes_min = __commonJS({
 var require_converters = __commonJS({
   "../node_modules/telegram/crypto/converters.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25577,7 +25577,7 @@ var require_converters = __commonJS({
 var require_words = __commonJS({
   "../node_modules/telegram/crypto/words.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25624,7 +25624,7 @@ var require_words = __commonJS({
 var require_crypto2 = __commonJS({
   "../node_modules/telegram/crypto/crypto.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25757,7 +25757,7 @@ var require_crypto2 = __commonJS({
 var require_CTR = __commonJS({
   "../node_modules/telegram/crypto/CTR.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25813,7 +25813,7 @@ var require_CTR = __commonJS({
 var require_TCPObfuscated = __commonJS({
   "../node_modules/telegram/network/connection/TCPObfuscated.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25903,7 +25903,7 @@ var require_TCPObfuscated = __commonJS({
 var require_connection = __commonJS({
   "../node_modules/telegram/network/connection/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25932,7 +25932,7 @@ var require_connection = __commonJS({
 var require_Abstract = __commonJS({
   "../node_modules/telegram/sessions/Abstract.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -25951,7 +25951,7 @@ var require_Abstract = __commonJS({
 var require_Memory = __commonJS({
   "../node_modules/telegram/sessions/Memory.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -26207,7 +26207,7 @@ var require_Memory = __commonJS({
 var require_AuthKey = __commonJS({
   "../node_modules/telegram/crypto/AuthKey.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -26292,7 +26292,7 @@ var require_AuthKey = __commonJS({
 var require_StringSession = __commonJS({
   "../node_modules/telegram/sessions/StringSession.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -26397,7 +26397,7 @@ var require_StringSession = __commonJS({
 // ../node_modules/store2/dist/store2.js
 var require_store2 = __commonJS({
   "../node_modules/store2/dist/store2.js"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -26741,7 +26741,7 @@ var require_store2 = __commonJS({
 import libDefault7 from "path";
 var require_path = __commonJS({
   "node-built-in-modules:path"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -26753,7 +26753,7 @@ var require_path = __commonJS({
 var access, copyFile, cp, open, opendir, rename, truncate, rm, rmdir, mkdir, readdir, readlink, symlink, lstat, stat, link, unlink, chmod, lchmod, lchown, chown, utimes, lutimes, realpath, mkdtemp, writeFile, appendFile, readFile, watch, statfs, glob;
 var init_promises = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/fs/promises.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -26857,7 +26857,7 @@ __export(constants_exports, {
 var UV_FS_SYMLINK_DIR, UV_FS_SYMLINK_JUNCTION, O_RDONLY, O_WRONLY, O_RDWR, UV_DIRENT_UNKNOWN, UV_DIRENT_FILE, UV_DIRENT_DIR, UV_DIRENT_LINK, UV_DIRENT_FIFO, UV_DIRENT_SOCKET, UV_DIRENT_CHAR, UV_DIRENT_BLOCK, EXTENSIONLESS_FORMAT_JAVASCRIPT, EXTENSIONLESS_FORMAT_WASM, S_IFMT, S_IFREG, S_IFDIR, S_IFCHR, S_IFBLK, S_IFIFO, S_IFLNK, S_IFSOCK, O_CREAT, O_EXCL, UV_FS_O_FILEMAP, O_NOCTTY, O_TRUNC, O_APPEND, O_DIRECTORY, O_NOATIME, O_NOFOLLOW, O_SYNC, O_DSYNC, O_DIRECT, O_NONBLOCK, S_IRWXU, S_IRUSR, S_IWUSR, S_IXUSR, S_IRWXG, S_IRGRP, S_IWGRP, S_IXGRP, S_IRWXO, S_IROTH, S_IWOTH, S_IXOTH, F_OK, R_OK, W_OK, X_OK, UV_FS_COPYFILE_EXCL, COPYFILE_EXCL, UV_FS_COPYFILE_FICLONE, COPYFILE_FICLONE, UV_FS_COPYFILE_FICLONE_FORCE, COPYFILE_FICLONE_FORCE;
 var init_constants = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/fs/constants.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -26926,7 +26926,7 @@ var init_constants = __esm({
 var promises_default;
 var init_promises2 = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/fs/promises.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -26974,7 +26974,7 @@ var init_promises2 = __esm({
 var Dir, Dirent, Stats, ReadStream2, WriteStream2, FileReadStream, FileWriteStream;
 var init_classes = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/fs/classes.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -27002,7 +27002,7 @@ function callbackify(fn) {
 var access2, appendFile2, chown2, chmod2, copyFile2, cp2, lchown2, lchmod2, link2, lstat2, lutimes2, mkdir2, mkdtemp2, realpath2, open2, opendir2, readdir2, readFile2, readlink2, rename2, rm2, rmdir2, stat2, symlink2, truncate2, unlink2, utimes2, writeFile2, statfs2, close, createReadStream, createWriteStream, exists, fchown, fchmod, fdatasync, fstat, fsync, ftruncate, futimes, lstatSync, read, readv, realpathSync, statSync, unwatchFile, watch2, watchFile, write, writev, _toUnixTimestamp, openAsBlob, glob2, appendFileSync, accessSync, chownSync, chmodSync, closeSync, copyFileSync, cpSync, existsSync, fchownSync, fchmodSync, fdatasyncSync, fstatSync, fsyncSync, ftruncateSync, futimesSync, lchownSync, lchmodSync, linkSync, lutimesSync, mkdirSync, mkdtempSync, openSync, opendirSync, readdirSync, readSync, readvSync, readFileSync, readlinkSync, renameSync, rmSync, rmdirSync, symlinkSync, truncateSync, unlinkSync, utimesSync, writeFileSync, writeSync, writevSync, statfsSync, globSync;
 var init_fs = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/fs/fs.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -27109,7 +27109,7 @@ var init_fs = __esm({
 var fs_default;
 var init_fs2 = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/fs.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -27234,7 +27234,7 @@ var init_fs2 = __esm({
 // node-built-in-modules:fs
 var require_fs = __commonJS({
   "node-built-in-modules:fs"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -27247,7 +27247,7 @@ var require_fs = __commonJS({
 import libDefault8 from "constants";
 var require_constants5 = __commonJS({
   "node-built-in-modules:constants"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -27258,7 +27258,7 @@ var require_constants5 = __commonJS({
 // ../node_modules/graceful-fs/polyfills.js
 var require_polyfills = __commonJS({
   "../node_modules/graceful-fs/polyfills.js"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -27563,7 +27563,7 @@ var require_polyfills = __commonJS({
 // ../node_modules/graceful-fs/legacy-streams.js
 var require_legacy_streams = __commonJS({
   "../node_modules/graceful-fs/legacy-streams.js"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -27667,7 +27667,7 @@ var require_legacy_streams = __commonJS({
 var require_clone = __commonJS({
   "../node_modules/graceful-fs/clone.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -27695,7 +27695,7 @@ var require_clone = __commonJS({
 import libDefault9 from "assert";
 var require_assert = __commonJS({
   "node-built-in-modules:assert"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -27706,7 +27706,7 @@ var require_assert = __commonJS({
 // ../node_modules/graceful-fs/graceful-fs.js
 var require_graceful_fs = __commonJS({
   "../node_modules/graceful-fs/graceful-fs.js"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28106,7 +28106,7 @@ var require_graceful_fs = __commonJS({
 // ../node_modules/slide/lib/async-map.js
 var require_async_map = __commonJS({
   "../node_modules/slide/lib/async-map.js"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28154,7 +28154,7 @@ var require_async_map = __commonJS({
 // ../node_modules/slide/lib/bind-actor.js
 var require_bind_actor = __commonJS({
   "../node_modules/slide/lib/bind-actor.js"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28178,7 +28178,7 @@ var require_bind_actor = __commonJS({
 // ../node_modules/slide/lib/chain.js
 var require_chain = __commonJS({
   "../node_modules/slide/lib/chain.js"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28212,7 +28212,7 @@ var require_chain = __commonJS({
 // ../node_modules/slide/lib/slide.js
 var require_slide = __commonJS({
   "../node_modules/slide/lib/slide.js"(exports) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28225,7 +28225,7 @@ var require_slide = __commonJS({
 // ../node_modules/imurmurhash/imurmurhash.js
 var require_imurmurhash = __commonJS({
   "../node_modules/imurmurhash/imurmurhash.js"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28329,7 +28329,7 @@ var require_imurmurhash = __commonJS({
 var require_write_file_atomic = __commonJS({
   "../node_modules/write-file-atomic/index.js"(exports, module) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28456,7 +28456,7 @@ var require_write_file_atomic = __commonJS({
 // ../node_modules/node-localstorage/LocalStorage.js
 var require_LocalStorage = __commonJS({
   "../node_modules/node-localstorage/LocalStorage.js"(exports) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28791,7 +28791,7 @@ var require_LocalStorage = __commonJS({
 var require_localStorage = __commonJS({
   "../node_modules/telegram/sessions/localStorage.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28805,7 +28805,7 @@ var require_localStorage = __commonJS({
 var require_StoreSession = __commonJS({
   "../node_modules/telegram/sessions/StoreSession.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28894,7 +28894,7 @@ var require_StoreSession = __commonJS({
 var require_sessions = __commonJS({
   "../node_modules/telegram/sessions/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -28923,7 +28923,7 @@ var require_sessions = __commonJS({
 var UV_UDP_REUSEADDR, dlopen2, errno, signals, priority;
 var init_constants2 = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/internal/os/constants.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29066,7 +29066,7 @@ var init_constants2 = __esm({
 var constants, NUM_CPUS, availableParallelism, arch2, machine, endianness, cpus, getPriority, setPriority, homedir, tmpdir, devNull, freemem, totalmem, loadavg, uptime2, hostname, networkInterfaces, platform2, type, release2, version2, userInfo, EOL, os_default;
 var init_os = __esm({
   "../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/unenv/dist/runtime/node/os.mjs"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29194,7 +29194,7 @@ var init_os = __esm({
 // node-built-in-modules:os
 var require_os = __commonJS({
   "node-built-in-modules:os"(exports, module) {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29207,7 +29207,7 @@ var require_os = __commonJS({
 var require_os2 = __commonJS({
   "../node_modules/telegram/client/os.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29248,7 +29248,7 @@ var require_os2 = __commonJS({
 var require_entityCache = __commonJS({
   "../node_modules/telegram/entityCache.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29337,7 +29337,7 @@ var require_entityCache = __commonJS({
 var require_IGE = __commonJS({
   "../node_modules/telegram/crypto/IGE.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29384,7 +29384,7 @@ var require_IGE = __commonJS({
 var require_MTProtoState = __commonJS({
   "../node_modules/telegram/network/MTProtoState.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29648,7 +29648,7 @@ var require_MTProtoState = __commonJS({
 var require_MTProtoPlainSender = __commonJS({
   "../node_modules/telegram/network/MTProtoPlainSender.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29718,7 +29718,7 @@ var require_MTProtoPlainSender = __commonJS({
 var require_Factorizator = __commonJS({
   "../node_modules/telegram/crypto/Factorizator.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29805,7 +29805,7 @@ var require_Factorizator = __commonJS({
 var require_RSA = __commonJS({
   "../node_modules/telegram/crypto/RSA.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -29864,7 +29864,7 @@ var require_RSA = __commonJS({
 var require_Authenticator = __commonJS({
   "../node_modules/telegram/network/Authenticator.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -30057,7 +30057,7 @@ var require_Authenticator = __commonJS({
 var require_PendingState = __commonJS({
   "../node_modules/telegram/extensions/PendingState.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -30099,7 +30099,7 @@ var require_PendingState = __commonJS({
 var require_MTProtoSender = __commonJS({
   "../node_modules/telegram/network/MTProtoSender.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -30858,7 +30858,7 @@ var require_MTProtoSender = __commonJS({
 var require_network = __commonJS({
   "../node_modules/telegram/network/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -30908,7 +30908,7 @@ var require_network = __commonJS({
 var require_TCPMTProxy = __commonJS({
   "../node_modules/telegram/network/connection/TCPMTProxy.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -31041,7 +31041,7 @@ var require_TCPMTProxy = __commonJS({
 var require_telegramBaseClient = __commonJS({
   "../node_modules/telegram/client/telegramBaseClient.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -31403,7 +31403,7 @@ var require_telegramBaseClient = __commonJS({
 var require_auth = __commonJS({
   "../node_modules/telegram/client/auth.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -31756,7 +31756,7 @@ var require_auth = __commonJS({
 var require_inlineResult = __commonJS({
   "../node_modules/telegram/tl/custom/inlineResult.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -31852,7 +31852,7 @@ var require_inlineResult = __commonJS({
 var require_inlineResults = __commonJS({
   "../node_modules/telegram/tl/custom/inlineResults.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -31891,7 +31891,7 @@ var require_inlineResults = __commonJS({
 var require_bots = __commonJS({
   "../node_modules/telegram/client/bots.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -31923,7 +31923,7 @@ var require_bots = __commonJS({
 var require_buttons = __commonJS({
   "../node_modules/telegram/client/buttons.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -32011,7 +32011,7 @@ var require_buttons = __commonJS({
 var require_requestIter = __commonJS({
   "../node_modules/telegram/requestIter.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -32145,7 +32145,7 @@ var require_requestIter = __commonJS({
 var require_fs2 = __commonJS({
   "../node_modules/telegram/client/fs.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -32174,7 +32174,7 @@ var require_fs2 = __commonJS({
 var require_path2 = __commonJS({
   "../node_modules/telegram/client/path.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -32191,7 +32191,7 @@ var require_path2 = __commonJS({
 var require_downloads = __commonJS({
   "../node_modules/telegram/client/downloads.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -32718,7 +32718,7 @@ var require_downloads = __commonJS({
 var require_uploads = __commonJS({
   "../node_modules/telegram/client/uploads.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -33202,7 +33202,7 @@ var require_uploads = __commonJS({
 var require_messages2 = __commonJS({
   "../node_modules/telegram/client/messages.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -33970,7 +33970,7 @@ var require_messages2 = __commonJS({
 var require_custom = __commonJS({
   "../node_modules/telegram/tl/custom/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -33987,7 +33987,7 @@ var require_custom = __commonJS({
 var require_common3 = __commonJS({
   "../node_modules/telegram/events/common.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -34134,7 +34134,7 @@ var require_common3 = __commonJS({
 var require_Raw = __commonJS({
   "../node_modules/telegram/events/Raw.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -34179,7 +34179,7 @@ var require_Raw = __commonJS({
 var require_updates = __commonJS({
   "../node_modules/telegram/client/updates.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -34414,7 +34414,7 @@ var require_updates = __commonJS({
 var require_chats = __commonJS({
   "../node_modules/telegram/client/chats.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -34760,7 +34760,7 @@ var require_chats = __commonJS({
 var require_draft = __commonJS({
   "../node_modules/telegram/tl/custom/draft.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -34819,7 +34819,7 @@ var require_draft = __commonJS({
 var require_dialog = __commonJS({
   "../node_modules/telegram/tl/custom/dialog.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -34870,7 +34870,7 @@ var require_dialog = __commonJS({
 var require_dialogs = __commonJS({
   "../node_modules/telegram/client/dialogs.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -35031,7 +35031,7 @@ var require_dialogs = __commonJS({
 var require_fa = __commonJS({
   "../node_modules/telegram/client/2fa.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -35105,7 +35105,7 @@ var require_fa = __commonJS({
 var require_NewMessage = __commonJS({
   "../node_modules/telegram/events/NewMessage.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -35268,7 +35268,7 @@ var require_NewMessage = __commonJS({
 var require_events2 = __commonJS({
   "../node_modules/telegram/events/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -35292,7 +35292,7 @@ var require_events2 = __commonJS({
 var require_TelegramClient = __commonJS({
   "../node_modules/telegram/client/TelegramClient.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -36501,7 +36501,7 @@ var require_TelegramClient = __commonJS({
 var require_Version = __commonJS({
   "../node_modules/telegram/Version.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -36515,7 +36515,7 @@ var require_Version = __commonJS({
 var require_client = __commonJS({
   "../node_modules/telegram/client/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -36583,7 +36583,7 @@ var require_client = __commonJS({
 var require_telegram = __commonJS({
   "../node_modules/telegram/index.js"(exports) {
     "use strict";
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -36692,7 +36692,7 @@ function toInt(value, fallback = 0) {
 var JSON_HEADERS;
 var init_http = __esm({
   "api/tg/_lib/http.js"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -37278,7 +37278,7 @@ function mapApiError(err) {
 var import_telegram, import_sessions, import_uploads, import_network, import_extensions, CONNECT_TIMEOUT_MS, REQUEST_TIMEOUT_MS, CONNECT_ATTEMPT_TIMEOUT_MS, WEB_DC_IDS, KNOWN_STATUS_CODES, ApiError;
 var init_telegram = __esm({
   "api/tg/_lib/telegram.js"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -37517,7 +37517,7 @@ function clearPendingAuth(state) {
 var COOKIE_NAME, COOKIE_MAX_AGE_SECONDS, textEncoder, textDecoder, cachedSecret, cachedKey;
 var init_session = __esm({
   "api/tg/_lib/session.js"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -37703,7 +37703,7 @@ async function clearTelegramSessionForUser(env2, userId) {
 var textEncoder2, textDecoder2, cachedSecret2, cachedKey2, corruptedSessionCleanupCount;
 var init_storage = __esm({
   "api/tg/_lib/storage.js"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -38645,7 +38645,7 @@ async function onRequest2(context2) {
 var import_telegram2, import_uploads2, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, GENERIC_BINARY_MIMES, PREVIEW_ETAG_VERSION, MIN_ACCEPTABLE_PHOTO_PREVIEW_BYTES;
 var init_action2 = __esm({
   "api/tg/[action].js"() {
-    init_functionsRoutes_0_7032069723358441();
+    init_functionsRoutes_0_6069375484419794();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
     init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
     init_performance2();
@@ -38730,10 +38730,10 @@ var init_action2 = __esm({
   }
 });
 
-// ../.wrangler/tmp/pages-lWC2xn/functionsRoutes-0.7032069723358441.mjs
+// ../.wrangler/tmp/pages-Jsj4DC/functionsRoutes-0.6069375484419794.mjs
 var routes;
-var init_functionsRoutes_0_7032069723358441 = __esm({
-  "../.wrangler/tmp/pages-lWC2xn/functionsRoutes-0.7032069723358441.mjs"() {
+var init_functionsRoutes_0_6069375484419794 = __esm({
+  "../.wrangler/tmp/pages-Jsj4DC/functionsRoutes-0.6069375484419794.mjs"() {
     init_action();
     init_action2();
     routes = [
@@ -38755,26 +38755,26 @@ var init_functionsRoutes_0_7032069723358441 = __esm({
   }
 });
 
-// ../.wrangler/tmp/bundle-C4Z5ZJ/middleware-loader.entry.ts
-init_functionsRoutes_0_7032069723358441();
+// ../.wrangler/tmp/bundle-xqOKjr/middleware-loader.entry.ts
+init_functionsRoutes_0_6069375484419794();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
 init_performance2();
 
-// ../.wrangler/tmp/bundle-C4Z5ZJ/middleware-insertion-facade.js
-init_functionsRoutes_0_7032069723358441();
+// ../.wrangler/tmp/bundle-xqOKjr/middleware-insertion-facade.js
+init_functionsRoutes_0_6069375484419794();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
 init_performance2();
 
 // ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/templates/pages-template-worker.ts
-init_functionsRoutes_0_7032069723358441();
+init_functionsRoutes_0_6069375484419794();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
 init_performance2();
 
 // ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/node_modules/path-to-regexp/dist.es2015/index.js
-init_functionsRoutes_0_7032069723358441();
+init_functionsRoutes_0_6069375484419794();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
 init_performance2();
@@ -39224,7 +39224,7 @@ var cloneResponse = /* @__PURE__ */ __name((response) => (
 ), "cloneResponse");
 
 // ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/templates/middleware/middleware-ensure-req-body-drained.ts
-init_functionsRoutes_0_7032069723358441();
+init_functionsRoutes_0_6069375484419794();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
 init_performance2();
@@ -39246,7 +39246,7 @@ var drainBody = /* @__PURE__ */ __name(async (request, env2, _ctx, middlewareCtx
 var middleware_ensure_req_body_drained_default = drainBody;
 
 // ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/templates/middleware/middleware-miniflare3-json-error.ts
-init_functionsRoutes_0_7032069723358441();
+init_functionsRoutes_0_6069375484419794();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
 init_performance2();
@@ -39272,7 +39272,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env2, _ctx, middlewareCtx
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-C4Z5ZJ/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-xqOKjr/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -39280,7 +39280,7 @@ var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
 var middleware_insertion_facade_default = pages_template_worker_default;
 
 // ../../../../Users/Ai/AppData/Roaming/npm/node_modules/wrangler/templates/middleware/common.ts
-init_functionsRoutes_0_7032069723358441();
+init_functionsRoutes_0_6069375484419794();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
 init_performance2();
@@ -39308,7 +39308,7 @@ function __facade_invoke__(request, env2, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-C4Z5ZJ/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-xqOKjr/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;
@@ -39427,4 +39427,4 @@ imurmurhash/imurmurhash.js:
    * @see http://sites.google.com/site/murmurhash/
    *)
 */
-//# sourceMappingURL=functionsWorker-0.8994596734930203.mjs.map
+//# sourceMappingURL=functionsWorker-0.9073759312908352.mjs.map

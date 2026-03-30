@@ -324,6 +324,7 @@ export default function VoidLogin() {
     const [appUser, setAppUser] = useState(null)
     const [showAccountPanel, setShowAccountPanel] = useState(false)
     const [isSigningOutApp, setIsSigningOutApp] = useState(false)
+    const [accountImageFailed, setAccountImageFailed] = useState(false)
 
     const logIdRef = useRef(0)
     const copyStateTimerRef = useRef(0)
@@ -355,6 +356,10 @@ export default function VoidLogin() {
             }
         }
     }, [])
+
+    useEffect(() => {
+        setAccountImageFailed(false)
+    }, [appUser?.picture])
 
     useEffect(() => {
         if (!showAccountPanel) return
@@ -399,6 +404,7 @@ export default function VoidLogin() {
         setAppUser(null)
         setShowAccountPanel(false)
         setIsSigningOutApp(false)
+        setAccountImageFailed(false)
         setPhone('')
         setCode('')
         setTwofa('')
@@ -421,6 +427,7 @@ export default function VoidLogin() {
         getAuthMe()
             .then(payload => {
                 if (payload?.authenticated) {
+                    setAccountImageFailed(false)
                     setAppUser(payload?.user || null)
                     appendLog('OK', 'GET /api/auth/me OK', {
                         durationMs: Date.now() - startedAt,
@@ -544,6 +551,7 @@ export default function VoidLogin() {
             })
             setShowAccountPanel(false)
             setAppUser(null)
+            setAccountImageFailed(false)
             setError('')
             setStage('appauth')
         } catch (err) {
@@ -711,286 +719,284 @@ export default function VoidLogin() {
         }
     }
 
+    const stageTag = (() => {
+        if (stage === 'check-auth') return 'APP AUTH CHECK'
+        if (stage === 'appauth') return 'GOOGLE SIGN IN'
+        if (stage === 'check') return 'SESSION CHECK'
+        if (stage === 'boot') return 'READY'
+        if (stage === 'phone') return 'PHONE'
+        if (stage === 'sending') return 'SENDING'
+        if (stage === 'code') return 'CODE'
+        if (stage === 'verifying') return 'VERIFYING'
+        if (stage === 'password') return '2FA PASSWORD'
+        if (stage === 'verifying2fa') return 'VERIFYING 2FA'
+        if (stage === 'success') return 'AUTHORIZED'
+        return 'AUTH'
+    })()
+
     /* ── JSX ─────────────────────────────────────────────── */
     return (
         <>
             <style>{`
-                @keyframes vl-scanline {
-                    0%   { transform: translateY(-100%); }
-                    100% { transform: translateY(100vh); }
+                :root {
+                    --vl-bg-a: #010204;
+                    --vl-bg-b: #06080d;
+                    --vl-bg-c: #0a0f16;
+                    --vl-card: #0c1219;
+                    --vl-card-soft: #0f1620;
+                    --vl-border: rgba(129, 140, 158, 0.24);
+                    --vl-border-strong: rgba(129, 140, 158, 0.34);
+                    --vl-text: #e8edf4;
+                    --vl-muted: #95a3b7;
+                    --vl-soft: #c1ccdb;
+                    --vl-accent: #5b82d6;
+                    --vl-accent-soft: rgba(91, 130, 214, 0.16);
+                    --vl-danger: #ff7a7a;
                 }
-                @keyframes vl-flicker {
-                    0%,19%,21%,23%,25%,54%,56%,100% { opacity:1; }
-                    20%,24%,55% { opacity:.35; }
+
+                @keyframes vl-fade-in {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
                 @keyframes vl-blink {
-                    0%,50%  { opacity:1; }
-                    51%,100%{ opacity:0; }
+                    0%, 50% { opacity: 1; }
+                    51%, 100% { opacity: 0; }
                 }
                 @keyframes vl-spin {
                     to { transform: rotate(360deg); }
                 }
-                @keyframes vl-fadein {
-                    from { opacity:0; transform: translateY(14px); }
-                    to   { opacity:1; transform: translateY(0); }
+                @keyframes vl-orb-float {
+                    0%, 100% { transform: translate3d(0, 0, 0); }
+                    50% { transform: translate3d(0, -18px, 0); }
+                }
+                @keyframes vl-scanline {
+                    0% { transform: translateY(-40px); opacity: 0; }
+                    12% { opacity: .55; }
+                    100% { transform: translateY(100vh); opacity: 0; }
                 }
                 @keyframes vl-glitch-a {
-                    0%  { clip-path:inset(40% 0 61% 0); transform:translateX(-4px); }
-                    33% { clip-path:inset(80% 0 5%  0); transform:translateX( 4px); }
-                    66% { clip-path:inset(10% 0 80% 0); transform:translateX(-2px); }
-                    100%{ clip-path:inset(40% 0 61% 0); transform:translateX(0);   }
+                    0%  { clip-path: inset(37% 0 57% 0); transform: translateX(-2px); }
+                    30% { clip-path: inset(78% 0 4% 0); transform: translateX(2px); }
+                    60% { clip-path: inset(18% 0 70% 0); transform: translateX(-1px); }
+                    100%{ clip-path: inset(37% 0 57% 0); transform: translateX(0); }
                 }
                 @keyframes vl-glitch-b {
-                    0%  { clip-path:inset(60% 0 1%  0); transform:translateX( 4px); }
-                    50% { clip-path:inset(10% 0 85% 0); transform:translateX(-4px); }
-                    100%{ clip-path:inset(60% 0 1%  0); transform:translateX(0);   }
+                    0%  { clip-path: inset(58% 0 4% 0); transform: translateX(2px); }
+                    45% { clip-path: inset(12% 0 82% 0); transform: translateX(-2px); }
+                    100%{ clip-path: inset(58% 0 4% 0); transform: translateX(0); }
                 }
                 @keyframes vl-success-pulse {
-                    0%,100%{ opacity:1; transform:scale(1);    }
-                    50%    { opacity:.6; transform:scale(1.05); }
+                    0%, 100% { box-shadow: 0 0 0 0 rgba(91, 130, 214, .28); }
+                    50% { box-shadow: 0 0 0 12px rgba(91, 130, 214, 0); }
                 }
 
-                .vl-root       { animation: vl-fadein .5s ease forwards; }
-                .vl-root.close { animation: vl-fadein .5s ease reverse forwards; }
-                .vl-scanline   { animation: vl-scanline 7s linear infinite; }
-                .vl-flicker    { animation: vl-flicker 4s step-end infinite; }
-                .vl-cursor     { animation: vl-blink 1s step-end infinite; color:#a78bfa; margin-left:2px; }
-                .vl-spinner    { animation: vl-spin 1s linear infinite; }
-                .vl-panel      { animation: vl-fadein .35s ease forwards; }
-                .vl-success    { animation: vl-success-pulse 1.6s ease infinite; }
-
-                .vl-glitch::before,
-                .vl-glitch::after {
-                    content: attr(data-text);
-                    position: absolute; inset:0;
-                }
-                .vl-glitch::before { animation: vl-glitch-a .15s steps(3) forwards; color:#60a5fa; text-shadow: 2px 0 #ef4444; }
-                .vl-glitch::after  { animation: vl-glitch-b .15s steps(3) forwards; color:#f472b6; text-shadow:-2px 0 #22d3ee; }
-
-                .vl-input {
-                    background: transparent;
-                    border: none;
-                    border-bottom: 1px solid rgba(139,92,246,.5);
-                    color: #e2d9f3;
-                    font-family: 'Courier New', monospace;
-                    font-size: 1.05rem;
-                    letter-spacing: .15em;
-                    outline: none;
-                    width: 100%;
-                    padding: 8px 2px;
-                    transition: border-color .3s;
-                    caret-color: #a78bfa;
-                }
-                .vl-input:focus { border-bottom-color: rgba(139,92,246,.85); }
-                .vl-input::placeholder { color: rgba(139,92,246,.42); }
-
-                .vl-btn {
-                    position: relative; overflow: hidden;
-                    border: 1px solid rgba(139,92,246,.58);
-                    background: transparent;
-                    color: rgba(167,139,250,.9);
-                    font-family: 'Courier New', monospace;
-                    font-size: .68rem;
-                    letter-spacing: .35em; text-transform: uppercase;
-                    padding: 12px 32px; cursor: pointer;
-                    transition: color .4s, border-color .4s;
-                    width: 100%;
-                }
-                .vl-btn::before {
-                    content:''; position:absolute; inset:0;
-                    background: rgba(139,92,246,.14);
-                    transform:scaleX(0); transform-origin:left;
-                    transition: transform .4s ease;
-                }
-                .vl-btn:hover::before { transform:scaleX(1); }
-                .vl-btn:hover { color:#e2d9f3; border-color:rgba(139,92,246,.9); }
-                .vl-btn:disabled { opacity:.4; cursor:not-allowed; }
-                .vl-btn:disabled::before { display:none; }
-
-                .vl-link-btn {
-                    background: transparent; border: none;
-                    color: rgba(139,92,246,.48); cursor: pointer;
-                    font-family: 'Courier New', monospace;
-                    font-size: .6rem; letter-spacing: .3em; text-transform: uppercase;
-                    padding: 8px 0; transition: color .3s; width: 100%;
-                }
-                .vl-link-btn:hover { color: rgba(139,92,246,.75); }
-
-                .vl-actions-dock {
-                    position: absolute;
-                    left: 24px;
-                    bottom: 24px;
-                    z-index: 12;
-                    display: flex;
-                    gap: 6px;
-                    flex-wrap: wrap;
-                }
-                .vl-void-cta {
-                    pointer-events: auto;
-                    position: relative;
-                    padding: 7px 20px;
-                    background: transparent;
-                    border: 1px solid rgba(255,255,255,.2);
+                .vl-root {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 200;
                     overflow: hidden;
-                    cursor: pointer;
-                    transition: border-color .5s;
-                    min-width: 188px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background:
+                        radial-gradient(1200px 700px at 12% -10%, rgba(91, 130, 214, .1), transparent 62%),
+                        radial-gradient(900px 600px at 100% 0%, rgba(33, 52, 79, .2), transparent 68%),
+                        linear-gradient(170deg, var(--vl-bg-b), var(--vl-bg-a) 68%);
+                    animation: vl-fade-in .45s ease forwards;
+                    padding: 24px;
                 }
-                .vl-void-cta-fill {
+                .vl-root.close {
+                    animation: vl-fade-in .45s ease reverse forwards;
+                }
+                .vl-back-grid {
                     position: absolute;
                     inset: 0;
-                    background: rgba(255,255,255,1);
-                    transform: translateY(100%);
-                    transition: transform .5s cubic-bezier(0.87, 0, 0.13, 1);
+                    pointer-events: none;
+                    opacity: .14;
+                    background-image:
+                        linear-gradient(rgba(86, 102, 131, .12) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(86, 102, 131, .1) 1px, transparent 1px);
+                    background-size: 64px 64px;
+                    mask-image: radial-gradient(circle at 50% 40%, rgba(0, 0, 0, .75), transparent 80%);
                 }
-                .vl-void-cta:hover,
-                .vl-void-cta.active {
-                    border-color: rgba(255,255,255,.82);
-                }
-                .vl-void-cta:hover .vl-void-cta-fill {
-                    transform: translateY(0);
-                }
-                .vl-void-cta-label {
-                    position: relative;
-                    font-family: 'Courier New', monospace;
-                    font-size: 12px;
-                    font-weight: 400;
-                    letter-spacing: .18em;
-                    color: rgba(255,255,255,.86);
-                    line-height: 1.15;
-                    text-transform: uppercase;
-                    transition: color .5s;
-                    white-space: nowrap;
-                }
-                .vl-void-cta:hover .vl-void-cta-label {
-                    color: rgba(0,0,0,.95);
-                }
-                .vl-void-cta-corner-tr,
-                .vl-void-cta-corner-bl {
+                .vl-bg-orb {
                     position: absolute;
-                    width: 8px;
-                    height: 8px;
-                    transition: border-color .5s;
+                    border-radius: 999px;
+                    filter: blur(90px);
+                    pointer-events: none;
+                    animation: vl-orb-float 9s ease-in-out infinite;
                 }
-                .vl-void-cta-corner-tr {
-                    top: 0;
-                    right: 0;
-                    border-top: 1px solid rgba(255,255,255,.5);
-                    border-right: 1px solid rgba(255,255,255,.5);
+                .vl-bg-orb-a {
+                    width: 360px;
+                    height: 360px;
+                    left: -100px;
+                    top: -120px;
+                    background: rgba(91, 130, 214, .14);
                 }
-                .vl-void-cta-corner-bl {
-                    bottom: 0;
+                .vl-bg-orb-b {
+                    width: 280px;
+                    height: 280px;
+                    right: -70px;
+                    bottom: -110px;
+                    background: rgba(60, 109, 188, .12);
+                    animation-delay: -4s;
+                }
+                .vl-scanline {
+                    position: absolute;
                     left: 0;
-                    border-bottom: 1px solid rgba(255,255,255,.5);
-                    border-left: 1px solid rgba(255,255,255,.5);
-                }
-                .vl-void-cta:hover .vl-void-cta-corner-tr,
-                .vl-void-cta:hover .vl-void-cta-corner-bl {
-                    border-color: rgba(0,0,0,.95);
+                    right: 0;
+                    height: 2px;
+                    background: linear-gradient(to right, transparent, rgba(91, 130, 214, .24), transparent);
+                    pointer-events: none;
+                    opacity: .34;
+                    animation: vl-scanline 9s linear infinite;
                 }
 
-                .vl-logs-panel {
+                .vl-shell {
+                    width: min(1180px, calc(100vw - 48px));
+                    min-height: min(760px, calc(100vh - 48px));
+                    border: 1px solid var(--vl-border);
+                    border-radius: 26px;
+                    background:
+                        linear-gradient(140deg, rgba(7, 10, 15, .98), rgba(5, 8, 13, .98) 42%, rgba(3, 5, 9, .99));
+                    box-shadow:
+                        0 28px 70px rgba(0, 0, 0, .66),
+                        inset 0 1px 0 rgba(255, 255, 255, .03);
+                    backdrop-filter: blur(8px);
+                    display: grid;
+                    grid-template-columns: 1.1fr 1fr;
+                    overflow: hidden;
+                    position: relative;
+                }
+                .vl-shell::after {
+                    content: '';
                     position: absolute;
-                    left: 24px;
-                    bottom: 90px;
-                    width: min(680px, calc(100vw - 88px));
-                    max-height: min(58vh, 540px);
-                    border: 1px solid rgba(255,255,255,.24);
-                    background: linear-gradient(180deg, rgba(6,10,20,.96) 0%, rgba(3,5,12,.97) 100%);
-                    box-shadow: 0 24px 50px rgba(0,0,0,.5);
-                    backdrop-filter: blur(6px);
-                    z-index: 11;
+                    inset: 0;
+                    pointer-events: none;
+                    border-radius: 26px;
+                    border: 1px solid rgba(255, 255, 255, .03);
+                }
+
+                .vl-brand {
+                    padding: clamp(28px, 5vw, 56px);
+                    border-right: 1px solid var(--vl-border);
                     display: flex;
                     flex-direction: column;
+                    justify-content: center;
+                    gap: 26px;
+                    position: relative;
                 }
-                .vl-logs-head {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 11px 12px;
-                    border-bottom: 1px solid rgba(255,255,255,.15);
-                    font-family: 'Courier New', monospace;
-                    font-size: .68rem;
-                    letter-spacing: .14em;
+                .vl-brand::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background:
+                        radial-gradient(500px 360px at 20% 5%, rgba(91, 130, 214, .08), transparent 74%);
+                    pointer-events: none;
+                }
+                .vl-kicker {
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.74rem;
+                    color: rgba(180, 203, 224, .82);
+                    letter-spacing: .17em;
                     text-transform: uppercase;
-                    color: rgba(255,255,255,.9);
+                    position: relative;
                 }
-                .vl-logs-actions {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
+                .vl-brand-title {
+                    position: relative;
+                    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+                    font-size: clamp(2.3rem, 5.4vw, 4.4rem);
+                    line-height: .95;
+                    letter-spacing: .04em;
+                    font-weight: 700;
+                    color: #f8fbff;
+                    text-shadow: 0 16px 48px rgba(0, 0, 0, .45);
+                    user-select: none;
                 }
-                .vl-log-clear {
-                    background: transparent;
-                    border: 1px solid rgba(255,255,255,.25);
-                    color: rgba(255,255,255,.78);
-                    cursor: pointer;
-                    font-family: 'Courier New', monospace;
-                    font-size: .62rem;
-                    letter-spacing: .1em;
-                    text-transform: uppercase;
-                    padding: 5px 10px;
-                    transition: border-color .2s, color .2s, background .2s;
+                .vl-brand-title .accent {
+                    color: #8fb0ff;
                 }
-                .vl-log-clear:hover {
-                    border-color: rgba(255,255,255,.62);
-                    color: #fff;
-                    background: rgba(255,255,255,.08);
+                .vl-brand-copy {
+                    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+                    color: var(--vl-muted);
+                    font-size: 1.02rem;
+                    line-height: 1.65;
+                    max-width: 42ch;
+                    margin: 0;
                 }
-                .vl-logs-list {
-                    padding: 12px;
-                    overflow: auto;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 11px;
+                .vl-brand-points {
+                    display: grid;
+                    gap: 12px;
+                    max-width: 460px;
                 }
-                .vl-logs-item {
-                    border-left: 2px solid rgba(255,255,255,.25);
-                    padding-left: 10px;
-                }
-                .vl-logs-main {
-                    font-family: 'Courier New', monospace;
-                    font-size: .74rem;
+                .vl-brand-point {
+                    border: 1px solid rgba(148, 163, 184, .2);
+                    border-radius: 14px;
+                    padding: 12px 14px;
+                    background: linear-gradient(120deg, rgba(20, 28, 42, .72), rgba(20, 28, 42, .45));
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.8rem;
+                    color: #dce8f7;
                     letter-spacing: .02em;
-                    color: rgba(255,255,255,.92);
-                    line-height: 1.6;
-                    white-space: pre-wrap;
                 }
-                .vl-logs-meta {
-                    margin-top: 5px;
-                    font-family: 'Courier New', monospace;
-                    font-size: .68rem;
-                    letter-spacing: .01em;
-                    color: rgba(189,225,255,.94);
-                    white-space: pre-wrap;
-                    word-break: break-word;
-                    line-height: 1.62;
+                .vl-brand-point strong {
+                    color: #8fb0ff;
+                    font-weight: 500;
+                }
+
+                .vl-main {
+                    position: relative;
+                    padding: clamp(24px, 4vw, 40px);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    gap: 16px;
+                }
+                .vl-main-inner {
+                    width: min(460px, 100%);
+                    margin: 0 auto;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
                 }
 
                 .vl-account-anchor {
                     position: absolute;
-                    top: 20px;
-                    right: 20px;
-                    z-index: 14;
+                    top: 22px;
+                    right: 24px;
+                    z-index: 16;
                 }
                 .vl-account-button {
-                    width: 42px;
-                    height: 42px;
+                    border: 1px solid var(--vl-border-strong);
+                    border-radius: 14px;
+                    height: 52px;
+                    min-width: 210px;
+                    background: linear-gradient(145deg, rgba(14, 20, 29, .96), rgba(10, 15, 23, .97));
+                    padding: 0 12px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    color: #f3f8ff;
+                    transition: border-color .2s, transform .2s, box-shadow .2s;
+                    box-shadow: 0 16px 34px rgba(0, 0, 0, .34);
+                }
+                .vl-account-button:hover {
+                    border-color: rgba(91, 130, 214, .58);
+                    transform: translateY(-1px);
+                    box-shadow: 0 20px 40px rgba(0, 0, 0, .44);
+                }
+                .vl-account-mini-avatar {
+                    width: 32px;
+                    height: 32px;
                     border-radius: 999px;
-                    border: 1px solid rgba(255,255,255,.34);
-                    background: rgba(15,20,35,.66);
+                    border: 1px solid rgba(255, 255, 255, .22);
+                    overflow: hidden;
+                    flex-shrink: 0;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    cursor: pointer;
-                    overflow: hidden;
-                    transition: border-color .2s, box-shadow .2s, transform .2s;
-                    box-shadow: 0 8px 20px rgba(0,0,0,.35);
-                }
-                .vl-account-button:hover {
-                    border-color: rgba(255,255,255,.68);
-                    box-shadow: 0 10px 24px rgba(0,0,0,.45);
-                    transform: translateY(-1px);
+                    background: linear-gradient(130deg, rgba(91, 130, 214, .18), rgba(67, 117, 255, .16));
                 }
                 .vl-account-avatar {
                     width: 100%;
@@ -998,24 +1004,87 @@ export default function VoidLogin() {
                     object-fit: cover;
                 }
                 .vl-account-fallback {
-                    font-family: 'Courier New', monospace;
-                    font-size: .92rem;
-                    color: rgba(255,255,255,.92);
-                    letter-spacing: .08em;
+                    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+                    font-size: 0.9rem;
+                    font-weight: 700;
+                    color: #f8fafc;
                     text-transform: uppercase;
+                }
+                .vl-account-pill-copy {
+                    min-width: 0;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1px;
+                    text-align: left;
+                }
+                .vl-account-pill-title {
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.62rem;
+                    text-transform: uppercase;
+                    letter-spacing: .09em;
+                    color: #8fb0ff;
+                }
+                .vl-account-pill-mail {
+                    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+                    font-size: 0.77rem;
+                    color: #d9e5f7;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .vl-account-pill-arrow {
+                    margin-left: auto;
+                    color: rgba(200, 216, 236, .86);
+                    font-size: 0.86rem;
                 }
                 .vl-account-panel {
                     position: absolute;
-                    top: calc(100% + 10px);
                     right: 0;
-                    width: min(320px, calc(100vw - 34px));
-                    border: 1px solid rgba(255,255,255,.24);
-                    background: linear-gradient(180deg, rgba(8,14,30,.98) 0%, rgba(4,7,18,.98) 100%);
-                    box-shadow: 0 20px 42px rgba(0,0,0,.5);
+                    top: calc(100% + 10px);
+                    width: min(390px, calc(100vw - 36px));
+                    border-radius: 18px;
+                    border: 1px solid var(--vl-border-strong);
+                    background:
+                        radial-gradient(400px 220px at 10% -10%, rgba(91, 130, 214, .09), transparent 76%),
+                        linear-gradient(160deg, rgba(12, 18, 28, .99), rgba(8, 12, 19, .99));
+                    box-shadow: 0 24px 50px rgba(0, 0, 0, .55);
+                    padding: 14px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+                .vl-account-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 8px;
+                }
+                .vl-account-top-title {
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.62rem;
+                    letter-spacing: .12em;
+                    text-transform: uppercase;
+                    color: #cad8ec;
+                }
+                .vl-account-top-status {
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.58rem;
+                    letter-spacing: .08em;
+                    text-transform: uppercase;
+                    border-radius: 999px;
+                    border: 1px solid rgba(91, 130, 214, .45);
+                    background: rgba(91, 130, 214, .13);
+                    color: #b6c8ff;
+                    padding: 3px 8px;
+                }
+                .vl-account-body {
+                    border-radius: 14px;
+                    border: 1px solid rgba(148, 163, 184, .18);
+                    background: rgba(8, 13, 20, .72);
                     padding: 12px;
                     display: flex;
                     flex-direction: column;
-                    gap: 10px;
+                    gap: 12px;
                 }
                 .vl-account-head {
                     display: flex;
@@ -1023,221 +1092,839 @@ export default function VoidLogin() {
                     gap: 10px;
                 }
                 .vl-account-head-avatar {
-                    width: 36px;
-                    height: 36px;
-                    border-radius: 999px;
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 12px;
                     overflow: hidden;
-                    border: 1px solid rgba(255,255,255,.3);
+                    border: 1px solid rgba(148, 163, 184, .32);
                     flex-shrink: 0;
-                    background: rgba(255,255,255,.08);
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    background: rgba(255, 255, 255, .04);
                 }
                 .vl-account-name {
-                    font-family: 'Courier New', monospace;
-                    font-size: .72rem;
-                    color: rgba(255,255,255,.95);
-                    letter-spacing: .08em;
-                    line-height: 1.35;
-                    text-transform: uppercase;
+                    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    color: #f7fbff;
+                    line-height: 1.2;
                 }
                 .vl-account-mail {
-                    font-family: 'Courier New', monospace;
-                    font-size: .62rem;
-                    color: rgba(208,227,255,.92);
-                    letter-spacing: .02em;
-                    line-height: 1.3;
+                    margin-top: 2px;
+                    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+                    font-size: 0.78rem;
+                    color: #c5d3e6;
+                    line-height: 1.2;
                     word-break: break-word;
                 }
                 .vl-account-info {
-                    border-top: 1px solid rgba(255,255,255,.14);
-                    border-bottom: 1px solid rgba(255,255,255,.14);
-                    padding: 8px 0;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 5px;
+                    border-top: 1px solid rgba(148, 163, 184, .22);
+                    padding-top: 10px;
+                    display: grid;
+                    gap: 7px;
                 }
                 .vl-account-row {
-                    display: flex;
-                    justify-content: space-between;
-                    gap: 12px;
-                    font-family: 'Courier New', monospace;
-                    font-size: .58rem;
-                    letter-spacing: .04em;
+                    display: grid;
+                    grid-template-columns: 92px minmax(0, 1fr);
+                    align-items: start;
+                    gap: 10px;
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.67rem;
                     line-height: 1.35;
                 }
                 .vl-account-key {
-                    color: rgba(182,202,245,.74);
+                    color: #90a7c2;
                     text-transform: uppercase;
+                    letter-spacing: .03em;
                 }
                 .vl-account-value {
-                    color: rgba(255,255,255,.92);
+                    color: #f3f8ff;
                     text-align: right;
                     word-break: break-word;
                 }
                 .vl-account-signout {
-                    border: 1px solid rgba(255,255,255,.28);
-                    background: transparent;
-                    color: rgba(255,255,255,.9);
-                    font-family: 'Courier New', monospace;
-                    font-size: .62rem;
-                    letter-spacing: .12em;
+                    border: 1px solid rgba(255, 122, 122, .52);
+                    border-radius: 12px;
+                    background: linear-gradient(145deg, rgba(76, 25, 30, .55), rgba(52, 18, 23, .45));
+                    color: #ffd7d7;
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.66rem;
+                    letter-spacing: .08em;
                     text-transform: uppercase;
+                    padding: 10px 12px;
                     cursor: pointer;
-                    padding: 8px 10px;
-                    transition: border-color .2s, background .2s, color .2s;
+                    transition: border-color .2s, background .2s;
                 }
                 .vl-account-signout:hover {
-                    border-color: rgba(248,113,113,.72);
-                    color: rgba(254,202,202,.95);
-                    background: rgba(248,113,113,.12);
+                    border-color: rgba(255, 163, 163, .8);
+                    background: linear-gradient(145deg, rgba(92, 28, 34, .64), rgba(58, 19, 26, .52));
                 }
                 .vl-account-signout:disabled {
-                    opacity: .55;
+                    opacity: .58;
                     cursor: not-allowed;
                 }
-                @media (min-width: 768px) {
-                    .vl-actions-dock {
-                        left: 32px;
-                        bottom: 32px;
+
+                .vl-card {
+                    width: 100%;
+                    border-radius: 22px;
+                    border: 1px solid var(--vl-border);
+                    background:
+                        radial-gradient(560px 240px at 20% -10%, rgba(91, 130, 214, .09), transparent 72%),
+                        linear-gradient(150deg, rgba(14, 20, 30, .98), rgba(10, 15, 23, .98));
+                    box-shadow:
+                        0 20px 46px rgba(0, 0, 0, .42),
+                        inset 0 1px 0 rgba(255, 255, 255, .03);
+                    padding: 22px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 20px;
+                }
+                .vl-card-head {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                }
+                .vl-card-tag {
+                    width: fit-content;
+                    border: 1px solid rgba(91, 130, 214, .45);
+                    background: rgba(91, 130, 214, .1);
+                    color: #b6c8ff;
+                    border-radius: 999px;
+                    padding: 4px 9px;
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.6rem;
+                    letter-spacing: .08em;
+                    text-transform: uppercase;
+                }
+                .vl-card-title {
+                    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+                    font-size: 1.6rem;
+                    letter-spacing: .01em;
+                    color: #f8fbff;
+                    font-weight: 700;
+                    line-height: 1.1;
+                }
+                .vl-card-subtitle {
+                    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+                    font-size: 0.94rem;
+                    color: var(--vl-muted);
+                    line-height: 1.55;
+                    max-width: 44ch;
+                }
+                .vl-panel {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                    animation: vl-fade-in .28s ease forwards;
+                }
+                .vl-panel-status {
+                    border: 1px solid rgba(148, 163, 184, .22);
+                    border-radius: 14px;
+                    background: rgba(6, 10, 16, .72);
+                    padding: 14px;
+                    min-height: 84px;
+                    justify-content: center;
+                }
+                .vl-panel-text {
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.78rem;
+                    line-height: 1.68;
+                    letter-spacing: .02em;
+                    color: #d5e2f3;
+                }
+                .vl-panel-text-soft {
+                    color: #93a6c0;
+                    font-size: 0.72rem;
+                }
+
+                .vl-field {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                }
+                .vl-label {
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.64rem;
+                    letter-spacing: .08em;
+                    text-transform: uppercase;
+                    color: #9eb3ce;
+                }
+                .vl-input {
+                    width: 100%;
+                    border: 1px solid rgba(148, 163, 184, .34);
+                    border-radius: 12px;
+                    background: rgba(5, 9, 15, .8);
+                    color: #f8fbff;
+                    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+                    font-size: 1.02rem;
+                    letter-spacing: .02em;
+                    outline: none;
+                    padding: 12px 14px;
+                    transition: border-color .2s, box-shadow .2s, background .2s;
+                    caret-color: #8fb0ff;
+                }
+                .vl-input:focus {
+                    border-color: rgba(91, 130, 214, .62);
+                    box-shadow: 0 0 0 3px rgba(91, 130, 214, .1);
+                    background: rgba(6, 11, 18, .88);
+                }
+                .vl-input::placeholder {
+                    color: rgba(170, 186, 209, .55);
+                }
+                .vl-input-code {
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    text-align: center;
+                    font-size: 1.18rem;
+                    letter-spacing: .34em;
+                    text-indent: .34em;
+                }
+
+                .vl-btn {
+                    width: 100%;
+                    border: 1px solid rgba(91, 130, 214, .5);
+                    border-radius: 12px;
+                    background: linear-gradient(145deg, rgba(14, 21, 30, .98), rgba(10, 15, 23, .98));
+                    color: #dbe5ff;
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.73rem;
+                    letter-spacing: .1em;
+                    text-transform: uppercase;
+                    font-weight: 500;
+                    padding: 12px 14px;
+                    cursor: pointer;
+                    transition: transform .15s, filter .2s;
+                }
+                .vl-btn:hover {
+                    background: linear-gradient(145deg, rgba(17, 27, 37, .99), rgba(13, 21, 31, .99));
+                    border-color: rgba(91, 130, 214, .74);
+                    filter: none;
+                    transform: translateY(-1px);
+                }
+                .vl-btn:disabled {
+                    opacity: .55;
+                    cursor: not-allowed;
+                    transform: none;
+                }
+                .vl-link-btn {
+                    background: transparent;
+                    border: 0;
+                    color: #9eb4ce;
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.64rem;
+                    letter-spacing: .05em;
+                    text-transform: uppercase;
+                    cursor: pointer;
+                    padding: 3px 0 0;
+                    transition: color .2s;
+                    width: fit-content;
+                }
+                .vl-link-btn:hover {
+                    color: #d4e4f8;
+                }
+
+                .vl-footer-note {
+                    margin-top: 2px;
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.6rem;
+                    color: rgba(157, 177, 201, .72);
+                    letter-spacing: .06em;
+                    text-transform: uppercase;
+                }
+
+                .vl-actions-dock {
+                    display: flex;
+                    gap: 10px;
+                    width: min(460px, 100%);
+                    margin: 0 auto;
+                }
+                .vl-void-cta {
+                    flex: 1;
+                    border: 1px solid rgba(148, 163, 184, .4);
+                    border-radius: 12px;
+                    height: 42px;
+                    background: linear-gradient(130deg, rgba(22, 30, 44, .94), rgba(16, 23, 35, .94));
+                    color: #e4eefc;
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.69rem;
+                    letter-spacing: .1em;
+                    text-transform: uppercase;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: border-color .2s, transform .15s, background .2s;
+                }
+                .vl-void-cta:hover {
+                    transform: translateY(-1px);
+                    border-color: rgba(91, 130, 214, .56);
+                }
+                .vl-void-cta.active {
+                    border-color: rgba(91, 130, 214, .62);
+                    background: linear-gradient(130deg, rgba(20, 38, 31, .9), rgba(13, 24, 20, .92));
+                }
+                .vl-void-cta-fill,
+                .vl-void-cta-corner-tr,
+                .vl-void-cta-corner-bl {
+                    display: none;
+                }
+                .vl-void-cta-label {
+                    line-height: 1;
+                }
+
+                .vl-logs-panel {
+                    position: absolute;
+                    left: 24px;
+                    bottom: 24px;
+                    width: min(840px, calc(100vw - 48px));
+                    max-height: min(58vh, 520px);
+                    border-radius: 18px;
+                    border: 1px solid var(--vl-border-strong);
+                    background:
+                        radial-gradient(500px 220px at 10% -10%, rgba(91, 130, 214, .09), transparent 72%),
+                        linear-gradient(160deg, rgba(10, 14, 22, .99), rgba(7, 11, 17, .99));
+                    box-shadow: 0 24px 52px rgba(0, 0, 0, .6);
+                    z-index: 14;
+                    display: flex;
+                    flex-direction: column;
+                    overflow: hidden;
+                    backdrop-filter: blur(8px);
+                }
+                .vl-logs-head {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 10px;
+                    padding: 12px 14px;
+                    border-bottom: 1px solid rgba(148, 163, 184, .23);
+                }
+                .vl-logs-title {
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.67rem;
+                    letter-spacing: .11em;
+                    text-transform: uppercase;
+                    color: #d8e7f9;
+                }
+                .vl-logs-actions {
+                    display: flex;
+                    gap: 8px;
+                }
+                .vl-log-clear {
+                    border: 1px solid rgba(148, 163, 184, .45);
+                    border-radius: 10px;
+                    background: rgba(19, 28, 42, .72);
+                    color: #dfebfb;
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.62rem;
+                    letter-spacing: .08em;
+                    text-transform: uppercase;
+                    padding: 7px 11px;
+                    cursor: pointer;
+                    transition: border-color .2s, background .2s;
+                }
+                .vl-log-clear:hover {
+                    border-color: rgba(91, 130, 214, .58);
+                    background: rgba(20, 34, 29, .62);
+                }
+                .vl-logs-list {
+                    padding: 12px 14px;
+                    overflow: auto;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                }
+                .vl-logs-item {
+                    border: 1px solid rgba(148, 163, 184, .18);
+                    border-radius: 10px;
+                    background: rgba(10, 15, 24, .62);
+                    padding: 9px 10px;
+                }
+                .vl-logs-main {
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.79rem;
+                    line-height: 1.6;
+                    color: #e5effc;
+                    white-space: pre-wrap;
+                    word-break: break-word;
+                }
+                .vl-logs-meta {
+                    margin-top: 6px;
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.73rem;
+                    line-height: 1.6;
+                    color: #b8cae0;
+                    white-space: pre-wrap;
+                    word-break: break-word;
+                }
+                .vl-logs-empty {
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.76rem;
+                    color: #9bb0ca;
+                    padding: 18px 6px;
+                }
+
+                .vl-loading {
+                    border: 1px solid rgba(148, 163, 184, .26);
+                    border-radius: 14px;
+                    background: rgba(8, 12, 20, .56);
+                    padding: 20px 16px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 16px;
+                }
+                .vl-spinner {
+                    width: 34px;
+                    height: 34px;
+                    border: 2px solid rgba(148, 163, 184, .28);
+                    border-top-color: #8fb0ff;
+                    border-radius: 50%;
+                    animation: vl-spin .9s linear infinite;
+                }
+                .vl-loading-text {
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.72rem;
+                    color: #d1e0f3;
+                    letter-spacing: .06em;
+                    text-transform: uppercase;
+                    text-align: center;
+                    line-height: 1.6;
+                }
+                .vl-cursor {
+                    margin-left: 2px;
+                    color: #8fb0ff;
+                    animation: vl-blink 1s step-end infinite;
+                }
+
+                .vl-error-line {
+                    border: 1px solid rgba(255, 122, 122, .46);
+                    border-radius: 10px;
+                    background: rgba(84, 22, 28, .35);
+                    color: #ffd0d0;
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.68rem;
+                    letter-spacing: .03em;
+                    line-height: 1.5;
+                    padding: 9px 10px;
+                    text-transform: uppercase;
+                }
+                .vl-success {
+                    width: 62px;
+                    height: 62px;
+                    border-radius: 999px;
+                    border: 1px solid rgba(91, 130, 214, .55);
+                    background: radial-gradient(circle at 35% 25%, rgba(91, 130, 214, .24), rgba(7, 10, 18, .72));
+                    color: #c3d2ff;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.55rem;
+                    animation: vl-success-pulse 1.45s ease infinite;
+                }
+
+                .vl-glitch::before,
+                .vl-glitch::after {
+                    content: attr(data-text);
+                    position: absolute;
+                    inset: 0;
+                }
+                .vl-glitch::before {
+                    color: rgba(120, 226, 255, .68);
+                    text-shadow: 2px 0 rgba(91, 130, 214, .25);
+                    animation: vl-glitch-a .14s steps(2) forwards;
+                }
+                .vl-glitch::after {
+                    color: rgba(255, 255, 255, .65);
+                    text-shadow: -2px 0 rgba(91, 130, 214, .22);
+                    animation: vl-glitch-b .14s steps(2) forwards;
+                }
+
+                @media (max-width: 1090px) {
+                    .vl-shell {
+                        grid-template-columns: 1fr;
+                        min-height: auto;
                     }
-                    .vl-logs-panel {
-                        left: 32px;
-                        bottom: 98px;
+                    .vl-brand {
+                        border-right: 0;
+                        border-bottom: 1px solid var(--vl-border);
+                        gap: 18px;
                     }
                     .vl-account-anchor {
-                        top: 24px;
-                        right: 24px;
+                        top: 18px;
+                        right: 18px;
+                    }
+                    .vl-main {
+                        padding-top: 88px;
+                    }
+                }
+                @media (max-width: 760px) {
+                    .vl-root {
+                        padding: 10px;
+                    }
+                    .vl-shell {
+                        width: calc(100vw - 20px);
+                        border-radius: 16px;
+                    }
+                    .vl-brand {
+                        padding: 18px 16px;
+                    }
+                    .vl-brand-copy {
+                        font-size: 0.92rem;
+                    }
+                    .vl-main {
+                        padding: 76px 16px 16px;
+                    }
+                    .vl-card {
+                        border-radius: 16px;
+                        padding: 16px;
+                    }
+                    .vl-card-title {
+                        font-size: 1.35rem;
+                    }
+                    .vl-actions-dock {
+                        width: 100%;
+                    }
+                    .vl-void-cta {
+                        height: 38px;
+                        font-size: 0.64rem;
+                        letter-spacing: .08em;
+                    }
+                    .vl-account-button {
+                        min-width: 54px;
+                        width: 54px;
+                        border-radius: 12px;
+                        justify-content: center;
+                        padding: 0;
+                    }
+                    .vl-account-pill-copy,
+                    .vl-account-pill-arrow {
+                        display: none;
+                    }
+                    .vl-logs-panel {
+                        left: 10px;
+                        right: 10px;
+                        width: auto;
+                        bottom: 10px;
+                        max-height: 62vh;
                     }
                 }
             `}</style>
 
-            {/* ── Backdrop ──────────────────────────────────────── */}
-            <div
-                className={`vl-root ${closing ? 'close' : ''}`}
-                style={{
-                    position: 'fixed', inset: 0, zIndex: 200,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'radial-gradient(ellipse at 50% 40%, #0d0618 0%, #020408 70%, #000 100%)',
-                    overflow: 'hidden',
-                }}
-            >
-                {/* Grid */}
-                <div style={{
-                    position: 'absolute', inset: 0, opacity: .035, pointerEvents: 'none',
-                    backgroundImage: `
-                        linear-gradient(rgba(139,92,246,1) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(139,92,246,1) 1px, transparent 1px)`,
-                    backgroundSize: '60px 60px',
-                }} />
+            <div className={`vl-root ${closing ? 'close' : ''}`}>
+                <div className="vl-back-grid" />
+                <div className="vl-bg-orb vl-bg-orb-a" />
+                <div className="vl-bg-orb vl-bg-orb-b" />
+                <div className="vl-scanline" />
 
-                {/* Scanline */}
-                <div className="vl-scanline" style={{
-                    position: 'absolute', left: 0, right: 0, height: '2px',
-                    background: 'linear-gradient(to right, transparent, rgba(139,92,246,.12), transparent)',
-                    pointerEvents: 'none',
-                }} />
-
-                {/* Corner marks */}
-                {[
-                    { top: 20, left: 20, borderTop: '1px solid', borderLeft: '1px solid' },
-                    { top: 20, right: 20, borderTop: '1px solid', borderRight: '1px solid' },
-                    { bottom: 20, left: 20, borderBottom: '1px solid', borderLeft: '1px solid' },
-                    { bottom: 20, right: 20, borderBottom: '1px solid', borderRight: '1px solid' },
-                ].map((s, i) => (
-                    <div key={i} style={{ position: 'absolute', width: 40, height: 40, borderColor: 'rgba(139,92,246,.28)', ...s }} />
-                ))}
-
-                {appUser && (
-                    <div className="vl-account-anchor" ref={accountPanelRef}>
-                        <button
-                            type="button"
-                            className="vl-account-button"
-                            id="void-google-account-toggle"
-                            onClick={() => setShowAccountPanel(prev => !prev)}
-                            title="Google account"
+                <div className="vl-shell">
+                    <section className="vl-brand">
+                        <div className="vl-kicker">Supabase-inspired Secure Entry</div>
+                        <div
+                            className={`vl-brand-title ${glitch ? 'vl-glitch' : ''}`}
+                            data-text="THE VOID"
                         >
-                            {appUser.picture ? (
-                                <img className="vl-account-avatar" src={appUser.picture} alt="Google account avatar" />
-                            ) : (
-                                <span className="vl-account-fallback">{accountInitial(appUser)}</span>
-                            )}
-                        </button>
+                            THE <span className="accent">VOID</span>
+                        </div>
+                        <p className="vl-brand-copy">
+                            Fast, clean access flow with Google session gate and Telegram secure channel.
+                            Full diagnostics stay available in one click.
+                        </p>
+                        <div className="vl-brand-points">
+                            <div className="vl-brand-point"><strong>Google Identity:</strong> verifies app account and loads cloud session.</div>
+                            <div className="vl-brand-point"><strong>Telegram MTProto:</strong> sign in with code and optional 2FA password.</div>
+                            <div className="vl-brand-point"><strong>Session Diagnostics:</strong> copy, inspect and clear the full log feed.</div>
+                        </div>
+                    </section>
 
-                        {showAccountPanel && (
-                            <div className="vl-account-panel" id="void-google-account-panel">
-                                <div className="vl-account-head">
-                                    <div className="vl-account-head-avatar">
-                                        {appUser.picture ? (
-                                            <img className="vl-account-avatar" src={appUser.picture} alt="Google account avatar" />
+                    <section className="vl-main">
+                        {appUser && (
+                            <div className="vl-account-anchor" ref={accountPanelRef}>
+                                <button
+                                    type="button"
+                                    className="vl-account-button"
+                                    id="void-google-account-toggle"
+                                    onClick={() => setShowAccountPanel(prev => !prev)}
+                                    title="Google account"
+                                >
+                                    <span className="vl-account-mini-avatar">
+                                        {appUser.picture && !accountImageFailed ? (
+                                            <img
+                                                className="vl-account-avatar"
+                                                src={appUser.picture}
+                                                alt="Google account avatar"
+                                                onError={() => setAccountImageFailed(true)}
+                                            />
                                         ) : (
                                             <span className="vl-account-fallback">{accountInitial(appUser)}</span>
                                         )}
-                                    </div>
-                                    <div style={{ minWidth: 0 }}>
-                                        <div className="vl-account-name">{safeShortText(appUser.name || 'Google User', 42)}</div>
-                                        <div className="vl-account-mail">{safeShortText(appUser.email, 64)}</div>
-                                    </div>
-                                </div>
-
-                                <div className="vl-account-info">
-                                    <div className="vl-account-row">
-                                        <span className="vl-account-key">User ID</span>
-                                        <span className="vl-account-value">{safeShortText(appUser.id, 18)}</span>
-                                    </div>
-                                    <div className="vl-account-row">
-                                        <span className="vl-account-key">Google Sub</span>
-                                        <span className="vl-account-value">{safeShortText(appUser.googleSub, 26)}</span>
-                                    </div>
-                                    <div className="vl-account-row">
-                                        <span className="vl-account-key">Status</span>
-                                        <span className="vl-account-value">AUTHORIZED</span>
-                                    </div>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    className="vl-account-signout"
-                                    id="void-google-account-signout"
-                                    onClick={handleAppSignOut}
-                                    disabled={isSigningOutApp}
-                                >
-                                    {isSigningOutApp ? '[ SIGNING OUT... ]' : '[ SIGN OUT GOOGLE ]'}
+                                    </span>
+                                    <span className="vl-account-pill-copy">
+                                        <span className="vl-account-pill-title">Google Connected</span>
+                                        <span className="vl-account-pill-mail">{safeShortText(appUser.email, 26)}</span>
+                                    </span>
+                                    <span className="vl-account-pill-arrow">{showAccountPanel ? '▾' : '▸'}</span>
                                 </button>
+
+                                {showAccountPanel && (
+                                    <div className="vl-account-panel" id="void-google-account-panel">
+                                        <div className="vl-account-top">
+                                            <div className="vl-account-top-title">Google Account Session</div>
+                                            <div className="vl-account-top-status">Authorized</div>
+                                        </div>
+
+                                        <div className="vl-account-body">
+                                            <div className="vl-account-head">
+                                                <div className="vl-account-head-avatar">
+                                                    {appUser.picture && !accountImageFailed ? (
+                                                        <img
+                                                            className="vl-account-avatar"
+                                                            src={appUser.picture}
+                                                            alt="Google account avatar"
+                                                            onError={() => setAccountImageFailed(true)}
+                                                        />
+                                                    ) : (
+                                                        <span className="vl-account-fallback">{accountInitial(appUser)}</span>
+                                                    )}
+                                                </div>
+                                                <div style={{ minWidth: 0 }}>
+                                                    <div className="vl-account-name">{safeShortText(appUser.name || 'Google User', 42)}</div>
+                                                    <div className="vl-account-mail">{safeShortText(appUser.email, 64)}</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="vl-account-info">
+                                                <div className="vl-account-row">
+                                                    <span className="vl-account-key">User ID</span>
+                                                    <span className="vl-account-value">{safeShortText(appUser.id, 18)}</span>
+                                                </div>
+                                                <div className="vl-account-row">
+                                                    <span className="vl-account-key">Google Sub</span>
+                                                    <span className="vl-account-value">{safeShortText(appUser.googleSub, 30)}</span>
+                                                </div>
+                                                <div className="vl-account-row">
+                                                    <span className="vl-account-key">Mail</span>
+                                                    <span className="vl-account-value">{safeShortText(appUser.email, 30)}</span>
+                                                </div>
+                                                <div className="vl-account-row">
+                                                    <span className="vl-account-key">Status</span>
+                                                    <span className="vl-account-value">AUTHORIZED</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            className="vl-account-signout"
+                                            id="void-google-account-signout"
+                                            onClick={handleAppSignOut}
+                                            disabled={isSigningOutApp}
+                                        >
+                                            {isSigningOutApp ? 'Signing out...' : 'Sign out Google'}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
-                    </div>
-                )}
 
-                <div className="vl-actions-dock">
-                    <button
-                        type="button"
-                        className={`vl-void-cta ${showLogs ? 'active' : ''}`}
-                        id="void-logs-toggle"
-                        onClick={() => setShowLogs(prev => !prev)}
-                    >
-                        <div className="vl-void-cta-fill" />
-                        <span className="vl-void-cta-label">[{showLogs ? '  HIDE LOGS  ' : '  LOGS  '}]</span>
-                        <div className="vl-void-cta-corner-tr" />
-                        <div className="vl-void-cta-corner-bl" />
-                    </button>
-                    <button
-                        type="button"
-                        className="vl-void-cta"
-                        onClick={handleClose}
-                    >
-                        <div className="vl-void-cta-fill" />
-                        <span className="vl-void-cta-label">[  ESC  ]</span>
-                        <div className="vl-void-cta-corner-tr" />
-                        <div className="vl-void-cta-corner-bl" />
-                    </button>
+                        <div className="vl-main-inner">
+                            <div className="vl-card">
+                                <div className="vl-card-head">
+                                    <span className="vl-card-tag">{stageTag}</span>
+                                    <div className="vl-card-title">Access Gateway</div>
+                                    <div className="vl-card-subtitle">
+                                        Authenticate your application profile and continue with Telegram secure session.
+                                    </div>
+                                </div>
+
+                                {(stage === 'check-auth' || stage === 'check' || stage === 'boot') && (
+                                    <div className="vl-panel vl-panel-status">
+                                        <div className="vl-panel-text">
+                                            {stage === 'check-auth' && (
+                                                <Typewriter text="> Checking Google identity provider session..." speed={24} />
+                                            )}
+                                            {stage === 'check' && (
+                                                <Typewriter text="> Checking existing Telegram authorization..." speed={24} />
+                                            )}
+                                            {stage === 'boot' && (
+                                                <Typewriter
+                                                    text="> No active Telegram session found. Provide phone number to establish secure channel."
+                                                    speed={18}
+                                                    onDone={() => setTimeout(() => setStage('phone'), 320)}
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {stage === 'appauth' && (
+                                    <div className="vl-panel">
+                                        <div className="vl-panel-text">
+                                            Google sign-in is required before Telegram login.
+                                            <br />
+                                            <span className="vl-panel-text-soft">
+                                                We use Google session to load your encrypted Telegram state from storage.
+                                            </span>
+                                        </div>
+
+                                        <button type="button" className="vl-btn" onClick={handleGoogleLogin} id="void-google-login">
+                                            Continue with Google
+                                        </button>
+                                    </div>
+                                )}
+
+                                {stage === 'phone' && (
+                                    <form className="vl-panel" onSubmit={handlePhoneSubmit}>
+                                        <div className="vl-field">
+                                            <label className="vl-label" htmlFor="void-phone-input">
+                                                Telegram phone number
+                                            </label>
+                                            <input
+                                                ref={phoneRef}
+                                                className="vl-input"
+                                                id="void-phone-input"
+                                                type="tel"
+                                                value={phone}
+                                                onChange={e => { setPhone(e.target.value); setError('') }}
+                                                placeholder="+7 999 123 45 67"
+                                                autoComplete="tel"
+                                            />
+                                        </div>
+
+                                        {error && <ErrorLine text={error} />}
+
+                                        <button type="submit" className="vl-btn" id="void-phone-submit">
+                                            Send code
+                                        </button>
+                                    </form>
+                                )}
+
+                                {stage === 'sending' && (
+                                    <Loading text={statusMsg} />
+                                )}
+
+                                {stage === 'code' && (
+                                    <form className="vl-panel" onSubmit={handleCodeSubmit}>
+                                        <div className="vl-panel-text">
+                                            Verification code sent to <strong>{phone}</strong>.
+                                            <br />
+                                            <span className="vl-panel-text-soft">Open Telegram app or SMS and enter the received code.</span>
+                                        </div>
+
+                                        <div className="vl-field">
+                                            <label className="vl-label" htmlFor="void-code-input">
+                                                One-time code
+                                            </label>
+                                            <input
+                                                ref={codeRef}
+                                                className="vl-input vl-input-code"
+                                                id="void-code-input"
+                                                type="text"
+                                                inputMode="numeric"
+                                                maxLength={8}
+                                                value={code}
+                                                onChange={e => { setCode(e.target.value.replace(/\D/g, '')); setError('') }}
+                                                placeholder="_ _ _ _ _ _"
+                                            />
+                                        </div>
+
+                                        {error && <ErrorLine text={error} />}
+
+                                        <button type="submit" className="vl-btn" id="void-code-submit">
+                                            Verify code
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="vl-link-btn"
+                                            onClick={() => { setStage('phone'); setCode(''); setError('') }}
+                                        >
+                                            Change phone number
+                                        </button>
+                                    </form>
+                                )}
+
+                                {stage === 'verifying' && (
+                                    <Loading text={statusMsg} />
+                                )}
+
+                                {stage === 'password' && (
+                                    <form className="vl-panel" onSubmit={handle2FASubmit}>
+                                        <div className="vl-panel-text">
+                                            Two-factor authentication is enabled for this Telegram account.
+                                            <br />
+                                            <span className="vl-panel-text-soft">Enter your Telegram cloud password to continue.</span>
+                                        </div>
+
+                                        <div className="vl-field">
+                                            <label className="vl-label" htmlFor="void-2fa-input">
+                                                Cloud password
+                                            </label>
+                                            <input
+                                                ref={twofaRef}
+                                                className="vl-input"
+                                                id="void-2fa-input"
+                                                type="password"
+                                                value={twofa}
+                                                onChange={e => { setTwofa(e.target.value); setError('') }}
+                                                placeholder="••••••••"
+                                                autoComplete="current-password"
+                                            />
+                                        </div>
+
+                                        {error && <ErrorLine text={error} />}
+
+                                        <button type="submit" className="vl-btn" id="void-2fa-submit">
+                                            Verify and enter
+                                        </button>
+                                    </form>
+                                )}
+
+                                {stage === 'verifying2fa' && (
+                                    <Loading text={statusMsg} />
+                                )}
+
+                                {stage === 'success' && (
+                                    <div className="vl-panel" style={{ alignItems: 'center', textAlign: 'center' }}>
+                                        <div className="vl-success">✓</div>
+                                        <div className="vl-panel-text">
+                                            Connection established.
+                                            <br />
+                                            <span className="vl-panel-text-soft">Redirecting to your workspace...</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {(stage === 'phone' || stage === 'code' || stage === 'password') && (
+                                    <div className="vl-footer-note">
+                                        Telegram MTProto · End-to-end encrypted
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="vl-actions-dock">
+                                <button
+                                    type="button"
+                                    className={`vl-void-cta ${showLogs ? 'active' : ''}`}
+                                    id="void-logs-toggle"
+                                    onClick={() => setShowLogs(prev => !prev)}
+                                >
+                                    <span className="vl-void-cta-label">{showLogs ? 'Hide logs' : 'Logs'}</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    className="vl-void-cta"
+                                    onClick={handleClose}
+                                >
+                                    <span className="vl-void-cta-label">Esc</span>
+                                </button>
+                            </div>
+                        </div>
+                    </section>
                 </div>
 
                 {showLogs && (
                     <div className="vl-logs-panel" id="void-logs-panel">
                         <div className="vl-logs-head">
-                            <span>SESSION DIAGNOSTICS</span>
+                            <span className="vl-logs-title">Session Diagnostics</span>
                             <div className="vl-logs-actions">
                                 <button
                                     type="button"
@@ -1246,10 +1933,10 @@ export default function VoidLogin() {
                                     onClick={handleCopyLogs}
                                 >
                                     {copyLogsState === 'ok'
-                                        ? '[ COPIED ]'
+                                        ? 'Copied'
                                         : copyLogsState === 'error'
-                                            ? '[ COPY FAILED ]'
-                                            : '[ COPY ALL ]'}
+                                            ? 'Copy failed'
+                                            : 'Copy all'}
                                 </button>
                                 <button
                                     type="button"
@@ -1261,15 +1948,13 @@ export default function VoidLogin() {
                                         appendLog('INFO', 'LOG BUFFER CLEARED')
                                     }}
                                 >
-                                    [ CLEAR ]
+                                    Clear
                                 </button>
                             </div>
                         </div>
                         <div className="vl-logs-list">
                             {logs.length === 0 && (
-                                <div className="vl-logs-main" style={{ color: 'rgba(255,255,255,.6)' }}>
-                                    NO LOGS YET.
-                                </div>
+                                <div className="vl-logs-empty">No logs yet.</div>
                             )}
 
                             {logs.slice().reverse().map(entry => (
@@ -1278,7 +1963,7 @@ export default function VoidLogin() {
                                         <span style={{ color: levelColor(entry.level), marginRight: 10 }}>
                                             [{entry.level}]
                                         </span>
-                                        <span style={{ color: 'rgba(255,255,255,.55)', marginRight: 10 }}>
+                                        <span style={{ color: 'rgba(201, 218, 239, .72)', marginRight: 10 }}>
                                             {formatLogTime(entry.timestamp)}
                                         </span>
                                         <span>{entry.message}</span>
@@ -1291,275 +1976,6 @@ export default function VoidLogin() {
                         </div>
                     </div>
                 )}
-
-                {/* ── Content ───────────────────────────────────── */}
-                <div style={{
-                    width: '100%', maxWidth: 420, padding: '0 32px',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 40,
-                }}>
-
-                    {/* Title */}
-                    <div style={{ textAlign: 'center' }}>
-                        <div
-                            className={glitch ? 'vl-glitch' : ''}
-                            data-text="THE VOID"
-                            style={{
-                                position: 'relative',
-                                fontFamily: 'Courier New, monospace',
-                                fontSize: 'clamp(2.4rem, 7vw, 3.8rem)',
-                                fontWeight: 700,
-                                letterSpacing: '.35em',
-                                color: 'rgba(167,139,250,.2)',
-                                textShadow: '0 0 80px rgba(139,92,246,.22)',
-                                userSelect: 'none', lineHeight: 1,
-                            }}
-                        >
-                            THE VOID
-                        </div>
-                        <div className="vl-flicker" style={{
-                            fontFamily: 'Courier New, monospace',
-                            fontSize: '.58rem', letterSpacing: '.5em',
-                            color: 'rgba(139,92,246,.62)', marginTop: 12,
-                            textTransform: 'uppercase',
-                        }}>
-                            SECURE ACCESS TERMINAL
-                        </div>
-                    </div>
-
-                    {/* ── check / boot ───────────────────────────── */}
-                    {(stage === 'check-auth' || stage === 'check' || stage === 'boot') && (
-                        <div className="vl-panel" style={{
-                            fontFamily: 'Courier New, monospace', fontSize: '.7rem',
-                            color: 'rgba(139,92,246,.75)', letterSpacing: '.1em', lineHeight: 1.8,
-                            width: '100%',
-                        }}>
-                            {stage === 'check-auth' && (
-                                <Typewriter text="> CHECKING IDENTITY PROVIDER SESSION..." speed={25} />
-                            )}
-                            {stage === 'check' && (
-                                <Typewriter text="> CHECKING EXISTING TELEGRAM SESSION..." speed={25} />
-                            )}
-                            {stage === 'boot' && (
-                                <Typewriter
-                                    text="> NO TELEGRAM SESSION FOUND. IDENTITY VERIFICATION REQUIRED. PROVIDE YOUR TELEGRAM NUMBER TO ESTABLISH SECURE CHANNEL."
-                                    speed={18}
-                                    onDone={() => setTimeout(() => setStage('phone'), 350)}
-                                />
-                            )}
-                        </div>
-                    )}
-
-                    {/* ── app auth gate ───────────────────────────── */}
-                    {stage === 'appauth' && (
-                        <div className="vl-panel" style={{
-                            width: '100%',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 24,
-                        }}>
-                            <div style={{
-                                fontFamily: 'Courier New, monospace', fontSize: '.62rem',
-                                color: 'rgba(139,92,246,.7)', letterSpacing: '.09em', lineHeight: 1.8,
-                            }}>
-                                &gt; GOOGLE AUTHORIZATION REQUIRED
-                                <br />
-                                <span style={{ fontSize: '.55rem', color: 'rgba(139,92,246,.46)' }}>
-                                    SIGN IN WITH GOOGLE TO LOAD YOUR CLOUD TELEGRAM SESSION FROM SECURE STORAGE
-                                </span>
-                            </div>
-
-                            <button type="button" className="vl-btn" onClick={handleGoogleLogin} id="void-google-login">
-                                CONTINUE WITH GOOGLE
-                            </button>
-                        </div>
-                    )}
-
-                    {/* ── phone ──────────────────────────────────── */}
-                    {stage === 'phone' && (
-                        <form className="vl-panel" onSubmit={handlePhoneSubmit}
-                            style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 24 }}>
-
-                            <div>
-                                <div style={{
-                                    fontFamily: 'Courier New, monospace', fontSize: '.58rem',
-                                    color: 'rgba(139,92,246,.62)', letterSpacing: '.4em',
-                                    textTransform: 'uppercase', marginBottom: 10,
-                                }}>
-                                    &gt; SIGNAL FREQUENCY (PHONE NUMBER)
-                                </div>
-                                <input
-                                    ref={phoneRef}
-                                    className="vl-input"
-                                    id="void-phone-input"
-                                    type="tel"
-                                    value={phone}
-                                    onChange={e => { setPhone(e.target.value); setError('') }}
-                                    placeholder="+7 999 123 45 67"
-                                    autoComplete="tel"
-                                />
-                            </div>
-
-                            {error && <ErrorLine text={error} />}
-
-                            <button type="submit" className="vl-btn" id="void-phone-submit">
-                                TRANSMIT
-                            </button>
-                        </form>
-                    )}
-
-                    {/* ── sending ────────────────────────────────── */}
-                    {stage === 'sending' && (
-                        <Loading text={statusMsg} />
-                    )}
-
-                    {/* ── code ───────────────────────────────────── */}
-                    {stage === 'code' && (
-                        <form className="vl-panel" onSubmit={handleCodeSubmit}
-                            style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 24 }}>
-
-                            <div style={{
-                                fontFamily: 'Courier New, monospace', fontSize: '.63rem',
-                                color: 'rgba(139,92,246,.66)', letterSpacing: '.08em', lineHeight: 1.7,
-                            }}>
-                                &gt; CODE SENT TO <span style={{ color: '#a78bfa' }}>{phone}</span>
-                                <br />
-                                <span style={{ fontSize: '.55rem', color: 'rgba(139,92,246,.46)' }}>
-                                    CHECK TELEGRAM APP OR SMS
-                                </span>
-                            </div>
-
-                            <div>
-                                <div style={{
-                                    fontFamily: 'Courier New, monospace', fontSize: '.58rem',
-                                    color: 'rgba(139,92,246,.62)', letterSpacing: '.4em',
-                                    textTransform: 'uppercase', marginBottom: 10,
-                                }}>
-                                    &gt; ENTER QUANTUM KEY
-                                </div>
-                                <input
-                                    ref={codeRef}
-                                    className="vl-input"
-                                    id="void-code-input"
-                                    type="text"
-                                    inputMode="numeric"
-                                    maxLength={8}
-                                    value={code}
-                                    onChange={e => { setCode(e.target.value.replace(/\D/g, '')); setError('') }}
-                                    placeholder="_ _ _ _ _ _"
-                                    style={{ letterSpacing: '.55em', fontSize: '1.35rem', textAlign: 'center' }}
-                                />
-                            </div>
-
-                            {error && <ErrorLine text={error} />}
-
-                            <button type="submit" className="vl-btn" id="void-code-submit">
-                                AUTHENTICATE
-                            </button>
-                            <button type="button" className="vl-link-btn"
-                                onClick={() => { setStage('phone'); setCode(''); setError('') }}>
-                                ← CHANGE FREQUENCY
-                            </button>
-                        </form>
-                    )}
-
-                    {/* ── verifying ──────────────────────────────── */}
-                    {stage === 'verifying' && (
-                        <Loading text={statusMsg} />
-                    )}
-
-                    {/* ── 2FA password ────────────────────────────── */}
-                    {stage === 'password' && (
-                        <form className="vl-panel" onSubmit={handle2FASubmit}
-                            style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 24 }}>
-
-                            <div style={{
-                                fontFamily: 'Courier New, monospace', fontSize: '.63rem',
-                                color: 'rgba(139,92,246,.66)', letterSpacing: '.08em', lineHeight: 1.7,
-                            }}>
-                                &gt; TWO-FACTOR AUTHENTICATION ENABLED
-                                <br />
-                                <span style={{ fontSize: '.55rem', color: 'rgba(139,92,246,.46)' }}>
-                                    ENTER YOUR TELEGRAM CLOUD PASSWORD
-                                </span>
-                            </div>
-
-                            <div>
-                                <div style={{
-                                    fontFamily: 'Courier New, monospace', fontSize: '.58rem',
-                                    color: 'rgba(139,92,246,.62)', letterSpacing: '.4em',
-                                    textTransform: 'uppercase', marginBottom: 10,
-                                }}>
-                                    &gt; CLOUD PASSWORD
-                                </div>
-                                <input
-                                    ref={twofaRef}
-                                    className="vl-input"
-                                    id="void-2fa-input"
-                                    type="password"
-                                    value={twofa}
-                                    onChange={e => { setTwofa(e.target.value); setError('') }}
-                                    placeholder="••••••••"
-                                    autoComplete="current-password"
-                                />
-                            </div>
-
-                            {error && <ErrorLine text={error} />}
-
-                            <button type="submit" className="vl-btn" id="void-2fa-submit">
-                                VERIFY &amp; ENTER
-                            </button>
-                        </form>
-                    )}
-
-                    {/* ── verifying 2FA ───────────────────────────── */}
-                    {stage === 'verifying2fa' && (
-                        <Loading text={statusMsg} />
-                    )}
-
-                    {/* ── success ────────────────────────────────── */}
-                    {stage === 'success' && (
-                        <div className="vl-panel" style={{
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24,
-                            width: '100%',
-                        }}>
-                            <div style={{
-                                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
-                            }}>
-                                <div className="vl-success" style={{
-                                    width: 56, height: 56,
-                                    border: '1px solid rgba(139,92,246,.6)', borderRadius: '50%',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: '#a78bfa', fontSize: '1.5rem',
-                                    boxShadow: '0 0 30px rgba(139,92,246,.3)',
-                                }}>
-                                    ✦
-                                </div>
-                                <div style={{
-                                    fontFamily: 'Courier New, monospace', fontSize: '.7rem',
-                                    color: 'rgba(167,139,250,.85)', letterSpacing: '.38em',
-                                    textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.9,
-                                }}>
-                                    CONNECTION ESTABLISHED
-                                    <br />
-                                    <span style={{ color: 'rgba(139,92,246,.4)', fontSize: '.55rem', letterSpacing: '.2em' }}>
-                                        WARPING INTO THE VOID...
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Footer */}
-                    {(stage === 'phone' || stage === 'code' || stage === 'password') && (
-                        <div style={{
-                            fontFamily: 'Courier New, monospace', fontSize: '.52rem',
-                            color: 'rgba(139,92,246,.32)', letterSpacing: '.18em',
-                            textTransform: 'uppercase', textAlign: 'center',
-                        }}>
-                            TELEGRAM MTProto · END-TO-END ENCRYPTED
-                        </div>
-                    )}
-                </div>
             </div>
         </>
     )
@@ -1569,21 +1985,10 @@ export default function VoidLogin() {
 
 function Loading({ text }) {
     return (
-        <div className="vl-panel" style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 22,
-        }}>
-            <div className="vl-spinner" style={{
-                width: 36, height: 36,
-                border: '1px solid rgba(139,92,246,.15)',
-                borderTop: '1px solid rgba(139,92,246,.85)',
-                borderRadius: '50%',
-            }} />
-            <div style={{
-                fontFamily: 'Courier New, monospace', fontSize: '.63rem',
-                color: 'rgba(139,92,246,.6)', letterSpacing: '.28em', textTransform: 'uppercase',
-                textAlign: 'center',
-            }}>
-                <Typewriter text={text} speed={30} />
+        <div className="vl-loading">
+            <div className="vl-spinner" />
+            <div className="vl-loading-text">
+                <Typewriter text={text} speed={28} />
             </div>
         </div>
     )
@@ -1591,12 +1996,8 @@ function Loading({ text }) {
 
 function ErrorLine({ text }) {
     return (
-        <div style={{
-            fontFamily: 'Courier New, monospace', fontSize: '.6rem',
-            color: '#f87171', letterSpacing: '.15em', textTransform: 'uppercase',
-            borderLeft: '2px solid rgba(248,113,113,.4)', paddingLeft: 10,
-        }}>
-            ! {text}
+        <div className="vl-error-line">
+            {text}
         </div>
     )
 }

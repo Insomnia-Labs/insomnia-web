@@ -41,6 +41,7 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
     const { raycaster, pointer, camera } = useThree()
     const section = useStore((state) => state.section)
     const setSection = useStore((state) => state.setSection)
+    const showVoidLogin = useStore((state) => state.showVoidLogin)
 
     // Store states for visibility
     const isDiving = useStore((state) => state.isDiving)
@@ -131,7 +132,9 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
     // Cache Vector3 for scale lerping to avoid GC
     const targetVec = useMemo(() => new THREE.Vector3(), [])
 
-    const handleClick = () => {
+    const handleClick = (e) => {
+        e.stopPropagation()
+        if (showVoidLogin) return
         // Allow clicking on mobile, but keep magnetic attraction disabled elsewhere
 
         if (!isActive) {
@@ -278,8 +281,10 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
 
             // Manual raycasting check for static cursor (optimized - every 6th frame)
             if (hitboxRef.current && Math.floor(state.clock.elapsedTime * 60) % 6 === 0) {
-                // Skip raycasting on mobile
-                if (!isMobile) {
+                if (showVoidLogin) {
+                    if (hovered) setHovered(false)
+                } else if (!isMobile) {
+                    // Skip raycasting on mobile
                     raycaster.setFromCamera(pointer, camera)
                     const intersects = raycaster.intersectObject(hitboxRef.current, true)
 
@@ -333,13 +338,18 @@ const SphereButton = ({ baseAngle, radius, icon: Icon, label, id, isActive }) =>
                 onClick={handleClick}
                 onPointerOver={(e) => {
                     e.stopPropagation()
+                    if (showVoidLogin) return
                     setHovered(true)
                 }}
                 onPointerOut={(e) => {
                     e.stopPropagation()
+                    if (showVoidLogin) return
                     setHovered(false)
                 }}
-                onPointerMove={(e) => e.stopPropagation()}
+                onPointerMove={(e) => {
+                    e.stopPropagation()
+                    if (showVoidLogin) return
+                }}
             >
                 <sphereGeometry args={[0.25, 8, 8]} />
                 <meshBasicMaterial

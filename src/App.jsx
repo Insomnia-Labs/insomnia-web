@@ -69,8 +69,9 @@ function App() {
                 depth: true
               }}
               camera={{ position: [25, 12, 25], fov: 45 }}
-              eventSource={containerRef}
-              eventPrefix="client"
+              {...(!blockCanvas
+                ? { eventSource: containerRef, eventPrefix: 'client' }
+                : {})}
               style={{ pointerEvents: blockCanvas ? 'none' : 'auto' }}
             >
               <CameraController />

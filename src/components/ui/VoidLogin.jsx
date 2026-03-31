@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useStore } from '../../store/useStore'
 import { sendCode, signIn, signInWith2FA, isAuthorized } from '../../services/telegramClient'
 import { getAuthMe, getGoogleLoginStartUrl, logoutAppSession } from '../../services/authClient'
+import VoidOceanBackground from './VoidOceanBackground'
 
 /* ─────────────────────────────────────────────────────────────
    Tiny helpers
@@ -308,6 +309,7 @@ function accountInitial(user) {
 
 export default function VoidLogin() {
     const { showVoidLogin, setShowVoidLogin } = useStore()
+    const activePreset = 'Dark'
 
     /* stages: 'check-auth' | 'appauth' | 'check' | 'boot' | 'phone' | 'sending' | 'code' | 'verifying' | 'password' | 'verifying2fa' | 'success' */
     const [stage, setStage] = useState('boot')
@@ -315,10 +317,8 @@ export default function VoidLogin() {
     const [code, setCode] = useState('')
     const [twofa, setTwofa] = useState('')
     const [error, setError] = useState('')
-    const [glitch, setGlitch] = useState(false)
     const [closing, setClosing] = useState(false)
     const [statusMsg, setStatusMsg] = useState('')
-    const [showLogs, setShowLogs] = useState(false)
     const [logs, setLogs] = useState([])
     const [copyLogsState, setCopyLogsState] = useState('idle')
     const [appUser, setAppUser] = useState(null)
@@ -377,16 +377,6 @@ export default function VoidLogin() {
         }
     }, [showAccountPanel])
 
-    /* Periodic glitch */
-    useEffect(() => {
-        if (!showVoidLogin) return
-        const id = setInterval(() => {
-            setGlitch(true)
-            setTimeout(() => setGlitch(false), 160)
-        }, 3200)
-        return () => clearInterval(id)
-    }, [showVoidLogin])
-
     /* Auto-focus */
     useEffect(() => {
         if (stage === 'phone') setTimeout(() => phoneRef.current?.focus(), 80)
@@ -399,7 +389,6 @@ export default function VoidLogin() {
         if (!showVoidLogin) return
         logIdRef.current = 0
         setLogs([])
-        setShowLogs(false)
         setCopyLogsState('idle')
         setAppUser(null)
         setShowAccountPanel(false)
@@ -567,12 +556,6 @@ export default function VoidLogin() {
     if (!showVoidLogin) return null
 
     /* ── Helpers ────────────────────────────────────────── */
-
-    const handleClose = () => {
-        setShowAccountPanel(false)
-        setClosing(true)
-        setTimeout(() => setShowVoidLogin(false), 600)
-    }
 
     const handleGoogleLogin = () => {
         setShowAccountPanel(false)
@@ -752,12 +735,14 @@ export default function VoidLogin() {
                     --vl-accent: #7a8291;
                     --vl-accent-soft: rgba(122, 130, 145, 0.16);
                     --vl-danger: #ff7a7a;
+                    --vl-horizon-rgb: 122, 130, 145;
+                    --vl-cloud-rgb: 34, 35, 51;
+                    --vl-dark-horizon: #4476ff;
+                    --vl-dark-cloud: #080810;
+                    --vl-dark-core: #000002;
+                    --vl-dark-tip: #222233;
                 }
 
-                @keyframes vl-fade-in {
-                    from { opacity: 0; transform: translateY(10px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
                 @keyframes vl-blink {
                     0%, 50% { opacity: 1; }
                     51%, 100% { opacity: 0; }
@@ -789,7 +774,42 @@ export default function VoidLogin() {
                     0%, 100% { box-shadow: 0 0 0 0 rgba(122, 130, 145, .28); }
                     50% { box-shadow: 0 0 0 12px rgba(122, 130, 145, 0); }
                 }
-
+                @keyframes vl-backdrop-in {
+                    from { opacity: 0; }
+                    to { opacity: .42; }
+                }
+                @keyframes vl-backdrop-out {
+                    from { opacity: .42; }
+                    to { opacity: 0; }
+                }
+                @keyframes vl-ocean-in {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes vl-ocean-out {
+                    from { opacity: 1; }
+                    to { opacity: 0; }
+                }
+                @keyframes vl-shell-in {
+                    from {
+                        transform: translate3d(0, 14px, 0);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translate3d(0, 0, 0);
+                        opacity: 1;
+                    }
+                }
+                @keyframes vl-shell-out {
+                    from {
+                        transform: translate3d(0, 0, 0);
+                        opacity: 1;
+                    }
+                    to {
+                        transform: translate3d(0, 8px, 0);
+                        opacity: 0;
+                    }
+                }
                 .vl-root {
                     position: fixed;
                     inset: 0;
@@ -798,83 +818,60 @@ export default function VoidLogin() {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    background:
-                        radial-gradient(1200px 700px at 12% -10%, rgba(122, 130, 145, .1), transparent 62%),
-                        radial-gradient(900px 600px at 100% 0%, rgba(33, 52, 79, .2), transparent 68%),
-                        linear-gradient(170deg, var(--vl-bg-b), var(--vl-bg-a) 68%);
-                    animation: vl-fade-in .45s ease forwards;
+                    background: transparent;
                     padding: 24px;
+                    isolation: isolate;
                 }
-                .vl-root.close {
-                    animation: vl-fade-in .45s ease reverse forwards;
-                }
-                .vl-back-grid {
+                .vl-backdrop {
                     position: absolute;
                     inset: 0;
                     pointer-events: none;
-                    opacity: .14;
-                    background-image:
-                        linear-gradient(rgba(86, 102, 131, .12) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(86, 102, 131, .1) 1px, transparent 1px);
-                    background-size: 64px 64px;
-                    mask-image: radial-gradient(circle at 50% 40%, rgba(0, 0, 0, .75), transparent 80%);
+                    background: #000;
+                    z-index: 0;
+                    animation: vl-backdrop-in .42s ease-out both;
                 }
-                .vl-bg-orb {
+                .vl-root.close .vl-backdrop {
+                    animation: vl-backdrop-out .24s ease-in both;
+                }
+                .vl-root[data-active-preset='Dark'] {
+                    --vl-horizon-rgb: 68, 118, 255;
+                    --vl-cloud-rgb: 34, 35, 51;
+                    --vl-bg-b: var(--vl-dark-cloud);
+                    --vl-bg-c: var(--vl-dark-tip);
+                    --vl-bg-a: var(--vl-dark-core);
+                }
+                .vl-ocean-canvas {
                     position: absolute;
-                    border-radius: 999px;
-                    filter: blur(90px);
+                    inset: 0;
                     pointer-events: none;
-                    animation: vl-orb-float 9s ease-in-out infinite;
+                    z-index: 1;
+                    opacity: 0;
+                    will-change: opacity;
+                    animation: vl-ocean-in .5s ease-out .06s both;
                 }
-                .vl-bg-orb-a {
-                    width: 360px;
-                    height: 360px;
-                    left: -100px;
-                    top: -120px;
-                    background: rgba(122, 130, 145, .14);
+                .vl-root.close .vl-ocean-canvas {
+                    animation: vl-ocean-out .2s ease-in both;
                 }
-                .vl-bg-orb-b {
-                    width: 280px;
-                    height: 280px;
-                    right: -70px;
-                    bottom: -110px;
-                    background: rgba(60, 109, 188, .12);
-                    animation-delay: -4s;
-                }
-                .vl-scanline {
-                    position: absolute;
-                    left: 0;
-                    right: 0;
-                    height: 2px;
-                    background: linear-gradient(to right, transparent, rgba(122, 130, 145, .24), transparent);
-                    pointer-events: none;
-                    opacity: .34;
-                    animation: vl-scanline 9s linear infinite;
-                }
-
                 .vl-shell {
-                    width: min(1180px, calc(100vw - 48px));
-                    min-height: min(760px, calc(100vh - 48px));
-                    border: 1px solid var(--vl-border);
-                    border-radius: 26px;
-                    background:
-                        linear-gradient(140deg, rgba(7, 10, 15, .98), rgba(5, 8, 13, .98) 42%, rgba(3, 5, 9, .99));
-                    box-shadow:
-                        0 28px 70px rgba(0, 0, 0, .66),
-                        inset 0 1px 0 rgba(255, 255, 255, .03);
-                    backdrop-filter: blur(8px);
-                    display: grid;
-                    grid-template-columns: 1.1fr 1fr;
-                    overflow: hidden;
+                    width: min(720px, calc(100vw - 24px));
+                    min-height: auto;
+                    border: 0;
+                    border-radius: 0;
+                    background: transparent;
+                    box-shadow: none;
+                    backdrop-filter: none;
+                    display: block;
+                    overflow: visible;
                     position: relative;
+                    z-index: 10;
+                    will-change: transform, opacity;
+                    animation: vl-shell-in .4s cubic-bezier(.22, .61, .36, 1) .04s both;
+                }
+                .vl-root.close .vl-shell {
+                    animation: vl-shell-out .2s ease-in both;
                 }
                 .vl-shell::after {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    pointer-events: none;
-                    border-radius: 26px;
-                    border: 1px solid rgba(255, 255, 255, .03);
+                    display: none;
                 }
 
                 .vl-brand {
@@ -946,18 +943,21 @@ export default function VoidLogin() {
 
                 .vl-main {
                     position: relative;
-                    padding: clamp(24px, 4vw, 40px);
+                    padding: 8px;
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
-                    gap: 16px;
+                    gap: 10px;
+                }
+                .vl-main.vl-main-only {
+                    padding: 8px;
                 }
                 .vl-main-inner {
-                    width: min(460px, 100%);
-                    margin: 0 auto;
+                    width: 100%;
+                    margin: 0;
                     display: flex;
                     flex-direction: column;
-                    gap: 16px;
+                    gap: 10px;
                 }
 
                 .vl-account-anchor {
@@ -1167,31 +1167,32 @@ export default function VoidLogin() {
 
                 .vl-card {
                     width: 100%;
-                    border-radius: 22px;
-                    border: 1px solid var(--vl-border);
+                    border-radius: 16px;
+                    border: 1px solid rgba(129, 140, 158, .28);
                     background:
-                        radial-gradient(560px 240px at 20% -10%, rgba(122, 130, 145, .09), transparent 72%),
-                        linear-gradient(150deg, rgba(14, 20, 30, .98), rgba(10, 15, 23, .98));
+                        radial-gradient(520px 240px at 20% -10%, rgba(122, 130, 145, .07), transparent 74%),
+                        linear-gradient(150deg, rgba(12, 18, 28, .5), rgba(8, 12, 19, .42));
                     box-shadow:
-                        0 20px 46px rgba(0, 0, 0, .42),
-                        inset 0 1px 0 rgba(255, 255, 255, .03);
-                    padding: 22px;
+                        0 14px 30px rgba(0, 0, 0, .28),
+                        inset 0 1px 0 rgba(255, 255, 255, .02);
+                    backdrop-filter: none;
+                    padding: 18px;
                     display: flex;
                     flex-direction: column;
-                    gap: 20px;
+                    gap: 14px;
                 }
                 .vl-card-head {
                     display: flex;
                     flex-direction: column;
-                    gap: 10px;
+                    gap: 9px;
                 }
                 .vl-card-tag {
                     width: fit-content;
-                    border: 1px solid rgba(122, 130, 145, .45);
-                    background: rgba(122, 130, 145, .1);
+                    border: 1px solid rgba(122, 130, 145, .4);
+                    background: rgba(122, 130, 145, .08);
                     color: #b8c1cf;
                     border-radius: 999px;
-                    padding: 4px 9px;
+                    padding: 4px 10px;
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
                     font-size: 0.6rem;
                     letter-spacing: .08em;
@@ -1199,7 +1200,7 @@ export default function VoidLogin() {
                 }
                 .vl-card-title {
                     font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
-                    font-size: 1.6rem;
+                    font-size: 1.55rem;
                     letter-spacing: .01em;
                     color: #d0d5de;
                     font-weight: 700;
@@ -1207,7 +1208,7 @@ export default function VoidLogin() {
                 }
                 .vl-card-subtitle {
                     font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
-                    font-size: 0.94rem;
+                    font-size: 0.95rem;
                     color: var(--vl-muted);
                     line-height: 1.55;
                     max-width: 44ch;
@@ -1215,21 +1216,20 @@ export default function VoidLogin() {
                 .vl-panel {
                     display: flex;
                     flex-direction: column;
-                    gap: 16px;
-                    animation: vl-fade-in .28s ease forwards;
+                    gap: 14px;
                 }
                 .vl-panel-status {
                     border: 1px solid rgba(148, 163, 184, .22);
-                    border-radius: 14px;
-                    background: rgba(6, 10, 16, .72);
+                    border-radius: 12px;
+                    background: rgba(6, 10, 16, .38);
                     padding: 14px;
                     min-height: 84px;
                     justify-content: center;
                 }
                 .vl-panel-text {
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
-                    font-size: 0.78rem;
-                    line-height: 1.68;
+                    font-size: 0.79rem;
+                    line-height: 1.62;
                     letter-spacing: .02em;
                     color: #bcc4cf;
                 }
@@ -1252,9 +1252,9 @@ export default function VoidLogin() {
                 }
                 .vl-input {
                     width: 100%;
-                    border: 1px solid rgba(148, 163, 184, .34);
+                    border: 1px solid rgba(148, 163, 184, .3);
                     border-radius: 12px;
-                    background: rgba(5, 9, 15, .8);
+                    background: rgba(5, 9, 15, .54);
                     color: #d0d5de;
                     font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
                     font-size: 1.02rem;
@@ -1267,7 +1267,7 @@ export default function VoidLogin() {
                 .vl-input:focus {
                     border-color: rgba(122, 130, 145, .62);
                     box-shadow: 0 0 0 3px rgba(122, 130, 145, .1);
-                    background: rgba(6, 11, 18, .88);
+                    background: rgba(6, 11, 18, .62);
                 }
                 .vl-input::placeholder {
                     color: rgba(122, 136, 156, .55);
@@ -1275,19 +1275,19 @@ export default function VoidLogin() {
                 .vl-input-code {
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
                     text-align: center;
-                    font-size: 1.18rem;
+                    font-size: 1.12rem;
                     letter-spacing: .34em;
                     text-indent: .34em;
                 }
 
                 .vl-btn {
                     width: 100%;
-                    border: 1px solid rgba(122, 130, 145, .5);
+                    border: 1px solid rgba(122, 130, 145, .42);
                     border-radius: 12px;
-                    background: linear-gradient(145deg, rgba(14, 21, 30, .98), rgba(10, 15, 23, .98));
+                    background: linear-gradient(145deg, rgba(14, 21, 30, .48), rgba(10, 15, 23, .4));
                     color: #c2c9d4;
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
-                    font-size: 0.73rem;
+                    font-size: 0.74rem;
                     letter-spacing: .1em;
                     text-transform: uppercase;
                     font-weight: 500;
@@ -1296,8 +1296,8 @@ export default function VoidLogin() {
                     transition: transform .15s, filter .2s;
                 }
                 .vl-btn:hover {
-                    background: linear-gradient(145deg, rgba(17, 27, 37, .99), rgba(13, 21, 31, .99));
-                    border-color: rgba(122, 130, 145, .74);
+                    background: linear-gradient(145deg, rgba(17, 27, 37, .56), rgba(13, 21, 31, .48));
+                    border-color: rgba(122, 130, 145, .62);
                     filter: none;
                     transform: translateY(-1px);
                 }
@@ -1334,20 +1334,20 @@ export default function VoidLogin() {
 
                 .vl-actions-dock {
                     display: flex;
-                    gap: 10px;
-                    width: min(460px, 100%);
+                    gap: 6px;
+                    width: min(260px, 100%);
                     margin: 0 auto;
                 }
                 .vl-void-cta {
                     flex: 1;
-                    border: 1px solid rgba(148, 163, 184, .4);
-                    border-radius: 12px;
-                    height: 42px;
-                    background: linear-gradient(130deg, rgba(22, 30, 44, .94), rgba(16, 23, 35, .94));
+                    border: 1px solid rgba(148, 163, 184, .24);
+                    border-radius: 8px;
+                    height: 28px;
+                    background: linear-gradient(130deg, rgba(22, 30, 44, .24), rgba(16, 23, 35, .2));
                     color: #c2cad5;
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
-                    font-size: 0.69rem;
-                    letter-spacing: .1em;
+                    font-size: 0.5rem;
+                    letter-spacing: .07em;
                     text-transform: uppercase;
                     cursor: pointer;
                     display: inline-flex;
@@ -1357,11 +1357,11 @@ export default function VoidLogin() {
                 }
                 .vl-void-cta:hover {
                     transform: translateY(-1px);
-                    border-color: rgba(122, 130, 145, .56);
+                    border-color: rgba(122, 130, 145, .36);
                 }
                 .vl-void-cta.active {
-                    border-color: rgba(122, 130, 145, .62);
-                    background: linear-gradient(130deg, rgba(17, 24, 38, .94), rgba(11, 17, 27, .95));
+                    border-color: rgba(122, 130, 145, .42);
+                    background: linear-gradient(130deg, rgba(17, 24, 38, .34), rgba(11, 17, 27, .3));
                 }
                 .vl-void-cta-fill,
                 .vl-void-cta-corner-tr,
@@ -1539,6 +1539,18 @@ export default function VoidLogin() {
                     animation: vl-glitch-b .14s steps(2) forwards;
                 }
 
+                @media (prefers-reduced-motion: reduce) {
+                    .vl-root,
+                    .vl-backdrop,
+                    .vl-success,
+                    .vl-shell,
+                    .vl-card,
+                    .vl-glitch::before,
+                    .vl-glitch::after {
+                        animation: none !important;
+                    }
+                }
+
                 @media (max-width: 1090px) {
                     .vl-shell {
                         grid-template-columns: 1fr;
@@ -1610,121 +1622,12 @@ export default function VoidLogin() {
                 }
             `}</style>
 
-            <div className={`vl-root ${closing ? 'close' : ''}`}>
-                <div className="vl-back-grid" />
-                <div className="vl-bg-orb vl-bg-orb-a" />
-                <div className="vl-bg-orb vl-bg-orb-b" />
-                <div className="vl-scanline" />
+            <div className={`vl-root ${closing ? 'close' : ''}`} data-active-preset={activePreset}>
+                <div className="vl-backdrop" />
+                <VoidOceanBackground activePreset={activePreset} />
 
                 <div className="vl-shell">
-                    <section className="vl-brand">
-                        <div className="vl-kicker">Supabase-inspired Secure Entry</div>
-                        <div
-                            className={`vl-brand-title ${glitch ? 'vl-glitch' : ''}`}
-                            data-text="THE VOID"
-                        >
-                            THE <span className="accent">VOID</span>
-                        </div>
-                        <p className="vl-brand-copy">
-                            Fast, clean access flow with Google session gate and Telegram secure channel.
-                            Full diagnostics stay available in one click.
-                        </p>
-                        <div className="vl-brand-points">
-                            <div className="vl-brand-point"><strong>Google Identity:</strong> verifies app account and loads cloud session.</div>
-                            <div className="vl-brand-point"><strong>Telegram MTProto:</strong> sign in with code and optional 2FA password.</div>
-                            <div className="vl-brand-point"><strong>Session Diagnostics:</strong> copy, inspect and clear the full log feed.</div>
-                        </div>
-                    </section>
-
-                    <section className="vl-main">
-                        {appUser && (
-                            <div className="vl-account-anchor" ref={accountPanelRef}>
-                                <button
-                                    type="button"
-                                    className="vl-account-button"
-                                    id="void-google-account-toggle"
-                                    onClick={() => setShowAccountPanel(prev => !prev)}
-                                    title="Google account"
-                                >
-                                    <span className="vl-account-mini-avatar">
-                                        {appUser.picture && !accountImageFailed ? (
-                                            <img
-                                                className="vl-account-avatar"
-                                                src={appUser.picture}
-                                                alt="Google account avatar"
-                                                onError={() => setAccountImageFailed(true)}
-                                            />
-                                        ) : (
-                                            <span className="vl-account-fallback">{accountInitial(appUser)}</span>
-                                        )}
-                                    </span>
-                                    <span className="vl-account-pill-copy">
-                                        <span className="vl-account-pill-title">Google Connected</span>
-                                        <span className="vl-account-pill-mail">{safeShortText(appUser.email, 26)}</span>
-                                    </span>
-                                    <span className="vl-account-pill-arrow">{showAccountPanel ? '▾' : '▸'}</span>
-                                </button>
-
-                                {showAccountPanel && (
-                                    <div className="vl-account-panel" id="void-google-account-panel">
-                                        <div className="vl-account-top">
-                                            <div className="vl-account-top-title">Google Account Session</div>
-                                            <div className="vl-account-top-status">Authorized</div>
-                                        </div>
-
-                                        <div className="vl-account-body">
-                                            <div className="vl-account-head">
-                                                <div className="vl-account-head-avatar">
-                                                    {appUser.picture && !accountImageFailed ? (
-                                                        <img
-                                                            className="vl-account-avatar"
-                                                            src={appUser.picture}
-                                                            alt="Google account avatar"
-                                                            onError={() => setAccountImageFailed(true)}
-                                                        />
-                                                    ) : (
-                                                        <span className="vl-account-fallback">{accountInitial(appUser)}</span>
-                                                    )}
-                                                </div>
-                                                <div style={{ minWidth: 0 }}>
-                                                    <div className="vl-account-name">{safeShortText(appUser.name || 'Google User', 42)}</div>
-                                                    <div className="vl-account-mail">{safeShortText(appUser.email, 64)}</div>
-                                                </div>
-                                            </div>
-
-                                            <div className="vl-account-info">
-                                                <div className="vl-account-row">
-                                                    <span className="vl-account-key">User ID</span>
-                                                    <span className="vl-account-value">{safeShortText(appUser.id, 18)}</span>
-                                                </div>
-                                                <div className="vl-account-row">
-                                                    <span className="vl-account-key">Google Sub</span>
-                                                    <span className="vl-account-value">{safeShortText(appUser.googleSub, 30)}</span>
-                                                </div>
-                                                <div className="vl-account-row">
-                                                    <span className="vl-account-key">Mail</span>
-                                                    <span className="vl-account-value">{safeShortText(appUser.email, 30)}</span>
-                                                </div>
-                                                <div className="vl-account-row">
-                                                    <span className="vl-account-key">Status</span>
-                                                    <span className="vl-account-value">AUTHORIZED</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            className="vl-account-signout"
-                                            id="void-google-account-signout"
-                                            onClick={handleAppSignOut}
-                                            disabled={isSigningOutApp}
-                                        >
-                                            {isSigningOutApp ? 'Signing out...' : 'Sign out Google'}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                    <section className="vl-main vl-main-only">
 
                         <div className="vl-main-inner">
                             <div className="vl-card">
@@ -1900,82 +1803,9 @@ export default function VoidLogin() {
                                 )}
                             </div>
 
-                            <div className="vl-actions-dock">
-                                <button
-                                    type="button"
-                                    className={`vl-void-cta ${showLogs ? 'active' : ''}`}
-                                    id="void-logs-toggle"
-                                    onClick={() => setShowLogs(prev => !prev)}
-                                >
-                                    <span className="vl-void-cta-label">{showLogs ? 'Hide logs' : 'Logs'}</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    className="vl-void-cta"
-                                    onClick={handleClose}
-                                >
-                                    <span className="vl-void-cta-label">Esc</span>
-                                </button>
-                            </div>
                         </div>
                     </section>
                 </div>
-
-                {showLogs && (
-                    <div className="vl-logs-panel" id="void-logs-panel">
-                        <div className="vl-logs-head">
-                            <span className="vl-logs-title">Session Diagnostics</span>
-                            <div className="vl-logs-actions">
-                                <button
-                                    type="button"
-                                    className="vl-log-clear"
-                                    id="void-logs-copy"
-                                    onClick={handleCopyLogs}
-                                >
-                                    {copyLogsState === 'ok'
-                                        ? 'Copied'
-                                        : copyLogsState === 'error'
-                                            ? 'Copy failed'
-                                            : 'Copy all'}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="vl-log-clear"
-                                    onClick={() => {
-                                        logIdRef.current = 0
-                                        setLogs([])
-                                        setCopyLogsState('idle')
-                                        appendLog('INFO', 'LOG BUFFER CLEARED')
-                                    }}
-                                >
-                                    Clear
-                                </button>
-                            </div>
-                        </div>
-                        <div className="vl-logs-list">
-                            {logs.length === 0 && (
-                                <div className="vl-logs-empty">No logs yet.</div>
-                            )}
-
-                            {logs.slice().reverse().map(entry => (
-                                <div key={entry.id} className="vl-logs-item">
-                                    <div className="vl-logs-main">
-                                        <span style={{ color: levelColor(entry.level), marginRight: 10 }}>
-                                            [{entry.level}]
-                                        </span>
-                                        <span style={{ color: 'rgba(201, 218, 239, .72)', marginRight: 10 }}>
-                                            {formatLogTime(entry.timestamp)}
-                                        </span>
-                                        <span>{entry.message}</span>
-                                    </div>
-                                    {entry.metaText && (
-                                        <div className="vl-logs-meta">{entry.metaText}</div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
             </div>
         </>
     )

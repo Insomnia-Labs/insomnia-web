@@ -73,3 +73,6 @@ dist-ssr/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Cloudflare Wrangler local artifacts (tmp/cache/dev bundles)
+.wrangler/

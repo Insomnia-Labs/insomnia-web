@@ -49,6 +49,8 @@ export default function Dashboard() {
     const [messages, setMessages] = useState([])
     const [dialogs, setDialogs] = useState([])
     const [myId, setMyId] = useState(null)
+    const [myProfile, setMyProfile] = useState(null)
+    const [myProfilePhotoUrl, setMyProfilePhotoUrl] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [activeTab, setActiveTab] = useState('all') // 'all', 'photo', 'video', 'archive'
@@ -402,6 +404,30 @@ export default function Dashboard() {
         return () => window.clearTimeout(timerId)
     }, [mobileSearchOpen])
     useEffect(() => {
+        if (mobileNavTab === 'files') return
+        setMobileSearchOpen(false)
+        setMobileSearchQuery('')
+    }, [mobileNavTab])
+    useEffect(() => {
+        let mounted = true
+        if (!myId) {
+            setMyProfilePhotoUrl('')
+            return () => { mounted = false }
+        }
+
+        async function fetchMyProfilePhoto() {
+            try {
+                const url = await getProfilePhoto(myId)
+                if (mounted) setMyProfilePhotoUrl(url || '')
+            } catch {
+                if (mounted) setMyProfilePhotoUrl('')
+            }
+        }
+
+        fetchMyProfilePhoto()
+        return () => { mounted = false }
+    }, [myId])
+    useEffect(() => {
         const timerId = window.setInterval(() => {
             setClockNowMs(Date.now())
         }, 1000)
@@ -413,7 +439,10 @@ export default function Dashboard() {
         async function fetchChats() {
             try {
                 const me = await getMe()
-                if (mounted) setMyId(me.id)
+                if (mounted) {
+                    setMyId(me.id)
+                    setMyProfile(me)
+                }
                 let fetchedDialogs
 
                 if (chatFolder <= 1) {
@@ -2089,8 +2118,26 @@ export default function Dashboard() {
         })
     }, [mobileVisibleRows, mobilePreviewUrls])
 
+    const mobileProfileDisplayName = `${myProfile?.firstName || ''} ${myProfile?.lastName || ''}`.trim() || 'Telegram User'
+    const mobileProfileInitial = mobileProfileDisplayName.charAt(0).toUpperCase() || 'U'
+    const mobileProfileHandle = myProfile?.username ? `@${myProfile.username}` : 'username не указан'
+    const mobileProfileIdLabel = myId ? `ID ${myId}` : 'ID недоступен'
+    const mobileSelectedSourceTitle = dialogs.find(d => d.entity?.id?.toString() === selectedChatId)?.title
+        || (selectedChatId === myId?.toString() ? 'Saved Messages' : '')
+
     const renderMobileDiskView = () => {
         const visibleRows = mobileVisibleRows
+        const isFilesTab = mobileNavTab === 'files'
+        const isProfileTab = mobileNavTab === 'profile'
+        const activeMobileTabTitle = (
+            {
+                home: 'Главная',
+                files: 'Файлы',
+                notes: 'Заметки',
+                contacts: 'Контакты',
+                profile: 'Профиль',
+            }[mobileNavTab] || 'Раздел'
+        )
 
         const handleToggleMobileSearch = () => {
             if (mobileSearchOpen) {
@@ -2107,7 +2154,7 @@ export default function Dashboard() {
                 style={{ WebkitTapHighlightColor: 'transparent' }}
             >
                 <AnimatePresence>
-                    {mobileUploadNotice && (
+                    {isFilesTab && mobileUploadNotice && (
                         <motion.div
                             key={mobileUploadNotice.id}
                             initial={{ opacity: 0, y: -14 }}
@@ -2161,148 +2208,306 @@ export default function Dashboard() {
                 </AnimatePresence>
 
                 <div className="shrink-0 px-4 pt-3 pb-1.5 bg-[#0b0c10]">
-                    <div className="relative h-9">
-                        <div
-                            className={`absolute inset-0 flex items-center justify-between gap-3 transition-all duration-200 ${mobileSearchOpen
-                                ? 'opacity-0 -translate-x-2 pointer-events-none'
-                                : 'opacity-100 translate-x-0'
-                                }`}
-                        >
-                            <div className="min-w-0">
-                                <p className="text-[12px] uppercase tracking-[0.18em] text-[#7c8597]">Insomnia Cloud</p>
-                            </div>
-                            <div className="shrink-0 flex items-center gap-2">
-                                <button
-                                    onClick={handleToggleMobileSearch}
-                                    className="w-9 h-9 rounded-full border border-white/10 bg-white/[0.03] text-[#b7bfce] hover:text-white hover:bg-white/[0.08] transition-colors"
-                                    title="Поиск"
-                                >
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 mx-auto">
-                                        <circle cx="11" cy="11" r="8"></circle>
-                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                    </svg>
-                                </button>
-                                <button
-                                    onClick={() => setPostLoginView(null)}
-                                    className="w-9 h-9 rounded-full border border-white/10 bg-white/[0.03] text-[#b7bfce] hover:text-white hover:bg-white/[0.08] transition-colors"
-                                    title="Вернуться на сайт"
-                                >
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 mx-auto">
-                                        <circle cx="12" cy="12" r="9"></circle>
-                                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                                        <circle cx="12" cy="16" r="1"></circle>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div
-                            className={`absolute inset-0 transition-all duration-200 ${mobileSearchOpen
-                                ? 'opacity-100 translate-x-0'
-                                : 'opacity-0 translate-x-2 pointer-events-none'
-                                }`}
-                        >
-                            <div className="relative w-full">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-[16px] h-[16px] text-[#6e7687]">
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                </svg>
-                                <input
-                                    ref={mobileSearchInputRef}
-                                    type="text"
-                                    name="file_search"
-                                    value={mobileSearchQuery}
-                                    onChange={(e) => setMobileSearchQuery(e.target.value)}
-                                    placeholder="Поиск файлов"
-                                    autoComplete="off"
-                                    autoCorrect="off"
-                                    autoCapitalize="none"
-                                    spellCheck={false}
-                                    inputMode="search"
-                                    enterKeyHint="search"
-                                    data-lpignore="true"
-                                    data-1p-ignore="true"
-                                    className="w-full h-9 rounded-full border border-[#3f5d91] bg-[#1a1d24] pl-9 pr-10 text-[13px] text-white placeholder-[#6e7687] outline-none focus:border-[#4f6da1] focus:bg-[#1c2029] transition-colors"
-                                />
-                                <button
-                                    onClick={handleToggleMobileSearch}
-                                    className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full border border-white/10 bg-white/[0.03] text-[#b7bfce] hover:text-white hover:bg-white/[0.08] transition-colors"
-                                    title="Закрыть поиск"
-                                >
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-3.5 h-3.5 mx-auto">
-                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        className="mt-2.5 -mx-1 px-1 overflow-x-auto [&::-webkit-scrollbar]:hidden"
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                    >
-                        <div className="min-w-max flex items-center gap-2">
-                            {navItems.map(item => (
-                                <button
-                                    key={item.id}
-                                    onClick={() => setActiveTab(item.id)}
-                                    className={`h-8 px-3.5 rounded-full text-[14px] font-medium transition-colors ${activeTab === item.id
-                                        ? 'bg-[#2b3342] text-[#dce8ff]'
-                                        : 'bg-[#1a1d24] text-[#8b93a5] hover:text-[#d5dbea]'
+                    {isFilesTab ? (
+                        <>
+                            <div className="relative h-9">
+                                <div
+                                    className={`absolute inset-0 flex items-center justify-between gap-3 transition-all duration-200 ${mobileSearchOpen
+                                        ? 'opacity-0 -translate-x-2 pointer-events-none'
+                                        : 'opacity-100 translate-x-0'
                                         }`}
                                 >
-                                    {item.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-[12px] uppercase tracking-[0.18em] text-[#7c8597]">Insomnia Cloud</p>
+                                    </div>
+                                    <div className="shrink-0 flex items-center gap-2">
+                                        <button
+                                            onClick={handleToggleMobileSearch}
+                                            className="w-9 h-9 rounded-full border border-white/10 bg-white/[0.03] text-[#b7bfce] hover:text-white hover:bg-white/[0.08] transition-colors"
+                                            title="Поиск"
+                                        >
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 mx-auto">
+                                                <circle cx="11" cy="11" r="8"></circle>
+                                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                            </svg>
+                                        </button>
+                                        <button
+                                            onClick={() => setPostLoginView(null)}
+                                            className="w-9 h-9 rounded-full border border-white/10 bg-white/[0.03] text-[#b7bfce] hover:text-white hover:bg-white/[0.08] transition-colors"
+                                            title="Вернуться на сайт"
+                                        >
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 mx-auto">
+                                                <circle cx="12" cy="12" r="9"></circle>
+                                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                                <circle cx="12" cy="16" r="1"></circle>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div
+                                    className={`absolute inset-0 transition-all duration-200 ${mobileSearchOpen
+                                        ? 'opacity-100 translate-x-0'
+                                        : 'opacity-0 translate-x-2 pointer-events-none'
+                                        }`}
+                                >
+                                    <div className="relative w-full">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-[16px] h-[16px] text-[#6e7687]">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                        </svg>
+                                        <input
+                                            ref={mobileSearchInputRef}
+                                            type="text"
+                                            name="file_search"
+                                            value={mobileSearchQuery}
+                                            onChange={(e) => setMobileSearchQuery(e.target.value)}
+                                            placeholder="Поиск файлов"
+                                            autoComplete="off"
+                                            autoCorrect="off"
+                                            autoCapitalize="none"
+                                            spellCheck={false}
+                                            inputMode="search"
+                                            enterKeyHint="search"
+                                            data-lpignore="true"
+                                            data-1p-ignore="true"
+                                            className="w-full h-9 rounded-full border border-[#3f5d91] bg-[#1a1d24] pl-9 pr-10 text-[13px] text-white placeholder-[#6e7687] outline-none focus:border-[#4f6da1] focus:bg-[#1c2029] transition-colors"
+                                        />
+                                        <button
+                                            onClick={handleToggleMobileSearch}
+                                            className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full border border-white/10 bg-white/[0.03] text-[#b7bfce] hover:text-white hover:bg-white/[0.08] transition-colors"
+                                            title="Закрыть поиск"
+                                        >
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-3.5 h-3.5 mx-auto">
+                                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                className="mt-2.5 -mx-1 px-1 overflow-x-auto [&::-webkit-scrollbar]:hidden"
+                                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                            >
+                                <div className="min-w-max flex items-center gap-2">
+                                    {navItems.map(item => (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => setActiveTab(item.id)}
+                                            className={`h-8 px-3.5 rounded-full text-[14px] font-medium transition-colors ${activeTab === item.id
+                                                ? 'bg-[#2b3342] text-[#dce8ff]'
+                                                : 'bg-[#1a1d24] text-[#8b93a5] hover:text-[#d5dbea]'
+                                                }`}
+                                        >
+                                            {item.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="h-9 flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="text-[12px] uppercase tracking-[0.18em] text-[#7c8597]">
+                                        {isProfileTab ? 'Insomnia Profile' : 'Insomnia Cloud'}
+                                    </p>
+                                </div>
+                                <div className="shrink-0 flex items-center gap-2">
+                                    {isProfileTab && (
+                                        <button
+                                            onClick={() => setMobileNavTab('files')}
+                                            className="w-9 h-9 rounded-full border border-white/10 bg-white/[0.03] text-[#b7bfce] hover:text-white hover:bg-white/[0.08] transition-colors"
+                                            title="Открыть файлы"
+                                        >
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className="w-4 h-4 mx-auto">
+                                                <rect x="3" y="3" width="7" height="7"></rect>
+                                                <rect x="14" y="3" width="7" height="7"></rect>
+                                                <rect x="14" y="14" width="7" height="7"></rect>
+                                                <rect x="3" y="14" width="7" height="7"></rect>
+                                            </svg>
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => setPostLoginView(null)}
+                                        className="w-9 h-9 rounded-full border border-white/10 bg-white/[0.03] text-[#b7bfce] hover:text-white hover:bg-white/[0.08] transition-colors"
+                                        title="Вернуться на сайт"
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 mx-auto">
+                                            <circle cx="12" cy="12" r="9"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <circle cx="12" cy="16" r="1"></circle>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <p className="mt-2 text-[16px] font-semibold text-[#e8ecf7]">{activeMobileTabTitle}</p>
+                            <p className="mt-0.5 text-[13px] text-[#9099ad]">
+                                {isProfileTab
+                                    ? 'Личные данные и быстрые действия аккаунта.'
+                                    : 'Раздел находится в разработке.'}
+                            </p>
+                        </>
+                    )}
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-2 pt-0 pb-28">
-                    {!selectedChatId ? (
-                        <div className="h-full flex flex-col items-center justify-center px-6 text-center">
-                            <div className="w-16 h-16 rounded-full bg-[#1c2029] border border-white/10 flex items-center justify-center mb-4 text-[#93a1bd]">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-7 h-7">
-                                    <path d="M20 7L9 18l-5-5"></path>
-                                </svg>
+                    {isFilesTab ? (
+                        !selectedChatId ? (
+                            <div className="h-full flex flex-col items-center justify-center px-6 text-center">
+                                <div className="w-16 h-16 rounded-full bg-[#1c2029] border border-white/10 flex items-center justify-center mb-4 text-[#93a1bd]">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-7 h-7">
+                                        <path d="M20 7L9 18l-5-5"></path>
+                                    </svg>
+                                </div>
+                                <p className="text-[18px] font-semibold text-white mb-1">Источник файлов не выбран</p>
+                                <p className="text-[14px] text-[#7f8798] mb-4">Выберите чат, из которого нужно показать облачный диск.</p>
+                                <button
+                                    onClick={() => setPostLoginView('chats')}
+                                    className="h-11 px-5 rounded-full bg-[#2f6feb] text-white text-[14px] font-medium"
+                                >
+                                    Выбрать источник
+                                </button>
                             </div>
-                            <p className="text-[18px] font-semibold text-white mb-1">Источник файлов не выбран</p>
-                            <p className="text-[14px] text-[#7f8798] mb-4">Выберите чат, из которого нужно показать облачный диск.</p>
-                            <button
-                                onClick={() => setPostLoginView('chats')}
-                                className="h-11 px-5 rounded-full bg-[#2f6feb] text-white text-[14px] font-medium"
-                            >
-                                Выбрать источник
-                            </button>
-                        </div>
-                    ) : visibleRows.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center px-6 text-center">
-                            <div className="w-16 h-16 rounded-full bg-[#1c2029] border border-white/10 flex items-center justify-center mb-4 text-[#93a1bd]">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-7 h-7">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                </svg>
+                        ) : visibleRows.length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center px-6 text-center">
+                                <div className="w-16 h-16 rounded-full bg-[#1c2029] border border-white/10 flex items-center justify-center mb-4 text-[#93a1bd]">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-7 h-7">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                </div>
+                                <p className="text-[18px] font-semibold text-white mb-1">Файлы не найдены</p>
+                                <p className="text-[14px] text-[#7f8798]">Попробуйте другой фильтр или другой источник.</p>
                             </div>
-                            <p className="text-[18px] font-semibold text-white mb-1">Файлы не найдены</p>
-                            <p className="text-[14px] text-[#7f8798]">Попробуйте другой фильтр или другой источник.</p>
+                        ) : (
+                            <div className="flex flex-col">
+                                {mobileVisibleRowItems}
+                            </div>
+                        )
+                    ) : isProfileTab ? (
+                        <div className="px-2 pb-2">
+                            <div className="mt-1 rounded-[24px] border border-[#2b3342] bg-[linear-gradient(160deg,#1b2230_0%,#141922_58%,#11151d_100%)] p-4 shadow-[0_16px_36px_rgba(0,0,0,0.42)]">
+                                <div className="flex items-center gap-3">
+                                    {myProfilePhotoUrl ? (
+                                        <img
+                                            src={myProfilePhotoUrl}
+                                            alt={mobileProfileDisplayName}
+                                            className="w-16 h-16 rounded-2xl object-cover border border-white/15"
+                                        />
+                                    ) : (
+                                        <div className="w-16 h-16 rounded-2xl border border-[#3b4558] bg-[#1f2735] flex items-center justify-center text-[24px] font-semibold text-[#dce6fa]">
+                                            {mobileProfileInitial}
+                                        </div>
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-[18px] font-semibold text-white truncate">{mobileProfileDisplayName}</p>
+                                        <p className="text-[13px] text-[#9fb0cb] truncate">{mobileProfileHandle}</p>
+                                        <div className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-[#325982] bg-[#12243a] px-2 py-0.5 text-[11px] text-[#b8d8ff]">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-[#7ad67a]"></span>
+                                            Telegram сессия активна
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-3 grid grid-cols-2 gap-2">
+                                <div className="rounded-2xl border border-[#2c3343] bg-[#141923] px-3 py-2.5">
+                                    <p className="text-[11px] uppercase tracking-[0.08em] text-[#7f8aa3]">Источник</p>
+                                    <p className="mt-1 text-[13px] font-medium text-[#d9e2f5] truncate">
+                                        {mobileSelectedSourceTitle || 'Не выбран'}
+                                    </p>
+                                </div>
+                                <div className="rounded-2xl border border-[#2c3343] bg-[#141923] px-3 py-2.5">
+                                    <p className="text-[11px] uppercase tracking-[0.08em] text-[#7f8aa3]">Чаты</p>
+                                    <p className="mt-1 text-[13px] font-medium text-[#d9e2f5]">{dialogs.length}</p>
+                                </div>
+                                <div className="rounded-2xl border border-[#2c3343] bg-[#141923] px-3 py-2.5">
+                                    <p className="text-[11px] uppercase tracking-[0.08em] text-[#7f8aa3]">Папки</p>
+                                    <p className="mt-1 text-[13px] font-medium text-[#d9e2f5]">{chatFolders.length || 1}</p>
+                                </div>
+                                <div className="rounded-2xl border border-[#2c3343] bg-[#141923] px-3 py-2.5">
+                                    <p className="text-[11px] uppercase tracking-[0.08em] text-[#7f8aa3]">Файлы</p>
+                                    <p className="mt-1 text-[13px] font-medium text-[#d9e2f5]">{visibleRows.length}</p>
+                                </div>
+                            </div>
+
+                            <div className="mt-3 rounded-2xl border border-[#2c3343] bg-[#141923] px-3 py-2.5">
+                                <p className="text-[11px] uppercase tracking-[0.08em] text-[#7f8aa3]">Данные аккаунта</p>
+                                <div className="mt-2 space-y-2">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="text-[12px] text-[#8e9ab2]">Telegram ID</span>
+                                        <span className="text-[12px] text-[#dbe6fb]">{mobileProfileIdLabel}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="text-[12px] text-[#8e9ab2]">Username</span>
+                                        <span className="text-[12px] text-[#dbe6fb] truncate">{mobileProfileHandle}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="text-[12px] text-[#8e9ab2]">Источник файлов</span>
+                                        <span className="text-[12px] text-[#dbe6fb] truncate">
+                                            {mobileSelectedSourceTitle || 'Не выбран'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-3 flex flex-col gap-2 pb-2">
+                                <button
+                                    onClick={() => setPostLoginView('chats')}
+                                    className="h-11 rounded-xl border border-[#3b5f8a] bg-[#1b2e47] text-[#d9e9ff] text-[14px] font-medium"
+                                >
+                                    Выбрать источник файлов
+                                </button>
+                                <button
+                                    onClick={() => setMobileNavTab('files')}
+                                    className="h-11 rounded-xl border border-[#2c3445] bg-[#171c26] text-[#c8d3e8] text-[14px] font-medium"
+                                >
+                                    Перейти к файлам
+                                </button>
+                                {selectedChatId && (
+                                    <button
+                                        onClick={() => setSelectedChatId(null)}
+                                        className="h-11 rounded-xl border border-[#5a3942] bg-[#26171c] text-[#f0bbc7] text-[14px] font-medium"
+                                    >
+                                        Отключить текущий источник
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     ) : (
-                        <div className="flex flex-col">
-                            {mobileVisibleRowItems}
+                        <div className="h-full flex flex-col items-center justify-center px-6 text-center">
+                            <div className="w-16 h-16 rounded-full bg-[#1c2029] border border-white/10 flex items-center justify-center mb-4 text-[#93a1bd]">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-7 h-7">
+                                    <path d="M12 2v20"></path>
+                                    <path d="M2 12h20"></path>
+                                </svg>
+                            </div>
+                            <p className="text-[18px] font-semibold text-white mb-1">{activeMobileTabTitle}</p>
+                            <p className="text-[14px] text-[#7f8798] mb-4">Раздел скоро появится. Пока используйте вкладки «Файлы» и «Профиль».</p>
+                            <button
+                                onClick={() => setMobileNavTab('files')}
+                                className="h-11 px-5 rounded-full bg-[#2f6feb] text-white text-[14px] font-medium"
+                            >
+                                Открыть файлы
+                            </button>
                         </div>
                     )}
                 </div>
 
-                <input
-                    ref={mobileFileInputRef}
-                    type="file"
-                    className="hidden"
-                    onChange={handleMobileFileSelected}
-                />
+                {isFilesTab && (
+                    <input
+                        ref={mobileFileInputRef}
+                        type="file"
+                        className="hidden"
+                        onChange={handleMobileFileSelected}
+                    />
+                )}
 
                 <AnimatePresence>
-                    {mobileUploadDetailsOpen && mobileUploadNotice && (
+                    {isFilesTab && mobileUploadDetailsOpen && mobileUploadNotice && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -2367,7 +2572,7 @@ export default function Dashboard() {
                     )}
                 </AnimatePresence>
 
-                {mobileUploadInProgress && (() => {
+                {isFilesTab && mobileUploadInProgress && (() => {
                     const totalMB = mobileUploadFileSize > 0 ? mobileUploadFileSize / 1048576 : 0
                     const loadedMB = totalMB * (mobileUploadProgress / 100)
                     const fmtMB = (n) => n >= 100 ? `${Math.round(n)} MB` : n >= 10 ? `${n.toFixed(1)} MB` : `${n.toFixed(2)} MB`
@@ -2406,24 +2611,26 @@ export default function Dashboard() {
                     )
                 })()}
 
-                <button
-                    onClick={openMobileFilePicker}
-                    disabled={mobileUploadInProgress}
-                    className="absolute right-5 bottom-24 z-10 w-14 h-14 rounded-full bg-[#7ea8d2] text-[#1b1f29] shadow-[0_10px_24px_rgba(41,66,101,0.45)] flex items-center justify-center disabled:opacity-70"
-                    title={mobileUploadInProgress ? 'Загрузка файла...' : 'Добавить файл с устройства'}
-                >
-                    {mobileUploadInProgress ? (
-                        <div className="flex flex-col items-center leading-none">
-                            <div className="w-5 h-5 rounded-full border-2 border-white/35 border-t-white animate-spin"></div>
-                            <span className="mt-0.5 text-[10px] font-semibold">{mobileUploadProgress}%</span>
-                        </div>
-                    ) : (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-6 h-6">
-                            <path d="M5 12h14"></path>
-                            <path d="M12 5v14"></path>
-                        </svg>
-                    )}
-                </button>
+                {isFilesTab && (
+                    <button
+                        onClick={openMobileFilePicker}
+                        disabled={mobileUploadInProgress}
+                        className="absolute right-5 bottom-24 z-10 w-14 h-14 rounded-full bg-[#7ea8d2] text-[#1b1f29] shadow-[0_10px_24px_rgba(41,66,101,0.45)] flex items-center justify-center disabled:opacity-70"
+                        title={mobileUploadInProgress ? 'Загрузка файла...' : 'Добавить файл с устройства'}
+                    >
+                        {mobileUploadInProgress ? (
+                            <div className="flex flex-col items-center leading-none">
+                                <div className="w-5 h-5 rounded-full border-2 border-white/35 border-t-white animate-spin"></div>
+                                <span className="mt-0.5 text-[10px] font-semibold">{mobileUploadProgress}%</span>
+                            </div>
+                        ) : (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-6 h-6">
+                                <path d="M5 12h14"></path>
+                                <path d="M12 5v14"></path>
+                            </svg>
+                        )}
+                    </button>
+                )}
 
                 <div className="absolute left-3 right-3 bottom-4 rounded-[28px] border border-white/10 bg-[#1a1d24]/95 backdrop-blur-md px-2 py-2">
                     <div className="grid grid-cols-5 gap-0.5">

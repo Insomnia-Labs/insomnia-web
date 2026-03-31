@@ -1284,7 +1284,9 @@ export default function VoidLogin() {
                     width: 100%;
                     border: 1px solid rgba(122, 130, 145, .42);
                     border-radius: 12px;
-                    background: linear-gradient(145deg, rgba(14, 21, 30, .48), rgba(10, 15, 23, .4));
+                    background:
+                        linear-gradient(112deg, rgba(156, 170, 198, 0) 18%, rgba(156, 170, 198, .14) 50%, rgba(156, 170, 198, 0) 82%) 0 0 / 230% 100% no-repeat,
+                        linear-gradient(145deg, rgba(14, 21, 30, .48), rgba(10, 15, 23, .4));
                     color: #c2c9d4;
                     font-family: 'JetBrains Mono', 'Consolas', monospace;
                     font-size: 0.74rem;
@@ -1293,18 +1295,43 @@ export default function VoidLogin() {
                     font-weight: 500;
                     padding: 12px 14px;
                     cursor: pointer;
-                    transition: transform .15s, filter .2s;
+                    box-shadow:
+                        0 0 0 1px rgba(148, 163, 184, .05) inset,
+                        0 8px 18px rgba(0, 0, 0, .2);
+                    transition:
+                        border-color .2s ease,
+                        box-shadow .2s ease,
+                        background-position .55s cubic-bezier(.22, .61, .36, 1),
+                        color .2s ease;
+                    will-change: background-position;
                 }
                 .vl-btn:hover {
-                    background: linear-gradient(145deg, rgba(17, 27, 37, .56), rgba(13, 21, 31, .48));
                     border-color: rgba(122, 130, 145, .62);
-                    filter: none;
-                    transform: translateY(-1px);
+                    background-position: 100% 0, 0 0;
+                    box-shadow:
+                        0 0 0 1px rgba(148, 163, 184, .1) inset,
+                        0 11px 22px rgba(0, 0, 0, .24);
+                }
+                .vl-btn:active {
+                    box-shadow:
+                        0 0 0 1px rgba(148, 163, 184, .12) inset,
+                        0 3px 10px rgba(0, 0, 0, .22),
+                        inset 0 2px 4px rgba(0, 0, 0, .28);
+                }
+                .vl-btn:focus-visible {
+                    outline: none;
+                    border-color: rgba(122, 130, 145, .72);
+                    box-shadow:
+                        0 0 0 2px rgba(122, 130, 145, .24),
+                        0 10px 20px rgba(0, 0, 0, .22);
                 }
                 .vl-btn:disabled {
                     opacity: .55;
                     cursor: not-allowed;
-                    transform: none;
+                    background-position: 0 0, 0 0;
+                    box-shadow:
+                        0 0 0 1px rgba(148, 163, 184, .04) inset,
+                        0 4px 10px rgba(0, 0, 0, .14);
                 }
                 .vl-link-btn {
                     background: transparent;

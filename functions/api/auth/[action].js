@@ -1,4 +1,5 @@
 import {
+  APP_SESSION_COOKIE_NAME,
   buildAppSessionCookie,
   buildClearedAppSessionCookie,
   buildClearedOAuthCookies,
@@ -10,11 +11,15 @@ import {
   getGoogleOAuthConfig,
   getGoogleRedirectUri,
   invalidateAppSession,
+  parseCookies,
   readAuthenticatedUser,
   readOAuthCookies,
   toSafeReturnTo,
   upsertGoogleUser,
 } from '../_lib/auth.js'
+import { supabaseRequest } from '../_lib/supabase.js'
+
+const textEncoder = new TextEncoder()
 
 function json(payload, init = {}) {
   const headers = new Headers(init.headers || {})
@@ -38,6 +43,131 @@ function appendQueryParam(path, key, value) {
   url.searchParams.set(key, value)
   const query = url.searchParams.toString()
   return `${url.pathname}${query ? `?${query}` : ''}${url.hash || ''}`
+}
+
+function toSafeText(value, fallback = '') {
+  if (typeof value === 'string') return value
+  return fallback
+}
+
+function toPositiveInt(value) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed <= 0) return 0
+  return Math.floor(parsed)
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value))
+}
+
+async function readJsonBody(request) {
+  const contentType = String(request.headers.get('content-type') || '').toLowerCase()
+  if (!contentType.includes('application/json')) return {}
+  try {
+    const parsed = await request.json()
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    return parsed
+  } catch {
+    return {}
+  }
+}
+
+async function sha256Hex(value) {
+  const encoded = textEncoder.encode(String(value || ''))
+  const digest = await crypto.subtle.digest('SHA-256', encoded)
+  return Array.from(new Uint8Array(digest))
+    .map(byte => byte.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+async function readCurrentSessionTokenHash(request) {
+  const cookies = parseCookies(request.headers.get('cookie'))
+  const token = toSafeText(cookies[APP_SESSION_COOKIE_NAME]).trim()
+  if (!token) return ''
+  return sha256Hex(token)
+}
+
+function serializeSessionRecord(record, currentTokenHash, now) {
+  const id = toPositiveInt(record?.id)
+  const createdAt = toPositiveInt(record?.created_at)
+  const expiresAt = toPositiveInt(record?.expires_at)
+  const lastSeenAt = toPositiveInt(record?.last_seen_at)
+  const tokenHash = toSafeText(record?.token_hash).trim()
+  const userAgent = toSafeText(record?.user_agent)
+  const lastIp = toSafeText(record?.last_ip)
+  const isCurrent = Boolean(currentTokenHash && tokenHash && tokenHash === currentTokenHash)
+
+  return {
+    id,
+    createdAt,
+    expiresAt,
+    lastSeenAt,
+    userAgent,
+    lastIp,
+    isCurrent,
+    status: expiresAt > now ? 'active' : 'expired',
+  }
+}
+
+async function loadUserSessionsForGoogleUser(env, userId, currentTokenHash = '') {
+  const rows = await supabaseRequest(env, 'app_sessions', {
+    query: {
+      select: 'id,token_hash,created_at,expires_at,last_seen_at,user_agent,last_ip',
+      user_id: `eq.${userId}`,
+      order: 'last_seen_at.desc',
+      limit: 120,
+    },
+  })
+  const now = Date.now()
+  const mapped = Array.isArray(rows)
+    ? rows
+      .map(item => serializeSessionRecord(item, currentTokenHash, now))
+      .filter(item => item.id > 0)
+    : []
+
+  return mapped.sort((a, b) => {
+    if (a.isCurrent && !b.isCurrent) return -1
+    if (!a.isCurrent && b.isCurrent) return 1
+    return (b.lastSeenAt || 0) - (a.lastSeenAt || 0)
+  })
+}
+
+async function readTelegramSessionBindingForGoogleUser(env, userId) {
+  const rows = await supabaseRequest(env, 'telegram_sessions', {
+    query: {
+      select: 'session_encrypted,updated_at',
+      user_id: `eq.${userId}`,
+      limit: 1,
+    },
+  })
+  const row = Array.isArray(rows) ? rows[0] : null
+  const encrypted = toSafeText(row?.session_encrypted).trim()
+  return {
+    linked: Boolean(encrypted),
+    updatedAt: toPositiveInt(row?.updated_at),
+  }
+}
+
+async function buildSessionManagerPayload({ request, env, user, currentTokenHash = '' }) {
+  const activeTokenHash = currentTokenHash || await readCurrentSessionTokenHash(request)
+  const sessions = await loadUserSessionsForGoogleUser(env, user.id, activeTokenHash)
+  const currentSession = sessions.find(item => item.isCurrent)
+  const telegramSession = await readTelegramSessionBindingForGoogleUser(env, user.id)
+
+  return {
+    authenticated: true,
+    googleUser: {
+      id: user.id,
+      googleSub: user.googleSub,
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+    },
+    totalSessions: sessions.length,
+    currentSessionId: currentSession?.id || null,
+    sessions,
+    telegramSession,
+  }
 }
 
 async function exchangeGoogleCodeForAccessToken({ code, request, env }) {
@@ -123,6 +253,15 @@ function validateOAuthState(requestState, cookieState) {
   const cookieValue = String(cookieState || '').trim()
   if (!queryValue || !cookieValue) return false
   return queryValue === cookieValue
+}
+
+function isAllowedGoogleAvatarHost(hostname) {
+  const host = String(hostname || '').trim().toLowerCase()
+  if (!host) return false
+  return host === 'googleusercontent.com'
+    || host.endsWith('.googleusercontent.com')
+    || host === 'ggpht.com'
+    || host.endsWith('.ggpht.com')
 }
 
 async function handleGoogleStart({ request, env }) {
@@ -233,6 +372,258 @@ async function handleLogout({ request, env }) {
   )
 }
 
+async function handleGoogleAvatar({ request, env }) {
+  const user = await readAuthenticatedUser(request, env)
+  if (!user) {
+    return json(
+      {
+        ok: false,
+        error: { code: 'APP_AUTH_REQUIRED', message: 'Google authentication required' },
+      },
+      { status: 401 }
+    )
+  }
+
+  const pictureUrl = String(user?.picture || '').trim()
+  if (!pictureUrl) {
+    return new Response(null, {
+      status: 404,
+      headers: {
+        'cache-control': 'private, max-age=30',
+        vary: 'Cookie',
+      },
+    })
+  }
+
+  let source
+  try {
+    source = new URL(pictureUrl)
+  } catch {
+    return new Response(null, {
+      status: 404,
+      headers: {
+        'cache-control': 'private, max-age=30',
+        vary: 'Cookie',
+      },
+    })
+  }
+
+  const protocol = String(source.protocol || '').toLowerCase()
+  if ((protocol !== 'https:' && protocol !== 'http:') || !isAllowedGoogleAvatarHost(source.hostname)) {
+    return json(
+      {
+        ok: false,
+        error: { code: 'GOOGLE_AVATAR_URL_INVALID', message: 'Unsupported Google avatar URL' },
+      },
+      { status: 400 }
+    )
+  }
+
+  let upstream
+  try {
+    upstream = await fetch(source.toString(), {
+      method: 'GET',
+      headers: {
+        accept: 'image/*,*/*;q=0.8',
+      },
+    })
+  } catch {
+    return new Response(null, {
+      status: 502,
+      headers: {
+        'cache-control': 'private, max-age=30',
+        vary: 'Cookie',
+      },
+    })
+  }
+
+  if (!upstream.ok) {
+    return new Response(null, {
+      status: upstream.status === 404 ? 404 : 502,
+      headers: {
+        'cache-control': 'private, max-age=30',
+        vary: 'Cookie',
+      },
+    })
+  }
+
+  const contentType = String(upstream.headers.get('content-type') || '').toLowerCase()
+  if (!contentType.startsWith('image/')) {
+    return new Response(null, {
+      status: 415,
+      headers: {
+        'cache-control': 'private, max-age=30',
+        vary: 'Cookie',
+      },
+    })
+  }
+
+  return new Response(upstream.body, {
+    status: 200,
+    headers: {
+      'content-type': contentType,
+      'cache-control': 'private, max-age=600',
+      vary: 'Cookie',
+    },
+  })
+}
+
+async function handleSessionsGet({ request, env }) {
+  const user = await readAuthenticatedUser(request, env)
+  if (!user) {
+    return json(
+      {
+        ok: true,
+        data: {
+          authenticated: false,
+          googleUser: null,
+          totalSessions: 0,
+          currentSessionId: null,
+          sessions: [],
+          telegramSession: { linked: false, updatedAt: 0 },
+        },
+      },
+      { status: 200 }
+    )
+  }
+
+  const data = await buildSessionManagerPayload({ request, env, user })
+  return json({ ok: true, data }, { status: 200 })
+}
+
+async function handleSessionsManage({ request, env }) {
+  const user = await readAuthenticatedUser(request, env)
+  if (!user) {
+    return json(
+      {
+        ok: false,
+        error: { code: 'APP_AUTH_REQUIRED', message: 'Google authentication required' },
+      },
+      { status: 401 }
+    )
+  }
+
+  const body = await readJsonBody(request)
+  const action = toSafeText(body?.action).trim().toLowerCase()
+  const now = Date.now()
+  const headers = new Headers()
+  let currentTokenHash = await readCurrentSessionTokenHash(request)
+
+  const throwActionError = (code, message, status = 400) => {
+    const err = new Error(message)
+    err.code = code
+    err.status = status
+    throw err
+  }
+
+  if (!action) {
+    throwActionError('ACTION_REQUIRED', 'Session action is required', 400)
+  }
+
+  if (action === 'create') {
+    const { token } = await createAppSession(env, user.id, request)
+    headers.append('set-cookie', buildAppSessionCookie(token))
+    currentTokenHash = await sha256Hex(token)
+  } else if (action === 'delete') {
+    const sessionId = toPositiveInt(body?.sessionId || body?.id)
+    if (!sessionId) {
+      throwActionError('SESSION_ID_REQUIRED', 'sessionId is required', 400)
+    }
+
+    const rows = await supabaseRequest(env, 'app_sessions', {
+      query: {
+        select: 'id,token_hash',
+        id: `eq.${sessionId}`,
+        user_id: `eq.${user.id}`,
+        limit: 1,
+      },
+    })
+    const session = Array.isArray(rows) ? rows[0] : null
+    if (!session?.id) {
+      throwActionError('SESSION_NOT_FOUND', 'Session not found', 404)
+    }
+
+    const isDeletingCurrent = Boolean(currentTokenHash && toSafeText(session?.token_hash).trim() === currentTokenHash)
+    await supabaseRequest(env, 'app_sessions', {
+      method: 'DELETE',
+      query: {
+        id: `eq.${sessionId}`,
+        user_id: `eq.${user.id}`,
+      },
+      headers: {
+        Prefer: 'return=minimal',
+      },
+    })
+    if (isDeletingCurrent) {
+      headers.append('set-cookie', buildClearedAppSessionCookie())
+      currentTokenHash = ''
+    }
+  } else if (action === 'delete_all_except_current') {
+    const query = { user_id: `eq.${user.id}` }
+    if (currentTokenHash) {
+      query.token_hash = `neq.${currentTokenHash}`
+    }
+    await supabaseRequest(env, 'app_sessions', {
+      method: 'DELETE',
+      query,
+      headers: {
+        Prefer: 'return=minimal',
+      },
+    })
+  } else if (action === 'delete_expired') {
+    await supabaseRequest(env, 'app_sessions', {
+      method: 'DELETE',
+      query: {
+        user_id: `eq.${user.id}`,
+        expires_at: `lt.${now}`,
+      },
+      headers: {
+        Prefer: 'return=minimal',
+      },
+    })
+  } else if (action === 'extend') {
+    const sessionId = toPositiveInt(body?.sessionId || body?.id)
+    const requestedDays = clamp(toPositiveInt(body?.days || 30), 1, 180)
+    if (!sessionId) {
+      throwActionError('SESSION_ID_REQUIRED', 'sessionId is required', 400)
+    }
+
+    const nextExpiresAt = now + (requestedDays * 24 * 60 * 60 * 1000)
+    await supabaseRequest(env, 'app_sessions', {
+      method: 'PATCH',
+      query: {
+        id: `eq.${sessionId}`,
+        user_id: `eq.${user.id}`,
+      },
+      body: {
+        expires_at: nextExpiresAt,
+      },
+      headers: {
+        Prefer: 'return=minimal',
+      },
+    })
+  } else if (action === 'unlink_telegram') {
+    await supabaseRequest(env, 'telegram_sessions', {
+      method: 'PATCH',
+      query: {
+        user_id: `eq.${user.id}`,
+      },
+      body: {
+        session_encrypted: '',
+        updated_at: now,
+      },
+      headers: {
+        Prefer: 'return=minimal',
+      },
+    })
+  } else {
+    throwActionError('ACTION_INVALID', 'Unsupported session action', 400)
+  }
+
+  const data = await buildSessionManagerPayload({ request, env, user, currentTokenHash })
+  return json({ ok: true, data }, { status: 200, headers })
+}
+
 function routeNotFound() {
   return json(
     {
@@ -266,6 +657,18 @@ export async function onRequest(context) {
 
     if (method === 'POST' && action === 'logout') {
       return handleLogout({ request, env })
+    }
+
+    if (method === 'GET' && action === 'google-avatar') {
+      return handleGoogleAvatar({ request, env })
+    }
+
+    if (method === 'GET' && action === 'sessions') {
+      return handleSessionsGet({ request, env })
+    }
+
+    if (method === 'POST' && action === 'sessions') {
+      return handleSessionsManage({ request, env })
     }
 
     return routeNotFound()

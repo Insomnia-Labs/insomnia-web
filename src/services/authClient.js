@@ -70,6 +70,12 @@ export function getGoogleLoginStartUrl() {
   })
 }
 
+export function getGoogleAvatarUrl(cacheKey = '') {
+  return buildAuthUrl('/google-avatar', {
+    t: cacheKey || Date.now(),
+  })
+}
+
 export async function getAuthMe() {
   try {
     const data = await fetchJson(buildAuthUrl('/me'), { method: 'GET' })
@@ -87,4 +93,21 @@ export async function getAuthMe() {
 
 export async function logoutAppSession() {
   return fetchJson(buildAuthUrl('/logout'), { method: 'POST' })
+}
+
+export async function getAuthSessions() {
+  return fetchJson(buildAuthUrl('/sessions'), { method: 'GET' })
+}
+
+export async function manageAuthSessions(action, payload = {}) {
+  return fetchJson(buildAuthUrl('/sessions'), {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      action,
+      ...(payload && typeof payload === 'object' ? payload : {}),
+    }),
+  })
 }

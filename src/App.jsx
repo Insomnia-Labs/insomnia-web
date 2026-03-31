@@ -22,6 +22,7 @@ function App() {
   const setShowVoidLogin = useStore((state) => state.setShowVoidLogin)
   const showVoid = useStore((state) => state.showVoid)
   const postLoginView = useStore((state) => state.postLoginView)
+  const setPostLoginView = useStore((state) => state.setPostLoginView)
   const config = isMobile ? PERFORMANCE_CONFIG.mobile : PERFORMANCE_CONFIG.desktop
   const containerRef = useRef(null)
 
@@ -45,12 +46,14 @@ function App() {
     const url = new URL(window.location.href)
     if (url.searchParams.get('openVoidLogin') !== '1') return
 
+    // Re-validate session path after OAuth callback instead of reusing stale persisted view.
+    setPostLoginView(null)
     setShowVoidLogin(true)
     url.searchParams.delete('openVoidLogin')
     const query = url.searchParams.toString()
     const nextUrl = `${url.pathname}${query ? `?${query}` : ''}${url.hash || ''}`
     window.history.replaceState({}, '', nextUrl)
-  }, [setShowVoidLogin])
+  }, [setPostLoginView, setShowVoidLogin])
 
   return (
     <div

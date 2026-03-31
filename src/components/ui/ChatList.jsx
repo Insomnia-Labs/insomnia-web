@@ -1,8 +1,21 @@
 import React, { useEffect, useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { getDialogs, getMe } from '../../services/telegramClient'
+import { getAuthSessions, getGoogleLoginStartUrl } from '../../services/authClient'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Bookmark } from 'lucide-react'
+
+function isAppAuthRequiredError(err) {
+    const code = String(err?.code || '').trim().toUpperCase()
+    if (code === 'APP_AUTH_REQUIRED') return true
+
+    const status = Number(err?.status || 0)
+    if (status === 401) return true
+
+    const message = String(err?.message || '').toUpperCase()
+    return message.includes('GOOGLE AUTHENTICATION REQUIRED')
+        || message.includes('APP_AUTH_REQUIRED')
+}
 
 export default function ChatList() {
     const { setPostLoginView, setSelectedChatId } = useStore()
@@ -11,6 +24,7 @@ export default function ChatList() {
     const [searchQuery, setSearchQuery] = useState('')
     const [error, setError] = useState('')
     const [myId, setMyId] = useState(null)
+    const [requiresGoogleAuth, setRequiresGoogleAuth] = useState(false)
 
     useEffect(() => {
         // Keep current view persisted so accidental reload/tab discard returns here.
@@ -21,17 +35,41 @@ export default function ChatList() {
         let mounted = true
         async function fetchChats() {
             try {
+                const auth = await getAuthSessions()
+                if (!auth?.authenticated) {
+                    if (mounted) {
+                        setDialogs([])
+                        setMyId(null)
+                        setRequiresGoogleAuth(true)
+                        setError('Требуется вход через Google-аккаунт')
+                        setLoading(false)
+                    }
+                    return
+                }
+
                 const me = await getMe()
                 if (mounted) setMyId(me.id)
 
                 const chats = await getDialogs(50) // Adjust limit as needed
                 if (mounted) {
+                    setRequiresGoogleAuth(false)
                     setDialogs(chats)
                     setLoading(false)
                 }
             } catch (err) {
-                console.error('Failed to fetch dialogs:', err)
+                if (isAppAuthRequiredError(err)) {
+                    if (mounted) {
+                        setDialogs([])
+                        setMyId(null)
+                        setRequiresGoogleAuth(true)
+                        setError('Требуется вход через Google-аккаунт')
+                        setLoading(false)
+                    }
+                    return
+                }
+
                 if (mounted) {
+                    setRequiresGoogleAuth(false)
                     setError('Error loading chats: ' + err.message)
                     setLoading(false)
                 }
@@ -138,6 +176,16 @@ export default function ChatList() {
                             {error && (
                                 <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center text-red-400/80 text-sm py-5 font-inter bg-red-500/10 rounded-xl p-3 border border-red-500/20">
                                     {error}
+                                    {requiresGoogleAuth && (
+                                        <div className="mt-3">
+                                            <button
+                                                onClick={() => { window.location.href = getGoogleLoginStartUrl() }}
+                                                className="px-3 py-1.5 rounded-lg border border-white/20 bg-white/10 text-white/90 text-xs hover:bg-white/15 transition-colors"
+                                            >
+                                                Войти через Google
+                                            </button>
+                                        </div>
+                                    )}
                                 </motion.div>
                             )}
 

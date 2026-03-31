@@ -1334,6 +1334,20 @@ export async function getChatFolders() {
   return apiRequest('/chat-folders')
 }
 
+export async function getTelegramSessions() {
+  return apiRequest('/sessions')
+}
+
+export async function manageTelegramSessions(action, payload = {}) {
+  return apiRequest('/sessions', {
+    method: 'POST',
+    body: {
+      action,
+      ...(payload && typeof payload === 'object' ? payload : {}),
+    },
+  })
+}
+
 export function clearMediaPreviewCacheByChat(chatId) {
   const chat = String(chatId || '').trim()
   if (!chat) return

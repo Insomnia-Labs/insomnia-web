@@ -1,6 +1,7 @@
-import React, { useEffect, useLayoutEffect, useState, useRef, useMemo } from 'react'
+import React, { useEffect, useLayoutEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { useStore } from '../../store/useStore'
-import { getChatHistory, getDialogs, getMe, getProfilePhoto, getMessageMediaPreview, clearMediaPreviewCacheByChat, getChatFolders, sendMessage, sendFileToChat, subscribeToMessages, subscribeToPresence, subscribeToTyping } from '../../services/telegramClient'
+import { getChatHistory, getDialogs, getMe, getProfilePhoto, getMessageMediaPreview, clearMediaPreviewCacheByChat, getChatFolders, getTelegramSessions, manageTelegramSessions, sendMessage, sendFileToChat, subscribeToMessages, subscribeToPresence, subscribeToTyping } from '../../services/telegramClient'
+import { getAuthSessions, getGoogleLoginStartUrl, getGoogleAvatarUrl, logoutAppSession } from '../../services/authClient'
 import { motion, AnimatePresence } from 'framer-motion'
 import './terminal-mode.css'
 
@@ -44,6 +45,18 @@ const isLikelyVideoMime = (value) => {
         || mime.includes('vnd.dlna.mpeg-tts')
 }
 
+const isAppAuthRequiredError = (err) => {
+    const code = String(err?.code || '').trim().toUpperCase()
+    if (code === 'APP_AUTH_REQUIRED') return true
+
+    const status = Number(err?.status || 0)
+    if (status === 401) return true
+
+    const message = String(err?.message || '').toUpperCase()
+    return message.includes('GOOGLE AUTHENTICATION REQUIRED')
+        || message.includes('APP_AUTH_REQUIRED')
+}
+
 export default function Dashboard() {
     const { selectedChatId, setPostLoginView, setSelectedChatId } = useStore()
     const [messages, setMessages] = useState([])
@@ -51,6 +64,18 @@ export default function Dashboard() {
     const [myId, setMyId] = useState(null)
     const [myProfile, setMyProfile] = useState(null)
     const [myProfilePhotoUrl, setMyProfilePhotoUrl] = useState('')
+    const [googleAuthUser, setGoogleAuthUser] = useState(null)
+    const [googleAuthChecked, setGoogleAuthChecked] = useState(false)
+    const [googleAuthRefreshing, setGoogleAuthRefreshing] = useState(false)
+    const [googleAuthActionPending, setGoogleAuthActionPending] = useState(false)
+    const [googleAuthError, setGoogleAuthError] = useState('')
+    const [googleAvatarFailed, setGoogleAvatarFailed] = useState(false)
+    const [telegramSessionLinked, setTelegramSessionLinked] = useState(false)
+    const [telegramSessionItems, setTelegramSessionItems] = useState([])
+    const [telegramSessionCurrentHash, setTelegramSessionCurrentHash] = useState('')
+    const [telegramSessionTtlDays, setTelegramSessionTtlDays] = useState(0)
+    const [telegramSessionActionRunning, setTelegramSessionActionRunning] = useState('')
+    const [expandedTelegramSessionHashes, setExpandedTelegramSessionHashes] = useState({})
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [activeTab, setActiveTab] = useState('all') // 'all', 'photo', 'video', 'archive'
@@ -427,6 +452,134 @@ export default function Dashboard() {
         fetchMyProfilePhoto()
         return () => { mounted = false }
     }, [myId])
+    const resetTelegramSessionState = useCallback((linked = false) => {
+        setTelegramSessionLinked(Boolean(linked))
+        setTelegramSessionItems([])
+        setTelegramSessionCurrentHash('')
+        setTelegramSessionTtlDays(0)
+        setExpandedTelegramSessionHashes({})
+    }, [])
+    const hydrateGoogleSessionData = useCallback((payload) => {
+        const authenticated = Boolean(payload?.authenticated)
+        const googleUser = authenticated ? (payload?.googleUser || null) : null
+        const telegramLinked = authenticated ? Boolean(payload?.telegramSession?.linked) : false
+
+        setGoogleAuthUser(googleUser)
+        if (!authenticated) {
+            resetTelegramSessionState(false)
+            return false
+        }
+        setTelegramSessionLinked(telegramLinked)
+        return true
+    }, [resetTelegramSessionState])
+    const hydrateTelegramSessionsData = useCallback((payload) => {
+        const linked = Boolean(payload?.linked)
+        const sessions = linked && Array.isArray(payload?.sessions) ? payload.sessions : []
+        const currentHash = linked ? String(payload?.currentHash || '').trim() : ''
+        const parsedTtlDays = linked ? Math.max(0, Math.trunc(Number(payload?.ttlDays) || 0)) : 0
+
+        setTelegramSessionLinked(linked)
+        setTelegramSessionItems(sessions)
+        setTelegramSessionCurrentHash(currentHash)
+        setTelegramSessionTtlDays(parsedTtlDays)
+        setExpandedTelegramSessionHashes({})
+    }, [])
+    const refreshGoogleSessionBinding = useCallback(async () => {
+        setGoogleAuthRefreshing(true)
+        setGoogleAuthError('')
+        setGoogleAvatarFailed(false)
+        try {
+            const payload = await getAuthSessions()
+            const authenticated = hydrateGoogleSessionData(payload)
+            if (!authenticated) return
+
+            try {
+                const telegramSessions = await getTelegramSessions()
+                hydrateTelegramSessionsData(telegramSessions)
+            } catch (err) {
+                resetTelegramSessionState(Boolean(payload?.telegramSession?.linked))
+                const message = String(err?.message || '').trim()
+                setGoogleAuthError(message || 'Не удалось загрузить Telegram-сессии')
+            }
+        } catch {
+            setGoogleAuthUser(null)
+            resetTelegramSessionState(false)
+            setGoogleAuthError('Не удалось обновить данные Google и Telegram сессий')
+        } finally {
+            setGoogleAuthRefreshing(false)
+            setGoogleAuthChecked(true)
+        }
+    }, [hydrateGoogleSessionData, hydrateTelegramSessionsData, resetTelegramSessionState])
+    useEffect(() => {
+        void refreshGoogleSessionBinding()
+    }, [refreshGoogleSessionBinding])
+    const handleTelegramSessionAction = useCallback(async (action, payload = {}, key = action) => {
+        if (telegramSessionActionRunning) return
+        setTelegramSessionActionRunning(key)
+        setGoogleAuthError('')
+        try {
+            const data = await manageTelegramSessions(action, payload)
+            if (data?.linked) {
+                hydrateTelegramSessionsData(data)
+            } else {
+                resetTelegramSessionState(false)
+            }
+            setGoogleAuthChecked(true)
+        } catch (err) {
+            const message = String(err?.message || '').trim()
+            if (message) {
+                setGoogleAuthError(message)
+            } else {
+                setGoogleAuthError('Не удалось выполнить действие с Telegram-сессией')
+            }
+        } finally {
+            setTelegramSessionActionRunning('')
+        }
+    }, [hydrateTelegramSessionsData, resetTelegramSessionState, telegramSessionActionRunning])
+    const handleGoogleLoginFromProfile = () => {
+        setGoogleAuthError('')
+        setGoogleAvatarFailed(false)
+        window.location.href = getGoogleLoginStartUrl()
+    }
+    const handleGoogleLogoutFromProfile = async () => {
+        if (googleAuthActionPending) return
+        setGoogleAuthActionPending(true)
+        setGoogleAuthError('')
+        try {
+            await logoutAppSession()
+            setGoogleAuthUser(null)
+            resetTelegramSessionState(false)
+            setGoogleAvatarFailed(false)
+            setGoogleAuthChecked(true)
+            setPostLoginView(null)
+        } catch {
+            setGoogleAuthError('Не удалось завершить Google-сессию')
+        } finally {
+            setGoogleAuthActionPending(false)
+        }
+    }
+    useEffect(() => {
+        setGoogleAvatarFailed(false)
+    }, [googleAuthUser?.id, googleAuthUser?.picture])
+    const toggleTelegramSessionExpanded = (hash) => {
+        const key = String(hash || '').trim()
+        if (!key) return
+        setExpandedTelegramSessionHashes(prev => ({
+            ...prev,
+            [key]: !prev[key],
+        }))
+    }
+    const handleRevokeTelegramSession = (hash) => {
+        const key = String(hash || '').trim()
+        if (!key) return
+        void handleTelegramSessionAction('revoke', { hash: key }, `revoke_${key}`)
+    }
+    const handleRevokeOtherTelegramSessions = () => {
+        void handleTelegramSessionAction('revoke_others', {}, 'revoke_others')
+    }
+    const handleUnlinkTelegramSessions = () => {
+        void handleTelegramSessionAction('unlink', {}, 'unlink')
+    }
     useEffect(() => {
         const timerId = window.setInterval(() => {
             setClockNowMs(Date.now())
@@ -437,6 +590,17 @@ export default function Dashboard() {
     useEffect(() => {
         let mounted = true
         async function fetchChats() {
+            if (!googleAuthChecked) return
+            if (!googleAuthUser?.id) {
+                if (mounted) {
+                    setDialogs([])
+                    setMyId(null)
+                    setMyProfile(null)
+                    if (selectedChatId) setSelectedChatId(null)
+                }
+                return
+            }
+
             try {
                 const me = await getMe()
                 if (mounted) {
@@ -450,6 +614,7 @@ export default function Dashboard() {
                     try {
                         fetchedDialogs = await getDialogs(50, chatFolder)
                     } catch (e) {
+                        if (isAppAuthRequiredError(e)) throw e
                         console.warn('Failed to fetch folder', chatFolder, ':', e)
                         fetchedDialogs = await getDialogs(50, 0)
                     }
@@ -501,7 +666,9 @@ export default function Dashboard() {
                             }
                             allDialogsCache.current = unique
                         } catch (e) {
-                            console.warn('Failed to fetch dialogs for filtering:', e)
+                            if (!isAppAuthRequiredError(e)) {
+                                console.warn('Failed to fetch dialogs for filtering:', e)
+                            }
                             allDialogsCache.current = []
                         }
                     }
@@ -610,16 +777,25 @@ export default function Dashboard() {
                     }
                 }
             } catch (err) {
+                if (isAppAuthRequiredError(err)) {
+                    if (mounted) {
+                        setDialogs([])
+                        setMyId(null)
+                        setMyProfile(null)
+                        if (selectedChatId) setSelectedChatId(null)
+                    }
+                    return
+                }
                 console.error('Failed to fetch dialogs:', err)
             }
         }
         fetchChats()
         return () => { mounted = false }
-    }, [chatFolder, activeSection])
+    }, [activeSection, chatFolder, googleAuthChecked, googleAuthUser?.id, selectedChatId, setSelectedChatId])
 
     // Subscribe to realtime presence updates
     useEffect(() => {
-        if (activeSection !== 'chats') return
+        if (activeSection !== 'chats' || !googleAuthUser?.id) return
 
         let mounted = true
         let unsubscribe = null
@@ -649,11 +825,11 @@ export default function Dashboard() {
             mounted = false
             if (unsubscribe) unsubscribe()
         }
-    }, [activeSection])
+    }, [activeSection, googleAuthUser?.id])
 
     // Subscribe to realtime typing updates
     useEffect(() => {
-        if (activeSection !== 'chats') return
+        if (activeSection !== 'chats' || !googleAuthUser?.id) return
 
         let mounted = true
         let unsubscribe = null
@@ -716,17 +892,29 @@ export default function Dashboard() {
             clearInterval(interval)
             if (unsubscribe) unsubscribe()
         }
-    }, [activeSection])
+    }, [activeSection, googleAuthUser?.id])
 
     // Refresh folders & clear cache when entering chats section
     useEffect(() => {
-        if (activeSection === 'chats') {
-            allDialogsCache.current = null // invalidate cache
-            getChatFolders().then(folders => {
-                setChatFolders(folders)
-            })
+        if (activeSection !== 'chats') return
+        if (!googleAuthUser?.id) {
+            setChatFolders([])
+            return
         }
-    }, [activeSection])
+
+        allDialogsCache.current = null // invalidate cache
+        getChatFolders()
+            .then(folders => {
+                setChatFolders(Array.isArray(folders) ? folders : [])
+            })
+            .catch(err => {
+                if (isAppAuthRequiredError(err)) {
+                    setChatFolders([])
+                    return
+                }
+                console.warn('Failed to fetch chat folders:', err)
+            })
+    }, [activeSection, googleAuthUser?.id])
 
     // Close dropdown on outside click
     useEffect(() => {
@@ -755,6 +943,7 @@ export default function Dashboard() {
 
     const loadOlderHistory = async () => {
         const chatId = activeChatIdRef.current
+        if (!googleAuthUser?.id) return
         if (!chatId || loading || loadingOlderHistoryRef.current || !hasMoreHistory || messages.length === 0) return
 
         const oldestLoadedMessage = messages[messages.length - 1]
@@ -865,6 +1054,13 @@ export default function Dashboard() {
         setLoadingOlderHistory(false)
         setHasMoreHistory(true)
 
+        if (!googleAuthUser?.id) {
+            setLoading(false)
+            setHasMoreHistory(false)
+            setError('Требуется вход через Google-аккаунт')
+            return () => { mounted = false }
+        }
+
         const fetchHistory = async () => {
             try {
                 const history = await getChatHistory(selectedChatId, { limit: HISTORY_BATCH_SIZE })
@@ -876,6 +1072,15 @@ export default function Dashboard() {
                     setLoading(false)
                 }
             } catch (err) {
+                if (isAppAuthRequiredError(err)) {
+                    if (mounted) {
+                        setError('Требуется вход через Google-аккаунт')
+                        setLoading(false)
+                        setHasMoreHistory(false)
+                        setSelectedChatId(null)
+                    }
+                    return
+                }
                 console.error('Failed to load chat history:', err)
                 if (mounted) {
                     setError(err.message)
@@ -890,10 +1095,10 @@ export default function Dashboard() {
             mounted = false
             exportCancelRef.current = true
         }
-    }, [selectedChatId])
+    }, [googleAuthUser?.id, selectedChatId, setSelectedChatId])
 
     useEffect(() => {
-        if (!selectedChatId || activeSection !== 'chats') return
+        if (!selectedChatId || activeSection !== 'chats' || !googleAuthUser?.id) return
 
         let mounted = true
         let unsubscribe = null
@@ -930,7 +1135,7 @@ export default function Dashboard() {
             mounted = false
             if (unsubscribe) unsubscribe()
         }
-    }, [selectedChatId, activeSection])
+    }, [activeSection, googleAuthUser?.id, selectedChatId])
 
     const handleBack = () => {
         setPostLoginView('chats')
@@ -2124,6 +2329,79 @@ export default function Dashboard() {
     const mobileProfileIdLabel = myId ? `ID ${myId}` : 'ID недоступен'
     const mobileSelectedSourceTitle = dialogs.find(d => d.entity?.id?.toString() === selectedChatId)?.title
         || (selectedChatId === myId?.toString() ? 'Saved Messages' : '')
+    const googleAccountName = String(googleAuthUser?.name || '').trim() || 'Google account'
+    const googleAccountEmail = String(googleAuthUser?.email || '').trim() || 'email не найден'
+    const googleAccountIdLabel = googleAuthUser?.id ? `UID ${googleAuthUser.id}` : 'UID недоступен'
+    const googleAccountSubLabel = googleAuthUser?.googleSub ? String(googleAuthUser.googleSub) : 'sub недоступен'
+    const googleAccountInitial = (googleAccountName || googleAccountEmail).charAt(0).toUpperCase() || 'G'
+    const googleAvatarSrc = googleAuthUser
+        ? getGoogleAvatarUrl(googleAuthUser?.googleSub || googleAuthUser?.id || '')
+        : ''
+    const formatSessionDateTime = (value) => {
+        const ts = Number(value) || 0
+        if (!ts) return '—'
+        return new Date(ts).toLocaleString([], {
+            day: '2-digit',
+            month: '2-digit',
+            year: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+        })
+    }
+    const maskIpAddress = (value) => {
+        const raw = String(value || '').trim()
+        if (!raw) return 'неизвестно'
+        if (raw.includes(':')) return `${raw.split(':').slice(0, 3).join(':')}::*`
+        const parts = raw.split('.')
+        if (parts.length === 4) return `${parts[0]}.${parts[1]}.${parts[2]}.x`
+        return raw
+    }
+    const getTelegramDeviceKind = (item) => {
+        const raw = `${item?.platform || ''} ${item?.deviceModel || ''} ${item?.appName || ''}`.toLowerCase()
+        if (raw.includes('android') || raw.includes('ios') || raw.includes('iphone') || raw.includes('ipad')) {
+            return 'mobile'
+        }
+        if (raw.includes('web')) {
+            return 'web'
+        }
+        return 'desktop'
+    }
+    const telegramSessionRows = (Array.isArray(telegramSessionItems) ? telegramSessionItems : []).map((item, index) => {
+        const hash = String(item?.hash || '').trim()
+        const appName = String(item?.appName || '').trim() || 'Telegram'
+        const appVersion = String(item?.appVersion || '').trim()
+        const platform = String(item?.platform || '').trim() || 'Unknown platform'
+        const systemVersion = String(item?.systemVersion || '').trim()
+        const deviceModel = String(item?.deviceModel || '').trim() || 'Unknown device'
+        const locationPieces = [String(item?.country || '').trim(), String(item?.region || '').trim()].filter(Boolean)
+
+        return {
+            key: hash || `session-${index}`,
+            hash,
+            isCurrent: Boolean(item?.current) || (telegramSessionCurrentHash && hash === telegramSessionCurrentHash),
+            appLabel: `${appName}${appVersion ? ` ${appVersion}` : ''}`,
+            platformLabel: systemVersion ? `${platform} ${systemVersion}` : platform,
+            deviceLabel: deviceModel,
+            deviceKind: getTelegramDeviceKind(item),
+            apiId: Number(item?.apiId) || 0,
+            ipLabel: maskIpAddress(item?.ip),
+            locationLabel: locationPieces.join(', ') || 'Не указано',
+            createdAtLabel: formatSessionDateTime(item?.createdAt),
+            activeAtLabel: formatSessionDateTime(item?.activeAt),
+            officialApp: Boolean(item?.officialApp),
+            passwordPending: Boolean(item?.passwordPending),
+            unconfirmed: Boolean(item?.unconfirmed),
+            encryptedRequestsDisabled: Boolean(item?.encryptedRequestsDisabled),
+            callRequestsDisabled: Boolean(item?.callRequestsDisabled),
+        }
+    }).filter(item => item.hash)
+    const isSessionActionRunning = Boolean(telegramSessionActionRunning)
+    const telegramSessionStats = {
+        total: telegramSessionRows.length,
+        current: telegramSessionRows.filter(item => item.isCurrent).length,
+        other: telegramSessionRows.filter(item => !item.isCurrent).length,
+    }
 
     const renderMobileDiskView = () => {
         const visibleRows = mobileVisibleRows
@@ -2405,9 +2683,14 @@ export default function Dashboard() {
                                     <div className="min-w-0 flex-1">
                                         <p className="text-[18px] font-semibold text-white truncate">{mobileProfileDisplayName}</p>
                                         <p className="text-[13px] text-[#9fb0cb] truncate">{mobileProfileHandle}</p>
-                                        <div className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-[#325982] bg-[#12243a] px-2 py-0.5 text-[11px] text-[#b8d8ff]">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-[#7ad67a]"></span>
-                                            Telegram сессия активна
+                                        <div className={`mt-1 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] ${telegramSessionLinked
+                                            ? 'border border-[#2f6f4a] bg-[#163222] text-[#b8efc7]'
+                                            : 'border border-[#5b4e33] bg-[#2c2313] text-[#f1d8a0]'
+                                            }`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${telegramSessionLinked ? 'bg-[#7ad67a]' : 'bg-[#e3ba74]'}`}></span>
+                                            {googleAuthChecked
+                                                ? (telegramSessionLinked ? 'Telegram сессия привязана к Google' : 'Связь Telegram с Google не активна')
+                                                : 'Проверяем связь Telegram/Google'}
                                         </div>
                                     </div>
                                 </div>
@@ -2452,6 +2735,215 @@ export default function Dashboard() {
                                         </span>
                                     </div>
                                 </div>
+                            </div>
+
+                            <div className="mt-3 rounded-2xl border border-[#2c3343] bg-[#141923] px-3 py-2.5">
+                                <p className="text-[11px] uppercase tracking-[0.08em] text-[#7f8aa3]">Google аккаунт и Telegram-сессии</p>
+
+                                {googleAuthUser ? (
+                                    <div className="mt-2 flex items-center gap-3">
+                                        {googleAvatarSrc && !googleAvatarFailed ? (
+                                            <img
+                                                src={googleAvatarSrc}
+                                                alt={googleAccountName}
+                                                referrerPolicy="no-referrer"
+                                                className="w-12 h-12 rounded-xl object-cover border border-white/15"
+                                                onError={() => setGoogleAvatarFailed(true)}
+                                            />
+                                        ) : (
+                                            <div className="w-12 h-12 rounded-xl border border-[#3b4558] bg-[#1f2735] flex items-center justify-center text-[18px] font-semibold text-[#dce6fa]">
+                                                {googleAccountInitial}
+                                            </div>
+                                        )}
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-[14px] font-medium text-[#dbe6fb] truncate">{googleAccountName}</p>
+                                            <p className="text-[12px] text-[#9fb0cb] truncate">{googleAccountEmail}</p>
+                                            <p className="text-[11px] text-[#8d9ab3] mt-0.5">{googleAccountIdLabel}</p>
+                                            <p className="text-[11px] text-[#8d9ab3] truncate" title={googleAccountSubLabel}>{googleAccountSubLabel}</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="mt-2 rounded-xl border border-[#3a2f24] bg-[#1f1912] px-3 py-2 text-[12px] text-[#ddc9a0]">
+                                        {googleAuthChecked ? 'Google-сессия не найдена. Войдите заново.' : 'Проверяем Google-сессию...'}
+                                    </div>
+                                )}
+
+                                <div className="mt-2 space-y-2">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="text-[12px] text-[#8e9ab2]">Google app session</span>
+                                        <span className={`text-[12px] ${googleAuthUser ? 'text-[#b8efc7]' : 'text-[#f1d8a0]'}`}>
+                                            {googleAuthUser ? 'Активна' : (googleAuthChecked ? 'Нет' : 'Проверка...')}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="text-[12px] text-[#8e9ab2]">Telegram-сессия для Google UID</span>
+                                        <span className={`text-[12px] ${telegramSessionLinked ? 'text-[#b8efc7]' : 'text-[#f1d8a0]'}`}>
+                                            {googleAuthChecked ? (telegramSessionLinked ? 'Привязана' : 'Не привязана') : 'Проверка...'}
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-[#8d9ab3]">
+                                        Telegram-сессии хранятся отдельно для каждого Google UID: {googleAuthUser?.id || 'не определён'}.
+                                    </p>
+                                    <p className="text-[11px] text-[#8d9ab3]">
+                                        TTL Telegram authorizations: {telegramSessionTtlDays > 0 ? `${telegramSessionTtlDays} дн.` : 'неизвестно'}.
+                                    </p>
+                                </div>
+
+                                <div className="mt-3 grid grid-cols-3 gap-2">
+                                    <div className="rounded-xl border border-[#2c3343] bg-[#111722] px-2.5 py-2">
+                                        <p className="text-[10px] uppercase tracking-[0.08em] text-[#7f8aa3]">Всего</p>
+                                        <p className="mt-0.5 text-[13px] font-semibold text-[#dbe6fb]">{telegramSessionStats.total}</p>
+                                    </div>
+                                    <div className="rounded-xl border border-[#2c3343] bg-[#111722] px-2.5 py-2">
+                                        <p className="text-[10px] uppercase tracking-[0.08em] text-[#7f8aa3]">Текущая</p>
+                                        <p className="mt-0.5 text-[13px] font-semibold text-[#b8efc7]">{telegramSessionStats.current}</p>
+                                    </div>
+                                    <div className="rounded-xl border border-[#2c3343] bg-[#111722] px-2.5 py-2">
+                                        <p className="text-[10px] uppercase tracking-[0.08em] text-[#7f8aa3]">Другие</p>
+                                        <p className="mt-0.5 text-[13px] font-semibold text-[#f1d8a0]">{telegramSessionStats.other}</p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-3 max-h-[34vh] overflow-y-auto pr-1 space-y-2">
+                                    {!googleAuthUser ? (
+                                        <div className="rounded-xl border border-[#3a2f24] bg-[#1f1912] px-3 py-2 text-[12px] text-[#ddc9a0]">
+                                            Для просмотра Telegram-сессий войдите в Google-аккаунт.
+                                        </div>
+                                    ) : !telegramSessionLinked ? (
+                                        <div className="rounded-xl border border-[#3a2f24] bg-[#1f1912] px-3 py-2 text-[12px] text-[#ddc9a0]">
+                                            Telegram-сессия для этого Google UID ещё не подключена.
+                                        </div>
+                                    ) : telegramSessionRows.length === 0 ? (
+                                        <div className="rounded-xl border border-[#3a2f24] bg-[#1f1912] px-3 py-2 text-[12px] text-[#ddc9a0]">
+                                            Telegram вернул пустой список authorizations.
+                                        </div>
+                                    ) : telegramSessionRows.map(session => {
+                                        const expanded = Boolean(expandedTelegramSessionHashes[session.hash])
+                                        const hasFlags = session.officialApp
+                                            || session.passwordPending
+                                            || session.unconfirmed
+                                            || session.encryptedRequestsDisabled
+                                            || session.callRequestsDisabled
+
+                                        return (
+                                            <div key={session.key} className={`rounded-xl border px-2.5 py-2 ${session.isCurrent
+                                                ? 'border-[#3d6aa4] bg-[#152238]'
+                                                : 'border-[#2c3343] bg-[#111722]'
+                                                }`}>
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <p className="text-[12px] font-semibold text-[#dbe6fb] truncate" title={session.appLabel}>
+                                                        {session.appLabel}
+                                                    </p>
+                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${session.isCurrent
+                                                        ? 'border-[#2f6f4a] bg-[#163222] text-[#b8efc7]'
+                                                        : 'border-[#465779] bg-[#172136] text-[#c6d9ff]'
+                                                        }`}>
+                                                        {session.isCurrent ? 'current' : session.deviceKind}
+                                                    </span>
+                                                </div>
+                                                <p className="mt-1 text-[11px] text-[#9eb0cb]">
+                                                    {session.deviceLabel} · {session.platformLabel}
+                                                </p>
+                                                <p className="text-[11px] text-[#8d9ab3]">
+                                                    Активность: {session.activeAtLabel}
+                                                </p>
+                                                <p className="text-[11px] text-[#8d9ab3]">
+                                                    IP {session.ipLabel} · {session.locationLabel}
+                                                </p>
+                                                <div className="mt-2 flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => toggleTelegramSessionExpanded(session.hash)}
+                                                        disabled={isSessionActionRunning}
+                                                        className="h-8 px-2.5 rounded-lg border border-[#375b86] bg-[#18304d] text-[#d8e8ff] text-[11px] font-medium disabled:opacity-70"
+                                                    >
+                                                        {expanded ? 'Скрыть детали' : 'Подробнее'}
+                                                    </button>
+                                                    {!session.isCurrent && (
+                                                        <button
+                                                            onClick={() => handleRevokeTelegramSession(session.hash)}
+                                                            disabled={isSessionActionRunning}
+                                                            className="h-8 px-2.5 rounded-lg border border-[#5a3942] bg-[#26171c] text-[#f0bbc7] text-[11px] font-medium disabled:opacity-70"
+                                                        >
+                                                            {telegramSessionActionRunning === `revoke_${session.hash}` ? 'Отключаем...' : 'Удалить'}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                {expanded && (
+                                                    <div className="mt-2 rounded-lg border border-[#303a4f] bg-[#0f1521] px-2 py-1.5 text-[10px] text-[#9eb0cb] space-y-1">
+                                                        <p>Hash: <span className="text-[#cde0ff]">{session.hash}</span></p>
+                                                        <p>API ID: <span className="text-[#cde0ff]">{session.apiId || '—'}</span></p>
+                                                        <p>Создана: <span className="text-[#cde0ff]">{session.createdAtLabel}</span></p>
+                                                        <p>Последняя активность: <span className="text-[#cde0ff]">{session.activeAtLabel}</span></p>
+                                                        <div className="pt-0.5 flex flex-wrap gap-1.5">
+                                                            {session.officialApp && <span className="px-1.5 py-0.5 rounded border border-[#2f6f4a] bg-[#163222] text-[#b8efc7]">Official app</span>}
+                                                            {session.passwordPending && <span className="px-1.5 py-0.5 rounded border border-[#6a5b34] bg-[#2c2513] text-[#f3dfad]">Password pending</span>}
+                                                            {session.unconfirmed && <span className="px-1.5 py-0.5 rounded border border-[#7a4a45] bg-[#2d1a1a] text-[#f7b5b5]">Unconfirmed</span>}
+                                                            {session.encryptedRequestsDisabled && <span className="px-1.5 py-0.5 rounded border border-[#7a4a45] bg-[#2d1a1a] text-[#f7b5b5]">E2E off</span>}
+                                                            {session.callRequestsDisabled && <span className="px-1.5 py-0.5 rounded border border-[#6a5b34] bg-[#2c2513] text-[#f3dfad]">Calls off</span>}
+                                                            {!hasFlags && <span className="px-1.5 py-0.5 rounded border border-[#3c4d6d] bg-[#1a2639] text-[#c8dafc]">Стандартная</span>}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+
+                                <div className="mt-3 flex flex-col gap-2">
+                                    <button
+                                        onClick={() => { void refreshGoogleSessionBinding() }}
+                                        disabled={googleAuthRefreshing || googleAuthActionPending || isSessionActionRunning}
+                                        className="h-10 rounded-xl border border-[#3d567e] bg-[#1a2a42] text-[#d7e9ff] text-[13px] font-medium disabled:opacity-70"
+                                    >
+                                        {googleAuthRefreshing ? 'Обновляем статусы...' : 'Обновить список сессий'}
+                                    </button>
+
+                                    <button
+                                        onClick={handleRevokeOtherTelegramSessions}
+                                        disabled={!googleAuthUser || !telegramSessionLinked || telegramSessionRows.length <= 1 || googleAuthRefreshing || googleAuthActionPending || isSessionActionRunning}
+                                        className="h-10 rounded-xl border border-[#5b4b2f] bg-[#2a2212] text-[#f1d8a0] text-[13px] font-medium disabled:opacity-70"
+                                    >
+                                        {telegramSessionActionRunning === 'revoke_others'
+                                            ? 'Отключаем...'
+                                            : 'Удалить все другие Telegram-сессии'}
+                                    </button>
+
+                                    <button
+                                        onClick={handleUnlinkTelegramSessions}
+                                        disabled={!googleAuthUser || googleAuthRefreshing || googleAuthActionPending || isSessionActionRunning}
+                                        className="h-10 rounded-xl border border-[#5a3942] bg-[#26171c] text-[#f0bbc7] text-[13px] font-medium disabled:opacity-70"
+                                    >
+                                        {telegramSessionActionRunning === 'unlink'
+                                            ? 'Отвязываем...'
+                                            : 'Отвязать Telegram от Google UID'}
+                                    </button>
+
+                                    <p className="text-[11px] text-[#8d9ab3] leading-[1.35]">
+                                        Новая Telegram-сессия добавляется через вход в Telegram на новом устройстве под тем же номером.
+                                    </p>
+
+                                    {googleAuthUser ? (
+                                        <button
+                                            onClick={() => { void handleGoogleLogoutFromProfile() }}
+                                            disabled={googleAuthActionPending || isSessionActionRunning}
+                                            className="h-10 rounded-xl border border-[#5a3942] bg-[#26171c] text-[#f0bbc7] text-[13px] font-medium disabled:opacity-70"
+                                        >
+                                            {googleAuthActionPending ? 'Выход из Google...' : 'Выйти из Google аккаунта'}
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={handleGoogleLoginFromProfile}
+                                            disabled={googleAuthActionPending || isSessionActionRunning}
+                                            className="h-10 rounded-xl border border-[#3b5f8a] bg-[#1b2e47] text-[#d9e9ff] text-[13px] font-medium disabled:opacity-70"
+                                        >
+                                            Войти в Google аккаунт
+                                        </button>
+                                    )}
+                                </div>
+
+                                {googleAuthError && (
+                                    <p className="mt-2 text-[12px] text-[#ff9da8]">{googleAuthError}</p>
+                                )}
                             </div>
 
                             <div className="mt-3 flex flex-col gap-2 pb-2">

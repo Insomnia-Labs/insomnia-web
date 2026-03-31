@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useStore } from '../../store/useStore'
-import { sendCode, signIn, signInWith2FA, isAuthorized } from '../../services/telegramClient'
+import { sendCode, signIn, signInWith2FA, isAuthorized, getMe as getTelegramMe } from '../../services/telegramClient'
 import { getAuthMe, getGoogleLoginStartUrl, logoutAppSession } from '../../services/authClient'
 import VoidOceanBackground from './VoidOceanBackground'
 
@@ -444,34 +444,71 @@ export default function VoidLogin() {
             })
     }, [stage, appendLog])
 
-    /* Check if already authorized */
+    /* Check if already authorized + validate that session is healthy */
     useEffect(() => {
         if (stage !== 'check') return
-        const startedAt = Date.now()
-        appendLog('NET', 'GET /api/tg/authorized START')
-        isAuthorized()
-            .then(ok => {
-                if (ok) {
-                    appendLog('OK', 'GET /api/tg/authorized OK', {
-                        durationMs: Date.now() - startedAt,
-                        authorized: true,
-                    })
-                    setStage('success')
-                } else {
+        let cancelled = false
+
+        const run = async () => {
+            const startedAt = Date.now()
+            appendLog('NET', 'GET /api/tg/authorized START')
+
+            try {
+                const ok = await isAuthorized()
+                if (cancelled) return
+
+                if (!ok) {
                     appendLog('WARN', 'GET /api/tg/authorized OK', {
                         durationMs: Date.now() - startedAt,
                         authorized: false,
                     })
                     setStage('boot')
+                    return
                 }
-            })
-            .catch(err => {
-                appendLog('ERROR', 'GET /api/tg/authorized FAILED', {
+
+                appendLog('OK', 'GET /api/tg/authorized OK', {
                     durationMs: Date.now() - startedAt,
+                    authorized: true,
+                })
+
+                const probeStartedAt = Date.now()
+                appendLog('NET', 'GET /api/tg/me START')
+                const me = await getTelegramMe()
+                if (cancelled) return
+
+                if (me?.id) {
+                    appendLog('OK', 'GET /api/tg/me OK', {
+                        durationMs: Date.now() - probeStartedAt,
+                        meId: String(me.id),
+                    })
+                    setStage('success')
+                    return
+                }
+
+                appendLog('WARN', 'GET /api/tg/me EMPTY', {
+                    durationMs: Date.now() - probeStartedAt,
+                })
+                setStage('boot')
+            } catch (err) {
+                if (cancelled) return
+                const code = extractAuthErrorCode(err)
+                if (code === 'APP_AUTH_REQUIRED') {
+                    appendLog('WARN', 'SESSION CHECK REQUIRES APP AUTH', {
+                        ...toLogErrorMeta(err),
+                    })
+                    setStage('appauth')
+                    return
+                }
+
+                appendLog('ERROR', 'SESSION CHECK FAILED', {
                     ...toLogErrorMeta(err),
                 })
                 setStage('boot')
-            })
+            }
+        }
+
+        void run()
+        return () => { cancelled = true }
     }, [stage, appendLog])
 
     /* Handle transition to chats upon success */

@@ -53,6 +53,113 @@ function toPositiveInt(value) {
   return parsed
 }
 
+function toIntegerString(value) {
+  if (typeof value === 'bigint') return value.toString()
+  if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value).toString()
+  if (typeof value === 'string') return value.trim()
+  return ''
+}
+
+function toEpochMsFromSeconds(value) {
+  const seconds = toInt(value, 0)
+  if (!Number.isFinite(seconds) || seconds <= 0) return 0
+  return seconds * 1000
+}
+
+function parseAuthorizationHash(value) {
+  const hash = toIntegerString(value)
+  if (!hash || !/^-?\d+$/.test(hash)) return ''
+  try {
+    BigInt(hash)
+    return hash
+  } catch {
+    return ''
+  }
+}
+
+function serializeTelegramAuthorization(item) {
+  const hash = parseAuthorizationHash(item?.hash)
+  if (!hash) return null
+
+  return {
+    hash,
+    apiId: toPositiveInt(item?.apiId),
+    appName: toText(item?.appName),
+    appVersion: toText(item?.appVersion),
+    deviceModel: toText(item?.deviceModel),
+    platform: toText(item?.platform),
+    systemVersion: toText(item?.systemVersion),
+    ip: toText(item?.ip),
+    country: toText(item?.country),
+    region: toText(item?.region),
+    createdAt: toEpochMsFromSeconds(item?.dateCreated),
+    activeAt: toEpochMsFromSeconds(item?.dateActive),
+    current: Boolean(item?.current),
+    officialApp: Boolean(item?.officialApp),
+    passwordPending: Boolean(item?.passwordPending),
+    unconfirmed: Boolean(item?.unconfirmed),
+    encryptedRequestsDisabled: Boolean(item?.encryptedRequestsDisabled),
+    callRequestsDisabled: Boolean(item?.callRequestsDisabled),
+  }
+}
+
+function sortTelegramAuthorizationItems(left, right) {
+  if (left.current && !right.current) return -1
+  if (!left.current && right.current) return 1
+  if (left.activeAt !== right.activeAt) return right.activeAt - left.activeAt
+  if (left.createdAt !== right.createdAt) return right.createdAt - left.createdAt
+  if (left.hash === right.hash) return 0
+  return left.hash > right.hash ? 1 : -1
+}
+
+function getEmptyTelegramSessionsPayload() {
+  return {
+    linked: false,
+    ttlDays: 0,
+    totalSessions: 0,
+    currentHash: '',
+    sessions: [],
+  }
+}
+
+function buildTelegramSessionsPayload(response, linked = true) {
+  const rawAuthorizations = Array.isArray(response?.authorizations) ? response.authorizations : []
+  const sessions = rawAuthorizations
+    .map(serializeTelegramAuthorization)
+    .filter(Boolean)
+    .sort(sortTelegramAuthorizationItems)
+  const current = sessions.find(item => item.current)
+
+  return {
+    linked: Boolean(linked),
+    ttlDays: toPositiveInt(response?.authorizationTtlDays),
+    totalSessions: sessions.length,
+    currentHash: current?.hash || '',
+    sessions,
+  }
+}
+
+async function readTelegramSessionsWithClient(client) {
+  const authorized = await client.isUserAuthorized().catch(() => false)
+  if (!authorized) return getEmptyTelegramSessionsPayload()
+
+  const response = await client.invoke(new Api.account.GetAuthorizations())
+  return buildTelegramSessionsPayload(response, true)
+}
+
+function isRecoverableTelegramSessionError(code) {
+  const normalized = toText(code).toUpperCase()
+  if (!normalized) return false
+
+  return normalized === 'AUTH_KEY_UNREGISTERED'
+    || normalized === 'AUTH_BYTES_INVALID'
+    || normalized === 'SESSION_REVOKED'
+    || normalized === 'SESSION_EXPIRED'
+    || normalized === 'TELEGRAM_SESSION_NOT_LINKED'
+    || normalized === 'USER_DEACTIVATED'
+    || normalized === 'USER_DEACTIVATED_BAN'
+}
+
 const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'heic', 'heif', 'avif'])
 const VIDEO_EXTENSIONS = new Set([
   'mp4', 'm4v', 'mov', 'mkv', 'webm', 'avi', 'wmv', 'flv',
@@ -1079,6 +1186,103 @@ async function handleGetMediaPreview({ request, env, state, user, session }) {
   return new Response(result.bytes, { status: 200, headers })
 }
 
+async function handleGetSessions({ env, state, user, session }) {
+  const safeUser = ensureAuthenticatedUser(user)
+  const nextState = withLegacySessionCleared(state)
+
+  if (!session) {
+    return okWithState(getEmptyTelegramSessionsPayload(), nextState, env)
+  }
+
+  try {
+    const { result } = await runWithUserTelegramSession({ env, user: safeUser, session }, async ({ client }) => {
+      return readTelegramSessionsWithClient(client)
+    })
+    if (!result?.linked) {
+      await clearTelegramSessionForUser(env, safeUser.id).catch(() => {})
+      return okWithState(getEmptyTelegramSessionsPayload(), nextState, env)
+    }
+    return okWithState(result, nextState, env)
+  } catch (err) {
+    const mapped = mapApiError(err)
+    if (isRecoverableTelegramSessionError(mapped.code)) {
+      await clearTelegramSessionForUser(env, safeUser.id).catch(() => {})
+      return okWithState(getEmptyTelegramSessionsPayload(), nextState, env)
+    }
+    throw err
+  }
+}
+
+async function handleManageSessions({ request, env, state, user, session }) {
+  const safeUser = ensureAuthenticatedUser(user)
+  const body = await readJsonBody(request)
+  const action = toText(body?.action).toLowerCase()
+  if (!action) throw new ApiError('ACTION_REQUIRED', 400, 'action is required')
+
+  const nextState = withLegacySessionCleared(state)
+
+  if (action === 'unlink') {
+    await clearTelegramSessionForUser(env, safeUser.id)
+    return okWithState(getEmptyTelegramSessionsPayload(), nextState, env)
+  }
+
+  if (!session) {
+    throw new ApiError('TELEGRAM_SESSION_NOT_LINKED', 409, 'Telegram session is not linked for this Google account')
+  }
+
+  try {
+    const { result } = await runWithUserTelegramSession({ env, user: safeUser, session }, async ({ client }) => {
+      const current = await readTelegramSessionsWithClient(client)
+      if (!current.linked) {
+        throw new ApiError('TELEGRAM_SESSION_NOT_LINKED', 409, 'Telegram session is not linked for this Google account')
+      }
+
+      if (action === 'refresh') {
+        return current
+      }
+
+      if (action === 'revoke') {
+        const hash = parseAuthorizationHash(body?.hash || body?.sessionHash || body?.authorizationHash)
+        if (!hash) {
+          throw new ApiError('SESSION_HASH_REQUIRED', 400, 'authorization hash is required')
+        }
+
+        const target = current.sessions.find(item => item.hash === hash)
+        if (!target) {
+          throw new ApiError('SESSION_NOT_FOUND', 404, 'Telegram authorization not found')
+        }
+        if (target.current) {
+          throw new ApiError('SESSION_REVOKE_CURRENT_FORBIDDEN', 400, 'Current Telegram authorization cannot be revoked from this action')
+        }
+
+        await client.invoke(new Api.account.ResetAuthorization({
+          hash: BigInt(hash),
+        }))
+      } else if (action === 'revoke_others' || action === 'terminate_others') {
+        await client.invoke(new Api.account.ResetAuthorizations())
+      } else {
+        throw new ApiError('ACTION_INVALID', 400, 'Unsupported Telegram sessions action')
+      }
+
+      return readTelegramSessionsWithClient(client)
+    })
+
+    if (!result?.linked) {
+      await clearTelegramSessionForUser(env, safeUser.id).catch(() => {})
+      return okWithState(getEmptyTelegramSessionsPayload(), nextState, env)
+    }
+
+    return okWithState(result, nextState, env)
+  } catch (err) {
+    const mapped = mapApiError(err)
+    if (isRecoverableTelegramSessionError(mapped.code)) {
+      await clearTelegramSessionForUser(env, safeUser.id).catch(() => {})
+      return okWithState(getEmptyTelegramSessionsPayload(), nextState, env)
+    }
+    throw err
+  }
+}
+
 async function handleLogout({ env, user }) {
   if (user?.id) {
     await clearTelegramSessionForUser(env, user.id)
@@ -1148,6 +1352,12 @@ export async function onRequest(context) {
     }
     if (method === 'GET' && action === 'profile-photo') {
       return await handleGetProfilePhoto({ request, env, state, user, session: telegramSession })
+    }
+    if (method === 'GET' && action === 'sessions') {
+      return await handleGetSessions({ env, state, user, session: telegramSession })
+    }
+    if (method === 'POST' && action === 'sessions') {
+      return await handleManageSessions({ request, env, state, user, session: telegramSession })
     }
     if (method === 'GET' && action === 'media-preview') {
       return await handleGetMediaPreview({ request, env, state, user, session: telegramSession })

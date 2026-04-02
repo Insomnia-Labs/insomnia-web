@@ -436,7 +436,12 @@ function ensureAuthenticatedUser(user) {
 
 async function runWithUserTelegramSession({ env, user, session }, fn) {
   const safeUser = ensureAuthenticatedUser(user)
-  const { result, nextSession } = await runWithTelegramClient(env, session || '', fn)
+  const { result, nextSession } = await runWithTelegramClient(
+    env,
+    session || '',
+    fn,
+    { cacheKey: safeUser.id }
+  )
   await saveTelegramSessionForUser(env, safeUser.id, nextSession)
   return { result, nextSession }
 }
@@ -473,8 +478,11 @@ async function handleSendCode({ request, env, state, user, session }) {
   const phoneNumber = toText(body.phoneNumber || body.phone)
   if (!phoneNumber) throw new ApiError('PHONE_NUMBER_INVALID', 400, 'Phone number is required')
 
-  const { result, nextSession } = await runWithTelegramClient(env, session || '', async ({ client, apiId, apiHash }) =>
-    sendCodeWithClient(client, apiId, apiHash, phoneNumber)
+  const { result, nextSession } = await runWithTelegramClient(
+    env,
+    session || '',
+    async ({ client, apiId, apiHash }) => sendCodeWithClient(client, apiId, apiHash, phoneNumber),
+    { cacheKey: safeUser.id }
   )
   await saveTelegramSessionForUser(env, safeUser.id, nextSession)
 
@@ -506,8 +514,11 @@ async function handleSignIn({ request, env, state, user, session }) {
 
   let nextSessionFromSignIn = session || ''
   try {
-    const { nextSession } = await runWithTelegramClient(env, session || '', async ({ client }) =>
-      signInWithCode(client, phoneNumber, phoneCodeHash, phoneCode)
+    const { nextSession } = await runWithTelegramClient(
+      env,
+      session || '',
+      async ({ client }) => signInWithCode(client, phoneNumber, phoneCodeHash, phoneCode),
+      { cacheKey: safeUser.id }
     )
     nextSessionFromSignIn = nextSession
   } catch (err) {
@@ -551,8 +562,11 @@ async function handleSignIn2FA({ request, env, state, user, session }) {
   const password = toText(body.password)
   if (!password) throw new ApiError('CLOUD_PASSWORD_REQUIRED', 400, 'Cloud password is required')
 
-  const { nextSession } = await runWithTelegramClient(env, session || '', async ({ client, apiId, apiHash }) =>
-    signInWithPassword(client, password, apiId, apiHash)
+  const { nextSession } = await runWithTelegramClient(
+    env,
+    session || '',
+    async ({ client, apiId, apiHash }) => signInWithPassword(client, password, apiId, apiHash),
+    { cacheKey: safeUser.id }
   )
   await saveTelegramSessionForUser(env, safeUser.id, nextSession)
 

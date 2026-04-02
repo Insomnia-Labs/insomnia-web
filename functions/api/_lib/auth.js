@@ -3,6 +3,7 @@ import { supabaseRequest } from './supabase.js'
 
 export const APP_SESSION_COOKIE_NAME = 'app_session'
 export const APP_SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30
+export const DESKTOP_SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30
 export const GOOGLE_OAUTH_STATE_COOKIE_NAME = 'google_oauth_state'
 export const GOOGLE_OAUTH_RETURN_TO_COOKIE_NAME = 'google_oauth_return_to'
 export const GOOGLE_OAUTH_COOKIE_MAX_AGE_SECONDS = 60 * 10
@@ -206,14 +207,22 @@ export function buildClearedAppSessionCookie() {
   return buildClearedCookie(APP_SESSION_COOKIE_NAME)
 }
 
-export async function createAppSession(env, userId, request) {
+function readAuthorizationBearerToken(request) {
+  const header = toSafeText(request?.headers?.get('authorization') || '').trim()
+  if (!header) return ''
+  const matched = /^Bearer\s+(.+)$/i.exec(header)
+  if (!matched?.[1]) return ''
+  return matched[1].trim()
+}
+
+async function createSessionRecord(env, table, ttlSeconds, userId, request) {
   const token = createRandomToken(32)
   const tokenHash = await sha256Hex(token)
   const now = Date.now()
-  const expiresAt = now + APP_SESSION_MAX_AGE_SECONDS * 1000
+  const expiresAt = now + ttlSeconds * 1000
   const { userAgent, ip } = readRequestMetadata(request)
 
-  await supabaseRequest(env, 'app_sessions', {
+  await supabaseRequest(env, table, {
     method: 'POST',
     body: {
       user_id: Number(userId),
@@ -232,13 +241,11 @@ export async function createAppSession(env, userId, request) {
   return { token, expiresAt }
 }
 
-export async function invalidateAppSession(request, env) {
-  const cookies = parseCookies(request.headers.get('cookie'))
-  const token = toSafeText(cookies[APP_SESSION_COOKIE_NAME])
+async function invalidateSessionByToken(env, table, token) {
   if (!token) return false
 
   const tokenHash = await sha256Hex(token)
-  await supabaseRequest(env, 'app_sessions', {
+  await supabaseRequest(env, table, {
     method: 'DELETE',
     query: {
       token_hash: `eq.${tokenHash}`,
@@ -251,30 +258,11 @@ export async function invalidateAppSession(request, env) {
   return true
 }
 
-export async function readAuthenticatedUser(request, env) {
-  const cookies = parseCookies(request.headers.get('cookie'))
-  const token = toSafeText(cookies[APP_SESSION_COOKIE_NAME])
-  if (!token) return null
-
-  const tokenHash = await sha256Hex(token)
-  const now = Date.now()
-
-  const sessions = await supabaseRequest(env, 'app_sessions', {
-    query: {
-      select: 'user_id,expires_at',
-      token_hash: `eq.${tokenHash}`,
-      expires_at: `gt.${now}`,
-      limit: 1,
-    },
-  })
-
-  const session = Array.isArray(sessions) ? sessions[0] : null
-  if (!session?.user_id) return null
-
+async function loadUserById(env, userId) {
   const users = await supabaseRequest(env, 'users', {
     query: {
       select: 'id,google_sub,email,name,picture',
-      id: `eq.${session.user_id}`,
+      id: `eq.${userId}`,
       limit: 1,
     },
   })
@@ -282,8 +270,37 @@ export async function readAuthenticatedUser(request, env) {
   const user = Array.isArray(users) ? users[0] : null
   if (!user?.id) return null
 
+  return {
+    id: Number(user.id),
+    googleSub: toSafeText(user.google_sub),
+    email: toSafeText(user.email),
+    name: toSafeText(user.name),
+    picture: toSafeText(user.picture),
+  }
+}
+
+async function readSessionByTokenHash(env, table, tokenHash) {
+  const now = Date.now()
+  const sessions = await supabaseRequest(env, table, {
+    query: {
+      select: 'user_id,expires_at',
+      token_hash: `eq.${tokenHash}`,
+      expires_at: `gt.${now}`,
+      limit: 1,
+    },
+  })
+  const session = Array.isArray(sessions) ? sessions[0] : null
+  if (!session?.user_id) return null
+  return {
+    userId: Number(session.user_id),
+    expiresAt: Number(session.expires_at) || 0,
+    now,
+  }
+}
+
+async function touchSessionByTokenHash(env, table, tokenHash, request, now = Date.now()) {
   const { userAgent, ip } = readRequestMetadata(request)
-  await supabaseRequest(env, 'app_sessions', {
+  await supabaseRequest(env, table, {
     method: 'PATCH',
     query: {
       token_hash: `eq.${tokenHash}`,
@@ -297,15 +314,62 @@ export async function readAuthenticatedUser(request, env) {
       Prefer: 'return=minimal',
     },
   }).catch(() => {})
+}
+
+async function resolveAuthenticatedUserWithToken({ request, env, table, token }) {
+  if (!token) return null
+
+  const tokenHash = await sha256Hex(token)
+  const session = await readSessionByTokenHash(env, table, tokenHash)
+  if (!session?.userId) return null
+  const user = await loadUserById(env, session.userId)
+  if (!user?.id) return null
+
+  await touchSessionByTokenHash(env, table, tokenHash, request, session.now)
 
   return {
-    id: Number(user.id),
-    googleSub: toSafeText(user.google_sub),
-    email: toSafeText(user.email),
-    name: toSafeText(user.name),
-    picture: toSafeText(user.picture),
-    expiresAt: Number(session.expires_at) || 0,
+    ...user,
+    expiresAt: session.expiresAt,
   }
+}
+
+export async function createAppSession(env, userId, request) {
+  return createSessionRecord(env, 'app_sessions', APP_SESSION_MAX_AGE_SECONDS, userId, request)
+}
+
+export async function createDesktopSession(env, userId, request) {
+  return createSessionRecord(env, 'desktop_sessions', DESKTOP_SESSION_MAX_AGE_SECONDS, userId, request)
+}
+
+export async function invalidateAppSession(request, env) {
+  const cookies = parseCookies(request.headers.get('cookie'))
+  const token = toSafeText(cookies[APP_SESSION_COOKIE_NAME]).trim()
+  return invalidateSessionByToken(env, 'app_sessions', token)
+}
+
+export async function invalidateDesktopSession(request, env) {
+  const token = readAuthorizationBearerToken(request)
+  return invalidateSessionByToken(env, 'desktop_sessions', token)
+}
+
+export async function readAuthenticatedUser(request, env) {
+  const bearerToken = readAuthorizationBearerToken(request)
+  const byBearer = await resolveAuthenticatedUserWithToken({
+    request,
+    env,
+    table: 'desktop_sessions',
+    token: bearerToken,
+  })
+  if (byBearer?.id) return byBearer
+
+  const cookies = parseCookies(request.headers.get('cookie'))
+  const cookieToken = toSafeText(cookies[APP_SESSION_COOKIE_NAME]).trim()
+  return resolveAuthenticatedUserWithToken({
+    request,
+    env,
+    table: 'app_sessions',
+    token: cookieToken,
+  })
 }
 
 export async function upsertGoogleUser(env, profile) {

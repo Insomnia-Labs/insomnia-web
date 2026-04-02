@@ -7,10 +7,12 @@ import {
   buildOAuthReturnToCookie,
   buildOAuthStateCookie,
   createAppSession,
+  createDesktopSession,
   createOAuthState,
   getGoogleOAuthConfig,
   getGoogleRedirectUri,
   invalidateAppSession,
+  invalidateDesktopSession,
   parseCookies,
   readAuthenticatedUser,
   readOAuthCookies,
@@ -20,6 +22,7 @@ import {
 import { supabaseRequest } from '../_lib/supabase.js'
 
 const textEncoder = new TextEncoder()
+const DESKTOP_AUTH_INTENT_MAX_AGE_MS = 10 * 60 * 1000
 
 function json(payload, init = {}) {
   const headers = new Headers(init.headers || {})
@@ -36,6 +39,17 @@ function json(payload, init = {}) {
 function redirect(location, headers = new Headers()) {
   headers.set('location', location)
   return new Response(null, { status: 302, headers })
+}
+
+function html(content, init = {}) {
+  const headers = new Headers(init.headers || {})
+  if (!headers.has('content-type')) {
+    headers.set('content-type', 'text/html; charset=utf-8')
+  }
+  if (!headers.has('cache-control')) {
+    headers.set('cache-control', 'no-store')
+  }
+  return new Response(content, { ...init, headers })
 }
 
 function appendQueryParam(path, key, value) {
@@ -264,6 +278,310 @@ function isAllowedGoogleAvatarHost(hostname) {
     || host.endsWith('.ggpht.com')
 }
 
+function normalizeDesktopIntentStatus(value) {
+  const raw = toSafeText(value).trim().toLowerCase()
+  if (raw === 'authorized') return 'authorized'
+  if (raw === 'completed') return 'completed'
+  if (raw === 'expired') return 'expired'
+  return 'pending'
+}
+
+function makeDesktopBridgePath(intentCode) {
+  return `/api/auth/desktop-bridge?intent=${encodeURIComponent(intentCode)}`
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('\'', '&#39;')
+}
+
+function renderDesktopBridgePage({ title, message, success = false, retryUrl = '' }) {
+  const safeTitle = escapeHtml(title || 'Insomnia Desktop Sign-In')
+  const safeMessage = escapeHtml(message || '')
+  const safeRetryUrl = toSafeText(retryUrl).trim()
+  const statusColor = success ? '#3ddc97' : '#ff6b6b'
+  const buttonHtml = safeRetryUrl
+    ? `<a href="${escapeHtml(safeRetryUrl)}" style="display:inline-block;margin-top:16px;padding:10px 14px;border-radius:10px;border:1px solid #2b3f5d;background:#111a27;color:#f7fbff;text-decoration:none;font:500 14px/1.2 sans-serif;">Повторить вход</a>`
+    : ''
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${safeTitle}</title>
+  </head>
+  <body style="margin:0;padding:0;background:#06090f;color:#f7fbff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;">
+    <main style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;">
+      <section style="width:min(460px,100%);background:#0f1622;border:1px solid #2b3f5d;border-radius:16px;padding:24px;box-shadow:0 16px 50px rgba(0,0,0,0.45);">
+        <h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;">${safeTitle}</h1>
+        <p style="margin:0;color:#b6c4d8;font-size:14px;line-height:1.5;">${safeMessage}</p>
+        <p style="margin:16px 0 0;font-size:12px;color:${statusColor};font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${success ? 'STATUS: AUTHORIZED' : 'STATUS: FAILED'}</p>
+        ${buttonHtml}
+      </section>
+    </main>
+  </body>
+</html>`
+}
+
+async function readDesktopAuthIntent(env, intentCode) {
+  const safeIntent = toSafeText(intentCode).trim()
+  if (!safeIntent) return null
+
+  const rows = await supabaseRequest(env, 'desktop_auth_intents', {
+    query: {
+      select: 'intent_code,poll_secret_hash,status,user_id,created_at,updated_at,expires_at',
+      intent_code: `eq.${safeIntent}`,
+      limit: 1,
+    },
+  })
+  return Array.isArray(rows) ? rows[0] || null : null
+}
+
+async function updateDesktopAuthIntent(env, intentCode, body) {
+  await supabaseRequest(env, 'desktop_auth_intents', {
+    method: 'PATCH',
+    query: {
+      intent_code: `eq.${intentCode}`,
+    },
+    body,
+    headers: {
+      Prefer: 'return=minimal',
+    },
+  })
+}
+
+async function readGoogleUserById(env, userId) {
+  const safeUserId = toPositiveInt(userId)
+  if (!safeUserId) return null
+
+  const rows = await supabaseRequest(env, 'users', {
+    query: {
+      select: 'id,google_sub,email,name,picture',
+      id: `eq.${safeUserId}`,
+      limit: 1,
+    },
+  })
+  const user = Array.isArray(rows) ? rows[0] : null
+  if (!user?.id) return null
+
+  return {
+    id: toPositiveInt(user.id),
+    googleSub: toSafeText(user.google_sub),
+    email: toSafeText(user.email),
+    name: toSafeText(user.name),
+    picture: toSafeText(user.picture),
+  }
+}
+
+async function handleDesktopStart({ request, env }) {
+  try {
+    getGoogleOAuthConfig(env)
+  } catch (err) {
+    return json(
+      {
+        ok: false,
+        error: {
+          code: 'GOOGLE_OAUTH_CONFIG_MISSING',
+          message: err?.message || 'Google OAuth is not configured',
+        },
+      },
+      { status: 500 }
+    )
+  }
+
+  const intentCode = `${createOAuthState()}${createOAuthState()}`
+  const pollSecret = `${createOAuthState()}${createOAuthState()}`
+  const pollSecretHash = await sha256Hex(pollSecret)
+  const now = Date.now()
+  const expiresAt = now + DESKTOP_AUTH_INTENT_MAX_AGE_MS
+
+  await supabaseRequest(env, 'desktop_auth_intents', {
+    method: 'POST',
+    body: {
+      intent_code: intentCode,
+      poll_secret_hash: pollSecretHash,
+      status: 'pending',
+      user_id: null,
+      created_at: now,
+      updated_at: now,
+      expires_at: expiresAt,
+    },
+    headers: {
+      Prefer: 'return=minimal',
+    },
+  })
+
+  const requestUrl = new URL(request.url)
+  const authUrl = new URL('/api/auth/google-start', requestUrl.origin)
+  authUrl.searchParams.set('returnTo', makeDesktopBridgePath(intentCode))
+
+  return json(
+    {
+      ok: true,
+      data: {
+        intentCode,
+        pollSecret,
+        expiresAt,
+        pollAfterMs: 1500,
+        authUrl: authUrl.toString(),
+      },
+    },
+    { status: 200 }
+  )
+}
+
+async function handleDesktopBridge({ request, env }) {
+  const requestUrl = new URL(request.url)
+  const intentCode = toSafeText(requestUrl.searchParams.get('intent')).trim()
+  if (!intentCode) {
+    return html(renderDesktopBridgePage({
+      title: 'Insomnia Desktop',
+      message: 'Некорректный параметр intent. Вернитесь в приложение и начните вход заново.',
+      success: false,
+    }), { status: 400 })
+  }
+
+  const intent = await readDesktopAuthIntent(env, intentCode)
+  if (!intent?.intent_code) {
+    return html(renderDesktopBridgePage({
+      title: 'Insomnia Desktop',
+      message: 'Сессия входа не найдена или уже истекла.',
+      success: false,
+    }), { status: 404 })
+  }
+
+  const now = Date.now()
+  const expiresAt = toPositiveInt(intent?.expires_at)
+  if (expiresAt > 0 && expiresAt <= now) {
+    await updateDesktopAuthIntent(env, intentCode, {
+      status: 'expired',
+      updated_at: now,
+    }).catch(() => {})
+
+    return html(renderDesktopBridgePage({
+      title: 'Insomnia Desktop',
+      message: 'Сессия входа истекла. Вернитесь в desktop-приложение и начните вход заново.',
+      success: false,
+    }), { status: 410 })
+  }
+
+  const user = await readAuthenticatedUser(request, env)
+  if (!user?.id) {
+    const retryUrl = `/api/auth/google-start?returnTo=${encodeURIComponent(makeDesktopBridgePath(intentCode))}`
+    return html(renderDesktopBridgePage({
+      title: 'Insomnia Desktop',
+      message: 'Google-сессия не найдена. Нажмите "Повторить вход" и завершите авторизацию.',
+      success: false,
+      retryUrl,
+    }), { status: 401 })
+  }
+
+  await updateDesktopAuthIntent(env, intentCode, {
+    status: 'authorized',
+    user_id: user.id,
+    updated_at: now,
+  })
+
+  return html(renderDesktopBridgePage({
+    title: 'Insomnia Desktop',
+    message: 'Вход подтвержден. Вернитесь в desktop-приложение, оно завершит авторизацию автоматически.',
+    success: true,
+  }), { status: 200 })
+}
+
+async function handleDesktopPoll({ request, env }) {
+  const body = await readJsonBody(request)
+  const intentCode = toSafeText(body?.intentCode || body?.intent).trim()
+  const pollSecret = toSafeText(body?.pollSecret || body?.secret).trim()
+
+  if (!intentCode || !pollSecret) {
+    return json(
+      {
+        ok: false,
+        error: { code: 'DESKTOP_AUTH_INPUT_INVALID', message: 'intentCode and pollSecret are required' },
+      },
+      { status: 400 }
+    )
+  }
+
+  const intent = await readDesktopAuthIntent(env, intentCode)
+  if (!intent?.intent_code) {
+    return json(
+      {
+        ok: false,
+        error: { code: 'DESKTOP_AUTH_INTENT_NOT_FOUND', message: 'Desktop auth intent not found' },
+      },
+      { status: 404 }
+    )
+  }
+
+  const now = Date.now()
+  const expiresAt = toPositiveInt(intent?.expires_at)
+  if (expiresAt > 0 && expiresAt <= now) {
+    await updateDesktopAuthIntent(env, intentCode, {
+      status: 'expired',
+      updated_at: now,
+    }).catch(() => {})
+    return json({ ok: true, data: { status: 'expired', expiresAt } }, { status: 200 })
+  }
+
+  const expectedSecretHash = toSafeText(intent?.poll_secret_hash).trim()
+  const incomingSecretHash = await sha256Hex(pollSecret)
+  if (!expectedSecretHash || expectedSecretHash !== incomingSecretHash) {
+    return json(
+      {
+        ok: false,
+        error: { code: 'DESKTOP_AUTH_SECRET_INVALID', message: 'Desktop auth secret is invalid' },
+      },
+      { status: 401 }
+    )
+  }
+
+  const status = normalizeDesktopIntentStatus(intent?.status)
+  const userId = toPositiveInt(intent?.user_id)
+  if (status === 'expired') {
+    return json({ ok: true, data: { status: 'expired', expiresAt } }, { status: 200 })
+  }
+
+  if (status === 'pending' || !userId) {
+    return json({ ok: true, data: { status: 'pending', expiresAt } }, { status: 200 })
+  }
+
+  const user = await readGoogleUserById(env, userId)
+  if (!user?.id) {
+    await updateDesktopAuthIntent(env, intentCode, {
+      status: 'pending',
+      user_id: null,
+      updated_at: now,
+    }).catch(() => {})
+    return json({ ok: true, data: { status: 'pending', expiresAt } }, { status: 200 })
+  }
+
+  const { token, expiresAt: tokenExpiresAt } = await createDesktopSession(env, user.id, request)
+  await updateDesktopAuthIntent(env, intentCode, {
+    status: 'completed',
+    updated_at: now,
+  }).catch(() => {})
+
+  return json(
+    {
+      ok: true,
+      data: {
+        status: 'completed',
+        token,
+        expiresAt: tokenExpiresAt,
+        user,
+      },
+    },
+    { status: 200 }
+  )
+}
+
 async function handleGoogleStart({ request, env }) {
   try {
     // Validate early to provide deterministic config errors.
@@ -355,11 +673,16 @@ async function handleMe({ request, env }) {
 }
 
 async function handleLogout({ request, env }) {
-  try {
-    await invalidateAppSession(request, env)
-  } catch (err) {
-    console.warn('[AUTH] logout failed to delete session:', err?.message || err)
-  }
+  const deleteTasks = [
+    invalidateAppSession(request, env),
+    invalidateDesktopSession(request, env),
+  ]
+  const settled = await Promise.allSettled(deleteTasks)
+  settled
+    .filter(item => item.status === 'rejected')
+    .forEach(item => {
+      console.warn('[AUTH] logout failed to delete session:', item?.reason?.message || item?.reason || item)
+    })
 
   return json(
     { ok: true, data: { cleared: true } },
@@ -643,6 +966,18 @@ export async function onRequest(context) {
   const action = String(params?.action || '')
 
   try {
+    if (method === 'POST' && action === 'desktop-start') {
+      return handleDesktopStart({ request, env })
+    }
+
+    if (method === 'POST' && action === 'desktop-poll') {
+      return handleDesktopPoll({ request, env })
+    }
+
+    if (method === 'GET' && action === 'desktop-bridge') {
+      return handleDesktopBridge({ request, env })
+    }
+
     if (method === 'GET' && action === 'google-start') {
       return handleGoogleStart({ request, env })
     }

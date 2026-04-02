@@ -129,11 +129,17 @@ function buildTelegramSessionsPayload(response, linked = true) {
     .filter(Boolean)
     .sort(sortTelegramAuthorizationItems)
   const current = sessions.find(item => item.current)
+  const normalizedLinked = Boolean(linked)
+  // Telegram may occasionally return empty `authorizations` while current session is still authorized.
+  // Keep UI/state consistent with actual authorization presence.
+  const totalSessions = sessions.length > 0
+    ? sessions.length
+    : (normalizedLinked ? 1 : 0)
 
   return {
-    linked: Boolean(linked),
+    linked: normalizedLinked,
     ttlDays: toPositiveInt(response?.authorizationTtlDays),
-    totalSessions: sessions.length,
+    totalSessions,
     currentHash: current?.hash || '',
     sessions,
   }

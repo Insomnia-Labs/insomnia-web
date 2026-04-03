@@ -7,6 +7,7 @@ import {
   ApiError,
   enrichMessagesWithSenders,
   mapApiError,
+  resendCodeWithClient,
   resolvePeerEntity,
   runWithTelegramClient,
   sendCodeWithClient,
@@ -429,6 +430,25 @@ function withLegacySessionCleared(state) {
   }
 }
 
+async function checkTelegramAuthorizedWithTimeout(client, timeoutMs = 9_000) {
+  let timeoutId = 0
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new ApiError('TELEGRAM_AUTH_CHECK_TIMEOUT', 504, 'Telegram authorization check timed out'))
+    }, timeoutMs)
+  })
+
+  try {
+    const me = await Promise.race([
+      client.getMe(),
+      timeout,
+    ])
+    return Boolean(me?.id)
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
 function ensureAuthenticatedUser(user) {
   if (user?.id) return user
   throw new ApiError('APP_AUTH_REQUIRED', 401, 'Google authentication required')
@@ -439,8 +459,7 @@ async function runWithUserTelegramSession({ env, user, session }, fn) {
   const { result, nextSession } = await runWithTelegramClient(
     env,
     session || '',
-    fn,
-    { cacheKey: safeUser.id }
+    fn
   )
   await saveTelegramSessionForUser(env, safeUser.id, nextSession)
   return { result, nextSession }
@@ -478,11 +497,35 @@ async function handleSendCode({ request, env, state, user, session }) {
   const phoneNumber = toText(body.phoneNumber || body.phone)
   if (!phoneNumber) throw new ApiError('PHONE_NUMBER_INVALID', 400, 'Phone number is required')
 
+  const pendingPhoneNumber = toText(state.pendingAuth?.phoneNumber)
+  const pendingPhoneCodeHash = toText(state.pendingAuth?.phoneCodeHash)
+  const canResendExistingCode = Boolean(
+    pendingPhoneNumber
+    && pendingPhoneCodeHash
+    && pendingPhoneNumber === phoneNumber
+  )
+
   const { result, nextSession } = await runWithTelegramClient(
     env,
     session || '',
-    async ({ client, apiId, apiHash }) => sendCodeWithClient(client, apiId, apiHash, phoneNumber),
-    { cacheKey: safeUser.id }
+    async ({ client, apiId, apiHash }) => {
+      if (canResendExistingCode) {
+        try {
+          return await resendCodeWithClient(client, phoneNumber, pendingPhoneCodeHash)
+        } catch (err) {
+          const mapped = mapApiError(err)
+          if (
+            mapped.code !== 'PHONE_CODE_EXPIRED'
+            && mapped.code !== 'PHONE_CODE_INVALID'
+            && mapped.code !== 'CALL_SEND_CODE_FIRST'
+          ) {
+            throw err
+          }
+          // Fall back to fresh send-code if existing hash is stale.
+        }
+      }
+      return await sendCodeWithClient(client, apiId, apiHash, phoneNumber)
+    }
   )
   await saveTelegramSessionForUser(env, safeUser.id, nextSession)
 
@@ -495,7 +538,15 @@ async function handleSendCode({ request, env, state, user, session }) {
     },
   }
 
-  return okWithState({ phoneCodeHash: result.phoneCodeHash }, nextState, env)
+  return okWithState(
+    {
+      phoneCodeHash: result.phoneCodeHash,
+      delivery: result?.delivery || null,
+      resendUsed: canResendExistingCode,
+    },
+    nextState,
+    env
+  )
 }
 
 async function handleSignIn({ request, env, state, user, session }) {
@@ -517,8 +568,7 @@ async function handleSignIn({ request, env, state, user, session }) {
     const { nextSession } = await runWithTelegramClient(
       env,
       session || '',
-      async ({ client }) => signInWithCode(client, phoneNumber, phoneCodeHash, phoneCode),
-      { cacheKey: safeUser.id }
+      async ({ client }) => signInWithCode(client, phoneNumber, phoneCodeHash, phoneCode)
     )
     nextSessionFromSignIn = nextSession
   } catch (err) {
@@ -565,8 +615,7 @@ async function handleSignIn2FA({ request, env, state, user, session }) {
   const { nextSession } = await runWithTelegramClient(
     env,
     session || '',
-    async ({ client, apiId, apiHash }) => signInWithPassword(client, password, apiId, apiHash),
-    { cacheKey: safeUser.id }
+    async ({ client, apiId, apiHash }) => signInWithPassword(client, password, apiId, apiHash)
   )
   await saveTelegramSessionForUser(env, safeUser.id, nextSession)
 
@@ -586,17 +635,31 @@ async function handleAuthorized({ env, state, user, session }) {
     return okWithState(false, withLegacySessionCleared(state), env)
   }
 
-  const { result } = await runWithUserTelegramSession({ env, user, session }, async ({ client }) => {
-    try {
-      return await client.isUserAuthorized()
-    } catch {
-      return false
-    }
-  })
-
+  const safeUser = ensureAuthenticatedUser(user)
   const nextState = withLegacySessionCleared(state)
 
-  return okWithState(Boolean(result), nextState, env)
+  try {
+    const { result } = await runWithUserTelegramSession({ env, user: safeUser, session }, async ({ client }) => {
+      try {
+        return await checkTelegramAuthorizedWithTimeout(client)
+      } catch {
+        return false
+      }
+    })
+
+    if (!result) {
+      await clearTelegramSessionForUser(env, safeUser.id).catch(() => {})
+    }
+    return okWithState(Boolean(result), nextState, env)
+  } catch (err) {
+    const mapped = mapApiError(err)
+    if (isRecoverableTelegramSessionError(mapped.code)) {
+      await clearTelegramSessionForUser(env, safeUser.id).catch(() => {})
+      return okWithState(false, nextState, env)
+    }
+    // `/api/tg/authorized` should be resilient and not break app bootstrap.
+    return okWithState(false, nextState, env)
+  }
 }
 
 async function handleGetMe({ env, state, user, session }) {

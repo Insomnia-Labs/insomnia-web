@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useStore } from '../../store/useStore'
-import { sendCode, signIn, signInWith2FA, isAuthorized, getMe as getTelegramMe } from '../../services/telegramClient'
-import { getAuthMe, getGoogleLoginStartUrl, logoutAppSession } from '../../services/authClient'
+import { sendCode, signIn, signInWith2FA, isAuthorized, getMe as getTelegramMe, getTelegramSessions } from '../../services/telegramClient'
+import { getAuthMe, getGoogleAvatarUrl, getGoogleLoginStartUrl, logoutAppSession } from '../../services/authClient'
 import VoidOceanBackground from './VoidOceanBackground'
 
 /* ─────────────────────────────────────────────────────────────
@@ -303,6 +303,28 @@ function accountInitial(user) {
     return source.charAt(0).toUpperCase()
 }
 
+function formatSessionDateTime(value) {
+    const timestamp = Number(value) || 0
+    if (!timestamp) return '—'
+    return new Date(timestamp).toLocaleString([], {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    })
+}
+
+function maskIpAddress(value) {
+    const raw = String(value || '').trim()
+    if (!raw) return 'unknown'
+    if (raw.includes(':')) return `${raw.split(':').slice(0, 3).join(':')}::*`
+    const parts = raw.split('.')
+    if (parts.length === 4) return `${parts[0]}.${parts[1]}.${parts[2]}.x`
+    return raw
+}
+
 /* ─────────────────────────────────────────────────────────────
    Main component
 ───────────────────────────────────────────────────────────── */
@@ -322,12 +344,20 @@ export default function VoidLogin() {
     const [logs, setLogs] = useState([])
     const [copyLogsState, setCopyLogsState] = useState('idle')
     const [appUser, setAppUser] = useState(null)
+    const [telegramSessionItems, setTelegramSessionItems] = useState([])
+    const [telegramSessionTotal, setTelegramSessionTotal] = useState(0)
+    const [telegramSessionCurrentHash, setTelegramSessionCurrentHash] = useState('')
+    const [telegramSessionLinked, setTelegramSessionLinked] = useState(false)
+    const [telegramSessionTtlDays, setTelegramSessionTtlDays] = useState(0)
+    const [isLoadingTelegramSessions, setIsLoadingTelegramSessions] = useState(false)
+    const [telegramSessionsError, setTelegramSessionsError] = useState('')
     const [showAccountPanel, setShowAccountPanel] = useState(false)
     const [isSigningOutApp, setIsSigningOutApp] = useState(false)
     const [accountImageFailed, setAccountImageFailed] = useState(false)
 
     const logIdRef = useRef(0)
     const copyStateTimerRef = useRef(0)
+    const didAutoOpenAccountPanelRef = useRef(false)
 
     const phoneRef = useRef(null)
     const codeRef = useRef(null)
@@ -349,6 +379,16 @@ export default function VoidLogin() {
         })
     }, [])
 
+    const resetAccountSnapshot = useCallback(() => {
+        setTelegramSessionItems([])
+        setTelegramSessionTotal(0)
+        setTelegramSessionCurrentHash('')
+        setTelegramSessionLinked(false)
+        setTelegramSessionTtlDays(0)
+        setIsLoadingTelegramSessions(false)
+        setTelegramSessionsError('')
+    }, [])
+
     useEffect(() => {
         return () => {
             if (copyStateTimerRef.current) {
@@ -360,6 +400,16 @@ export default function VoidLogin() {
     useEffect(() => {
         setAccountImageFailed(false)
     }, [appUser?.picture])
+
+    useEffect(() => {
+        if (!showVoidLogin) {
+            didAutoOpenAccountPanelRef.current = false
+            return
+        }
+        if (!appUser?.id || didAutoOpenAccountPanelRef.current) return
+        setShowAccountPanel(true)
+        didAutoOpenAccountPanelRef.current = true
+    }, [appUser?.id, showVoidLogin])
 
     useEffect(() => {
         if (!showAccountPanel) return
@@ -388,9 +438,11 @@ export default function VoidLogin() {
     useEffect(() => {
         if (!showVoidLogin) return
         logIdRef.current = 0
+        didAutoOpenAccountPanelRef.current = false
         setLogs([])
         setCopyLogsState('idle')
         setAppUser(null)
+        resetAccountSnapshot()
         setShowAccountPanel(false)
         setIsSigningOutApp(false)
         setAccountImageFailed(false)
@@ -401,12 +453,70 @@ export default function VoidLogin() {
         setClosing(false)
         setStage('check-auth')
         appendLog('INFO', 'VOID LOGIN OPENED')
-    }, [showVoidLogin, appendLog])
+    }, [showVoidLogin, appendLog, resetAccountSnapshot])
 
     useEffect(() => {
         if (!showVoidLogin) return
         appendLog('STATE', `STAGE -> ${String(stage || '').toUpperCase()}`)
     }, [stage, showVoidLogin, appendLog])
+
+    const refreshTelegramSessions = useCallback(async () => {
+        if (!showVoidLogin || !appUser?.id) return false
+        const startedAt = Date.now()
+        setIsLoadingTelegramSessions(true)
+        setTelegramSessionsError('')
+        appendLog('NET', 'GET /api/tg/sessions START')
+
+        try {
+            const payload = await getTelegramSessions()
+            const linked = Boolean(payload?.linked)
+            const sessions = linked && Array.isArray(payload?.sessions) ? payload.sessions : []
+            const total = Math.max(0, Math.trunc(Number(payload?.totalSessions) || sessions.length))
+            const currentHash = linked ? String(payload?.currentHash || '').trim() : ''
+            const ttlDays = linked ? Math.max(0, Math.trunc(Number(payload?.ttlDays) || 0)) : 0
+
+            setTelegramSessionLinked(linked)
+            setTelegramSessionItems(sessions)
+            setTelegramSessionTotal(total)
+            setTelegramSessionCurrentHash(currentHash)
+            setTelegramSessionTtlDays(ttlDays)
+
+            appendLog('OK', 'GET /api/tg/sessions OK', {
+                durationMs: Date.now() - startedAt,
+                linked,
+                totalSessions: total,
+                ttlDays,
+            })
+            return true
+        } catch (err) {
+            const code = extractAuthErrorCode(err)
+            if (code === 'APP_AUTH_REQUIRED') {
+                appendLog('WARN', 'GET /api/tg/sessions REQUIRES APP AUTH', {
+                    durationMs: Date.now() - startedAt,
+                    ...toLogErrorMeta(err),
+                })
+                setAppUser(null)
+                resetAccountSnapshot()
+                setShowAccountPanel(false)
+                setStage('appauth')
+                return false
+            }
+
+            appendLog('ERROR', 'GET /api/tg/sessions FAILED', {
+                durationMs: Date.now() - startedAt,
+                ...toLogErrorMeta(err),
+            })
+            setTelegramSessionsError('Failed to load Telegram sessions')
+            return false
+        } finally {
+            setIsLoadingTelegramSessions(false)
+        }
+    }, [appendLog, appUser?.id, resetAccountSnapshot, showVoidLogin])
+
+    useEffect(() => {
+        if (!showVoidLogin || !appUser?.id) return
+        void refreshTelegramSessions()
+    }, [appUser?.id, refreshTelegramSessions, showVoidLogin])
 
     /* Check Google auth session first */
     useEffect(() => {
@@ -425,6 +535,7 @@ export default function VoidLogin() {
                     setStage('check')
                 } else {
                     setAppUser(null)
+                    resetAccountSnapshot()
                     setShowAccountPanel(false)
                     appendLog('WARN', 'GET /api/auth/me OK', {
                         durationMs: Date.now() - startedAt,
@@ -435,6 +546,7 @@ export default function VoidLogin() {
             })
             .catch(err => {
                 setAppUser(null)
+                resetAccountSnapshot()
                 setShowAccountPanel(false)
                 appendLog('ERROR', 'GET /api/auth/me FAILED', {
                     durationMs: Date.now() - startedAt,
@@ -442,7 +554,7 @@ export default function VoidLogin() {
                 })
                 setStage('appauth')
             })
-    }, [stage, appendLog])
+    }, [stage, appendLog, resetAccountSnapshot])
 
     /* Check if already authorized + validate that session is healthy */
     useEffect(() => {
@@ -496,6 +608,9 @@ export default function VoidLogin() {
                     appendLog('WARN', 'SESSION CHECK REQUIRES APP AUTH', {
                         ...toLogErrorMeta(err),
                     })
+                    setAppUser(null)
+                    resetAccountSnapshot()
+                    setShowAccountPanel(false)
                     setStage('appauth')
                     return
                 }
@@ -509,7 +624,7 @@ export default function VoidLogin() {
 
         void run()
         return () => { cancelled = true }
-    }, [stage, appendLog])
+    }, [stage, appendLog, resetAccountSnapshot])
 
     /* Handle transition to chats upon success */
     useEffect(() => {
@@ -577,6 +692,7 @@ export default function VoidLogin() {
             })
             setShowAccountPanel(false)
             setAppUser(null)
+            resetAccountSnapshot()
             setAccountImageFailed(false)
             setError('')
             setStage('appauth')
@@ -588,7 +704,7 @@ export default function VoidLogin() {
         } finally {
             setIsSigningOutApp(false)
         }
-    }, [appendLog, isSigningOutApp])
+    }, [appendLog, isSigningOutApp, resetAccountSnapshot])
 
     if (!showVoidLogin) return null
 
@@ -599,6 +715,14 @@ export default function VoidLogin() {
         appendLog('INFO', 'REDIRECTING TO GOOGLE AUTH')
         const nextUrl = getGoogleLoginStartUrl()
         window.location.href = nextUrl
+    }
+
+    const handleAccountPanelToggle = () => {
+        const next = !showAccountPanel
+        setShowAccountPanel(next)
+        if (next) {
+            void refreshTelegramSessions()
+        }
     }
 
     /* ── Step 1: Send code ────────────────────────────────── */
@@ -630,6 +754,9 @@ export default function VoidLogin() {
                     durationMs: Date.now() - startedAt,
                     ...toLogErrorMeta(err),
                 })
+                setAppUser(null)
+                resetAccountSnapshot()
+                setShowAccountPanel(false)
                 setError('')
                 setStage('appauth')
                 return
@@ -676,6 +803,9 @@ export default function VoidLogin() {
                     durationMs: Date.now() - startedAt,
                     ...toLogErrorMeta(err),
                 })
+                setAppUser(null)
+                resetAccountSnapshot()
+                setShowAccountPanel(false)
                 setError('')
                 setStage('appauth')
                 return
@@ -724,6 +854,9 @@ export default function VoidLogin() {
                     durationMs: Date.now() - startedAt,
                     ...toLogErrorMeta(err),
                 })
+                setAppUser(null)
+                resetAccountSnapshot()
+                setShowAccountPanel(false)
                 setError('')
                 setStage('appauth')
                 return
@@ -753,6 +886,43 @@ export default function VoidLogin() {
         if (stage === 'success') return 'AUTHORIZED'
         return 'AUTH'
     })()
+
+    const googleAccountName = String(appUser?.name || '').trim() || 'Google account'
+    const googleAccountEmail = String(appUser?.email || '').trim() || 'Email is hidden'
+    const googleAccountUid = appUser?.id ? String(appUser.id) : '—'
+    const googleAccountSub = String(appUser?.googleSub || '').trim() || '—'
+    const googleAvatarSrc = appUser
+        ? getGoogleAvatarUrl(appUser?.googleSub || appUser?.id || '')
+        : ''
+    const linkedTelegramText = telegramSessionLinked
+        ? `Linked${telegramSessionTtlDays > 0 ? ` · TTL ${telegramSessionTtlDays}d` : ''}`
+        : 'Not linked'
+    const accountSessionRows = (Array.isArray(telegramSessionItems) ? telegramSessionItems : []).map((item, index) => {
+        const hash = String(item?.hash || '').trim()
+        const appName = String(item?.appName || '').trim() || 'Telegram'
+        const appVersion = String(item?.appVersion || '').trim()
+        const deviceModel = String(item?.deviceModel || '').trim() || 'Unknown device'
+        const platform = String(item?.platform || '').trim() || 'Unknown platform'
+        const systemVersion = String(item?.systemVersion || '').trim()
+        const locationLabel = [String(item?.country || '').trim(), String(item?.region || '').trim()]
+            .filter(Boolean)
+            .join(', ') || 'Unknown'
+        const isCurrent = Boolean(item?.current) || Boolean(telegramSessionCurrentHash && hash === telegramSessionCurrentHash)
+
+        return {
+            key: hash || `tg-session-${index}`,
+            hash,
+            isCurrent,
+            appLabel: `${appName}${appVersion ? ` ${appVersion}` : ''}`,
+            deviceLabel: deviceModel,
+            platformLabel: systemVersion ? `${platform} ${systemVersion}` : platform,
+            createdAtLabel: formatSessionDateTime(item?.createdAt),
+            activeAtLabel: formatSessionDateTime(item?.activeAt),
+            ipLabel: maskIpAddress(item?.ip),
+            locationLabel,
+        }
+    }).filter(item => item.hash)
+    const totalSessionCount = telegramSessionTotal > 0 ? telegramSessionTotal : accountSessionRows.length
 
     /* ── JSX ─────────────────────────────────────────────── */
     return (
@@ -890,7 +1060,7 @@ export default function VoidLogin() {
                     animation: vl-ocean-out .2s ease-in both;
                 }
                 .vl-shell {
-                    width: min(720px, calc(100vw - 24px));
+                    width: min(1160px, calc(100vw - 24px));
                     min-height: auto;
                     border: 0;
                     border-radius: 0;
@@ -989,19 +1159,32 @@ export default function VoidLogin() {
                 .vl-main.vl-main-only {
                     padding: 8px;
                 }
+                .vl-main-layout {
+                    width: 100%;
+                    display: grid;
+                    grid-template-columns: 1fr;
+                    gap: 12px;
+                    align-items: start;
+                }
+                .vl-main-layout.has-account {
+                    grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+                }
                 .vl-main-inner {
                     width: 100%;
                     margin: 0;
                     display: flex;
                     flex-direction: column;
                     gap: 10px;
+                    min-width: 0;
                 }
 
                 .vl-account-anchor {
-                    position: absolute;
-                    top: 22px;
-                    right: 24px;
-                    z-index: 16;
+                    position: relative;
+                    z-index: 4;
+                    width: 100%;
+                    align-self: start;
+                    display: flex;
+                    flex-direction: column;
                 }
                 .vl-account-button {
                     border: 1px solid var(--vl-border-strong);
@@ -1017,6 +1200,7 @@ export default function VoidLogin() {
                     color: #c2c9d4;
                     transition: border-color .2s, transform .2s, box-shadow .2s;
                     box-shadow: 0 16px 34px rgba(0, 0, 0, .34);
+                    display: none;
                 }
                 .vl-account-button:hover {
                     border-color: rgba(122, 130, 145, .58);
@@ -1075,10 +1259,8 @@ export default function VoidLogin() {
                     font-size: 0.86rem;
                 }
                 .vl-account-panel {
-                    position: absolute;
-                    right: 0;
-                    top: calc(100% + 10px);
-                    width: min(390px, calc(100vw - 36px));
+                    position: relative;
+                    width: 100%;
                     border-radius: 18px;
                     border: 1px solid var(--vl-border-strong);
                     background:
@@ -1089,6 +1271,9 @@ export default function VoidLogin() {
                     display: flex;
                     flex-direction: column;
                     gap: 12px;
+                }
+                .vl-account-panel.is-open {
+                    display: flex;
                 }
                 .vl-account-top {
                     display: flex;
@@ -1179,6 +1364,122 @@ export default function VoidLogin() {
                     color: #96a3b8;
                     text-align: right;
                     word-break: break-word;
+                }
+                .vl-account-sessions {
+                    border-top: 1px solid rgba(148, 163, 184, .22);
+                    padding-top: 10px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                }
+                .vl-account-sessions-head {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 8px;
+                }
+                .vl-account-sessions-title {
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.62rem;
+                    letter-spacing: .08em;
+                    text-transform: uppercase;
+                    color: #b9c2cf;
+                }
+                .vl-account-refresh {
+                    border: 1px solid rgba(122, 130, 145, .45);
+                    border-radius: 8px;
+                    padding: 6px 9px;
+                    background: rgba(18, 27, 40, .68);
+                    color: #bec8d7;
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.58rem;
+                    letter-spacing: .07em;
+                    text-transform: uppercase;
+                    cursor: pointer;
+                    transition: border-color .2s, background .2s;
+                }
+                .vl-account-refresh:hover {
+                    border-color: rgba(122, 130, 145, .68);
+                    background: rgba(14, 22, 34, .72);
+                }
+                .vl-account-refresh:disabled {
+                    opacity: .56;
+                    cursor: not-allowed;
+                }
+                .vl-account-sessions-list {
+                    max-height: 198px;
+                    overflow: auto;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 7px;
+                    padding-right: 2px;
+                }
+                .vl-account-session-item {
+                    border: 1px solid rgba(148, 163, 184, .2);
+                    border-radius: 10px;
+                    background: rgba(10, 16, 24, .65);
+                    padding: 8px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+                .vl-account-session-item.current {
+                    border-color: rgba(122, 130, 145, .54);
+                    background: rgba(14, 23, 35, .72);
+                }
+                .vl-account-session-line {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 8px;
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.62rem;
+                    line-height: 1.35;
+                    color: #b4bcc9;
+                }
+                .vl-account-session-badge {
+                    border-radius: 999px;
+                    border: 1px solid rgba(122, 130, 145, .45);
+                    padding: 2px 6px;
+                    font-size: 0.54rem;
+                    letter-spacing: .06em;
+                    text-transform: uppercase;
+                    color: #c2c9d4;
+                    background: rgba(122, 130, 145, .14);
+                    white-space: nowrap;
+                }
+                .vl-account-session-badge.current {
+                    border-color: rgba(122, 130, 145, .62);
+                    background: rgba(122, 130, 145, .24);
+                    color: #d8deea;
+                }
+                .vl-account-session-meta {
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.56rem;
+                    line-height: 1.4;
+                    color: #9ca7b8;
+                    word-break: break-word;
+                }
+                .vl-account-empty {
+                    border: 1px dashed rgba(148, 163, 184, .3);
+                    border-radius: 10px;
+                    padding: 10px;
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.6rem;
+                    color: #a8b1c0;
+                    line-height: 1.4;
+                }
+                .vl-account-error {
+                    border: 1px solid rgba(255, 122, 122, .45);
+                    border-radius: 10px;
+                    background: rgba(74, 22, 28, .36);
+                    color: #ffd6d6;
+                    font-family: 'JetBrains Mono', 'Consolas', monospace;
+                    font-size: 0.58rem;
+                    letter-spacing: .04em;
+                    line-height: 1.45;
+                    padding: 8px 9px;
+                    text-transform: uppercase;
                 }
                 .vl-account-signout {
                     border: 1px solid rgba(255, 122, 122, .52);
@@ -1625,12 +1926,8 @@ export default function VoidLogin() {
                         border-bottom: 1px solid var(--vl-border);
                         gap: 18px;
                     }
-                    .vl-account-anchor {
-                        top: 18px;
-                        right: 18px;
-                    }
-                    .vl-main {
-                        padding-top: 88px;
+                    .vl-main-layout.has-account {
+                        grid-template-columns: minmax(250px, 310px) minmax(0, 1fr);
                     }
                 }
                 @media (max-width: 760px) {
@@ -1650,6 +1947,9 @@ export default function VoidLogin() {
                     .vl-main {
                         padding: 76px 16px 16px;
                     }
+                    .vl-main-layout.has-account {
+                        grid-template-columns: 1fr;
+                    }
                     .vl-card {
                         border-radius: 16px;
                         padding: 16px;
@@ -1665,7 +1965,15 @@ export default function VoidLogin() {
                         font-size: 0.64rem;
                         letter-spacing: .08em;
                     }
+                    .vl-account-anchor {
+                        position: absolute;
+                        top: 18px;
+                        right: 16px;
+                        width: auto;
+                        z-index: 16;
+                    }
                     .vl-account-button {
+                        display: flex;
                         min-width: 54px;
                         width: 54px;
                         border-radius: 12px;
@@ -1675,6 +1983,21 @@ export default function VoidLogin() {
                     .vl-account-pill-copy,
                     .vl-account-pill-arrow {
                         display: none;
+                    }
+                    .vl-account-panel {
+                        display: none;
+                        position: absolute;
+                        right: 0;
+                        top: calc(100% + 10px);
+                        width: min(390px, calc(100vw - 36px));
+                        max-height: calc(100vh - 118px);
+                        overflow: auto;
+                    }
+                    .vl-account-panel.is-open {
+                        display: flex;
+                    }
+                    .vl-account-sessions-list {
+                        max-height: 158px;
                     }
                     .vl-logs-panel {
                         left: 10px;
@@ -1692,6 +2015,157 @@ export default function VoidLogin() {
 
                 <div className="vl-shell">
                     <section className="vl-main vl-main-only">
+                        <div className={`vl-main-layout ${appUser ? 'has-account' : ''}`}>
+                        {appUser && (
+                            <aside className="vl-account-anchor" ref={accountPanelRef}>
+                                <button
+                                    type="button"
+                                    className="vl-account-button"
+                                    onClick={handleAccountPanelToggle}
+                                    aria-expanded={showAccountPanel}
+                                    aria-label="Toggle Google account panel"
+                                >
+                                    <span className="vl-account-mini-avatar">
+                                        {googleAvatarSrc && !accountImageFailed ? (
+                                            <img
+                                                src={googleAvatarSrc}
+                                                alt={googleAccountName}
+                                                referrerPolicy="no-referrer"
+                                                className="vl-account-avatar"
+                                                onError={() => setAccountImageFailed(true)}
+                                            />
+                                        ) : (
+                                            <span className="vl-account-fallback">{accountInitial(appUser)}</span>
+                                        )}
+                                    </span>
+                                    <span className="vl-account-pill-copy">
+                                        <span className="vl-account-pill-title">Google Profile</span>
+                                        <span className="vl-account-pill-mail">{googleAccountEmail}</span>
+                                    </span>
+                                    <span className="vl-account-pill-arrow">{showAccountPanel ? '▲' : '▼'}</span>
+                                </button>
+
+                                    <div className={`vl-account-panel ${showAccountPanel ? 'is-open' : ''}`} role="dialog" aria-label="Google account details">
+                                        <div className="vl-account-top">
+                                            <span className="vl-account-top-title">Google account</span>
+                                            <span className="vl-account-top-status">{isLoadingTelegramSessions ? 'syncing' : 'active'}</span>
+                                        </div>
+
+                                        <div className="vl-account-body">
+                                            <div className="vl-account-head">
+                                                <div className="vl-account-head-avatar">
+                                                    {googleAvatarSrc && !accountImageFailed ? (
+                                                        <img
+                                                            src={googleAvatarSrc}
+                                                            alt={googleAccountName}
+                                                            referrerPolicy="no-referrer"
+                                                            className="vl-account-avatar"
+                                                            onError={() => setAccountImageFailed(true)}
+                                                        />
+                                                    ) : (
+                                                        <span className="vl-account-fallback">{accountInitial(appUser)}</span>
+                                                    )}
+                                                </div>
+                                                <div style={{ minWidth: 0 }}>
+                                                    <div className="vl-account-name">{googleAccountName}</div>
+                                                    <div className="vl-account-mail">{googleAccountEmail}</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="vl-account-info">
+                                                <div className="vl-account-row">
+                                                    <span className="vl-account-key">Google UID</span>
+                                                    <span className="vl-account-value">{googleAccountUid}</span>
+                                                </div>
+                                                <div className="vl-account-row">
+                                                    <span className="vl-account-key">Google Sub</span>
+                                                    <span className="vl-account-value" title={googleAccountSub}>
+                                                        {safeShortText(googleAccountSub, 26)}
+                                                    </span>
+                                                </div>
+                                                <div className="vl-account-row">
+                                                    <span className="vl-account-key">Telegram</span>
+                                                    <span className="vl-account-value">{linkedTelegramText}</span>
+                                                </div>
+                                                <div className="vl-account-row">
+                                                    <span className="vl-account-key">TG Sessions</span>
+                                                    <span className="vl-account-value">{totalSessionCount}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="vl-account-sessions">
+                                                <div className="vl-account-sessions-head">
+                                                    <span className="vl-account-sessions-title">Telegram Sessions</span>
+                                                    <button
+                                                        type="button"
+                                                        className="vl-account-refresh"
+                                                        onClick={() => { void refreshTelegramSessions() }}
+                                                        disabled={isLoadingTelegramSessions || isSigningOutApp}
+                                                    >
+                                                        {isLoadingTelegramSessions ? 'Sync...' : 'Refresh'}
+                                                    </button>
+                                                </div>
+
+                                                <div className="vl-account-sessions-list">
+                                                    {isLoadingTelegramSessions && accountSessionRows.length === 0 && (
+                                                        <div className="vl-account-empty">Loading Telegram sessions...</div>
+                                                    )}
+                                                    {!isLoadingTelegramSessions && !telegramSessionLinked && (
+                                                        <div className="vl-account-empty">No Telegram session is linked to this Google account yet.</div>
+                                                    )}
+                                                    {!isLoadingTelegramSessions && telegramSessionLinked && accountSessionRows.length === 0 && (
+                                                        <div className="vl-account-empty">Telegram returned an empty list of authorizations.</div>
+                                                    )}
+                                                    {accountSessionRows.map(session => {
+                                                        const statusLabel = session.isCurrent
+                                                            ? 'current'
+                                                            : 'active'
+                                                        return (
+                                                            <div
+                                                                key={session.key}
+                                                                className={`vl-account-session-item ${session.isCurrent ? 'current' : ''}`}
+                                                            >
+                                                                <div className="vl-account-session-line">
+                                                                    <span>{`hash ${safeShortText(session.hash, 14)}`}</span>
+                                                                    <span className={`vl-account-session-badge ${session.isCurrent ? 'current' : ''}`}>
+                                                                        {statusLabel}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="vl-account-session-meta">
+                                                                    {session.appLabel}
+                                                                </div>
+                                                                <div className="vl-account-session-meta">
+                                                                    {session.deviceLabel} · {session.platformLabel}
+                                                                </div>
+                                                                <div className="vl-account-session-meta">
+                                                                    Created: {session.createdAtLabel}
+                                                                </div>
+                                                                <div className="vl-account-session-meta">
+                                                                    Last active: {session.activeAtLabel}
+                                                                </div>
+                                                                <div className="vl-account-session-meta">
+                                                                    IP: {session.ipLabel} · {session.locationLabel}
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+
+                                            {telegramSessionsError && <div className="vl-account-error">{telegramSessionsError}</div>}
+
+                                            <button
+                                                type="button"
+                                                className="vl-account-signout"
+                                                onClick={() => { void handleAppSignOut() }}
+                                                disabled={isSigningOutApp || isLoadingTelegramSessions}
+                                            >
+                                                {isSigningOutApp ? 'Signing out...' : 'Sign out Google account'}
+                                            </button>
+                                        </div>
+                                    </div>
+                            </aside>
+                        )}
 
                         <div className="vl-main-inner">
                             <div className="vl-card">
@@ -1867,6 +2341,7 @@ export default function VoidLogin() {
                                 )}
                             </div>
 
+                        </div>
                         </div>
                     </section>
                 </div>

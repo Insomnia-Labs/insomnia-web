@@ -9,11 +9,6 @@ const CONNECT_TIMEOUT_MS = 20_000
 const REQUEST_TIMEOUT_MS = 30_000
 const CONNECT_ATTEMPT_TIMEOUT_MS = 12_000
 const WEB_DC_IDS = [1, 2, 3, 4, 5]
-const CLIENT_CACHE_TTL_MS = 90_000
-const CLIENT_CACHE_MAX_SIZE = 8
-
-const TELEGRAM_CLIENT_CACHE = new Map()
-const TELEGRAM_CLIENT_CACHE_PENDING = new Map()
 
 const KNOWN_STATUS_CODES = new Map([
   ['APP_AUTH_REQUIRED', 401],
@@ -87,6 +82,54 @@ function toSafeId(value) {
 function toSafeText(value, fallback = '') {
   if (typeof value === 'string') return value
   return fallback
+}
+
+function normalizeSentCodeMethod(value) {
+  const candidates = [
+    value,
+    value?.className,
+    value?.constructor?.name,
+    value?._,
+    value?.type,
+    value?.['@type'],
+    value?.toString?.(),
+  ]
+    .filter(item => item !== undefined && item !== null)
+    .map(item => String(item))
+
+  const raw = candidates.join(' ').toUpperCase()
+  if (!raw.trim()) return 'unknown'
+  if (raw.includes('SENTCODETYPEAPP')) return 'app'
+  if (raw.includes('SENTCODETYPESMS')) return 'sms'
+  if (raw.includes('SENTCODETYPECALL')) return 'call'
+  if (raw.includes('SENTCODETYPEFLASHCALL')) return 'flash_call'
+  if (raw.includes('SENTCODETYPEMISSEDCALL')) return 'missed_call'
+  if (raw.includes('SENTCODETYPEEMAILCODE')) return 'email'
+  if (raw.includes('SENTCODETYPEFIREBASESMS')) return 'firebase_sms'
+  if (raw.includes('SENTCODETYPESETUPEMAILREQUIRED')) return 'setup_email_required'
+  if (raw.includes('SENTCODETYPEFRAGMENTSMS')) return 'fragment_sms'
+  if (raw.includes('SENTCODETYPESMSWORD')) return 'sms_word'
+  if (raw.includes('SENTCODETYPESMSPHRASE')) return 'sms_phrase'
+  return 'unknown'
+}
+
+function normalizeSentCodeType(value) {
+  const raw = String(
+    value?.className
+    || value?._
+    || value?.['@type']
+    || value?.constructor?.name
+    || value
+    || ''
+  ).trim()
+
+  return {
+    method: normalizeSentCodeMethod(value),
+    length: toSafeInt(value?.length, 0),
+    pattern: toSafeText(value?.pattern),
+    prefix: toSafeText(value?.prefix),
+    raw: raw.slice(0, 120),
+  }
 }
 
 function readConfigText(value) {
@@ -183,7 +226,8 @@ function createTelegramClient(session, apiId, apiHash) {
     connectionRetries: 1,
     requestRetries: 2,
     downloadRetries: 1,
-    autoReconnect: true,
+    // Workers requests are short-lived and isolated; reconnect loops must remain request-scoped.
+    autoReconnect: false,
     retryDelay: 500,
     maxConcurrentDownloads: 1,
     useWSS: true,
@@ -316,35 +360,6 @@ function normalizeSessionString(sessionString) {
   return typeof sessionString === 'string' ? sessionString.trim() : String(sessionString || '').trim()
 }
 
-function hashTextFast(input) {
-  let hash = 2166136261 >>> 0
-  const text = String(input || '')
-  for (let i = 0; i < text.length; i += 1) {
-    hash ^= text.charCodeAt(i)
-    hash = Math.imul(hash, 16777619) >>> 0
-  }
-  return hash.toString(16).padStart(8, '0')
-}
-
-function buildClientCacheKey(options, sessionString, apiId) {
-  const explicit = toSafeText(options?.cacheKey, '').trim()
-  if (explicit) return `user:${explicit}`
-  const normalizedSession = normalizeSessionString(sessionString)
-  if (!normalizedSession) return ''
-  return `session:${apiId}:${hashTextFast(normalizedSession)}`
-}
-
-function isSessionStateInvalidError(err) {
-  const text = `${String(err?.code || '').toUpperCase()} ${String(err?.message || '').toUpperCase()}`
-  return text.includes('AUTH_KEY_UNREGISTERED')
-    || text.includes('AUTH_BYTES_INVALID')
-    || text.includes('SESSION_REVOKED')
-    || text.includes('SESSION_EXPIRED')
-    || text.includes('TELEGRAM_SESSION_NOT_LINKED')
-    || text.includes('USER_DEACTIVATED')
-    || text.includes('USER_DEACTIVATED_BAN')
-}
-
 function wrapTelegramClientError(err, client) {
   const wrapped = err instanceof Error ? err : new Error(String(err || 'UNKNOWN_ERROR'))
   try {
@@ -353,42 +368,6 @@ function wrapTelegramClientError(err, client) {
     wrapped.tgSession = ''
   }
   return wrapped
-}
-
-async function evictCachedClientByKey(cacheKey) {
-  if (!cacheKey) return
-  const entry = TELEGRAM_CLIENT_CACHE.get(cacheKey)
-  if (!entry) return
-  TELEGRAM_CLIENT_CACHE.delete(cacheKey)
-  await safeDisconnect(entry.client)
-}
-
-async function sweepCachedClients() {
-  const now = Date.now()
-  const staleKeys = []
-
-  for (const [key, entry] of TELEGRAM_CLIENT_CACHE.entries()) {
-    const lastUsedAt = Number(entry?.lastUsedAt || 0)
-    if (!lastUsedAt || (now - lastUsedAt) > CLIENT_CACHE_TTL_MS) {
-      staleKeys.push(key)
-    }
-  }
-
-  for (const key of staleKeys) {
-    await evictCachedClientByKey(key)
-  }
-
-  if (TELEGRAM_CLIENT_CACHE.size <= CLIENT_CACHE_MAX_SIZE) return
-
-  const sorted = Array.from(TELEGRAM_CLIENT_CACHE.entries())
-    .sort((a, b) => Number(a[1]?.lastUsedAt || 0) - Number(b[1]?.lastUsedAt || 0))
-  const overflow = TELEGRAM_CLIENT_CACHE.size - CLIENT_CACHE_MAX_SIZE
-  for (let index = 0; index < overflow; index += 1) {
-    const [key] = sorted[index] || []
-    if (key) {
-      await evictCachedClientByKey(key)
-    }
-  }
 }
 
 async function connectFreshClient(sessionString, apiId, apiHash) {
@@ -433,86 +412,9 @@ async function connectFreshClient(sessionString, apiId, apiHash) {
     connectErrors
   )
 }
-
-async function getOrCreateCachedClient(cacheKey, sessionString, apiId, apiHash) {
-  const normalizedSession = normalizeSessionString(sessionString)
-  if (!cacheKey || !normalizedSession) return null
-
-  const existing = TELEGRAM_CLIENT_CACHE.get(cacheKey)
-  if (existing) {
-    const sameSession = existing.sessionString === normalizedSession
-    const sameConfig = existing.apiId === apiId && existing.apiHash === apiHash
-    if (sameSession && sameConfig) {
-      existing.lastUsedAt = Date.now()
-      return existing
-    }
-    await evictCachedClientByKey(cacheKey)
-  }
-
-  const pending = TELEGRAM_CLIENT_CACHE_PENDING.get(cacheKey)
-  if (pending) {
-    const entry = await pending
-    entry.lastUsedAt = Date.now()
-    return entry
-  }
-
-  const createPromise = (async () => {
-    const { client } = await connectFreshClient(normalizedSession, apiId, apiHash)
-    const entry = {
-      client,
-      sessionString: normalizedSession,
-      apiId,
-      apiHash,
-      lastUsedAt: Date.now(),
-    }
-    TELEGRAM_CLIENT_CACHE.set(cacheKey, entry)
-    return entry
-  })()
-
-  TELEGRAM_CLIENT_CACHE_PENDING.set(cacheKey, createPromise)
-  try {
-    const entry = await createPromise
-    return entry
-  } finally {
-    TELEGRAM_CLIENT_CACHE_PENDING.delete(cacheKey)
-  }
-}
-
-function updateCachedEntrySession(cacheKey, entry, nextSession) {
-  if (!cacheKey || !entry) return
-  const normalizedNextSession = normalizeSessionString(nextSession)
-  entry.sessionString = normalizedNextSession
-  entry.lastUsedAt = Date.now()
-}
-
-export async function runWithTelegramClient(env, sessionString, fn, options = {}) {
+export async function runWithTelegramClient(env, sessionString, fn) {
   const { apiId, apiHash } = getApiConfig(env)
   const normalizedSession = normalizeSessionString(sessionString)
-  const cacheKey = buildClientCacheKey(options, normalizedSession, apiId)
-  await sweepCachedClients()
-
-  if (cacheKey && normalizedSession) {
-    const entry = await getOrCreateCachedClient(cacheKey, normalizedSession, apiId, apiHash)
-    if (entry?.client) {
-      try {
-        const result = await fn({ client: entry.client, apiId, apiHash })
-        const nextSession = entry.client.session.save()
-        updateCachedEntrySession(cacheKey, entry, nextSession)
-        if (!normalizeSessionString(nextSession)) {
-          await evictCachedClientByKey(cacheKey)
-        }
-        return { result, nextSession }
-      } catch (err) {
-        const wrapped = wrapTelegramClientError(err, entry.client)
-        if (isSessionStateInvalidError(wrapped)) {
-          await evictCachedClientByKey(cacheKey)
-        } else {
-          entry.lastUsedAt = Date.now()
-        }
-        throw wrapped
-      }
-    }
-  }
 
   const { client } = await connectFreshClient(normalizedSession, apiId, apiHash)
   try {
@@ -539,7 +441,54 @@ export async function sendCodeWithClient(client, apiId, apiHash, phoneNumber) {
     REQUEST_TIMEOUT_MS,
     'TELEGRAM_SEND_CODE_TIMEOUT'
   )
-  return { phoneCodeHash: result.phoneCodeHash }
+  const phoneCodeHash = toSafeText(result?.phoneCodeHash)
+  if (!phoneCodeHash) {
+    throw new ApiError('TELEGRAM_SEND_CODE_INVALID', 502, 'Telegram did not return phoneCodeHash')
+  }
+  const currentType = normalizeSentCodeType(result?.type)
+  const nextType = normalizeSentCodeType(result?.nextType)
+  return {
+    phoneCodeHash,
+    delivery: {
+      currentMethod: currentType.method,
+      nextMethod: nextType.method,
+      timeoutSec: toSafeInt(result?.timeout, 0),
+      currentType,
+      nextType,
+    },
+  }
+}
+
+export async function resendCodeWithClient(client, phoneNumber, phoneCodeHash) {
+  const result = await withTimeout(
+    client.invoke(
+      new Api.auth.ResendCode({
+        phoneNumber,
+        phoneCodeHash,
+      })
+    ),
+    REQUEST_TIMEOUT_MS,
+    'TELEGRAM_SEND_CODE_TIMEOUT'
+  )
+
+  const nextPhoneCodeHash = toSafeText(result?.phoneCodeHash || phoneCodeHash)
+  if (!nextPhoneCodeHash) {
+    throw new ApiError('TELEGRAM_SEND_CODE_INVALID', 502, 'Telegram did not return phoneCodeHash')
+  }
+
+  const currentType = normalizeSentCodeType(result?.type)
+  const nextType = normalizeSentCodeType(result?.nextType)
+  return {
+    phoneCodeHash: nextPhoneCodeHash,
+    delivery: {
+      currentMethod: currentType.method,
+      nextMethod: nextType.method,
+      timeoutSec: toSafeInt(result?.timeout, 0),
+      currentType,
+      nextType,
+      via: 'resend',
+    },
+  }
 }
 
 export async function signInWithCode(client, phoneNumber, phoneCodeHash, phoneCode) {
